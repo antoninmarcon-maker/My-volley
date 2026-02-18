@@ -124,6 +124,29 @@ export function useMatchState(matchId: string) {
     resetChrono();
   }, [points, score, currentSetNumber, chronoSeconds, resetChrono]);
 
+  const finishMatch = useCallback(() => {
+    // End current set if there are points
+    if (points.length > 0) {
+      const winner: Team = score.blue >= score.red ? 'blue' : 'red';
+      const setData: SetData = {
+        id: crypto.randomUUID(),
+        number: currentSetNumber,
+        points: [...points],
+        score: { ...score },
+        winner,
+        duration: chronoSeconds,
+      };
+      setCompletedSets(prev => [...prev, setData]);
+      setPoints([]);
+    }
+    setChronoRunning(false);
+    // Mark as finished in storage
+    const match = getMatch(matchId);
+    if (match) {
+      saveMatch({ ...match, finished: true, updatedAt: Date.now() });
+    }
+  }, [points, score, currentSetNumber, chronoSeconds, matchId]);
+
   const switchSides = useCallback(() => {
     setSidesSwapped(prev => !prev);
   }, []);
@@ -175,6 +198,7 @@ export function useMatchState(matchId: string) {
     addPoint,
     undo,
     endSet,
+    finishMatch,
     resetMatch,
     switchSides,
     startChrono,
