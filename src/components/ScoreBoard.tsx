@@ -139,7 +139,8 @@ export function ScoreBoard({
           <p className={`text-5xl font-black tabular-nums ${left === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{score[left]}</p>
           <button
             onClick={() => openMenu(left)}
-            className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 ${
+            disabled={!!selectedTeam}
+            className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
               left === 'blue'
                 ? 'bg-team-blue/20 text-team-blue border-2 border-team-blue/30 hover:bg-team-blue/30'
                 : 'bg-team-red/20 text-team-red border-2 border-team-red/30 hover:bg-team-red/30'
@@ -154,7 +155,8 @@ export function ScoreBoard({
           <p className={`text-5xl font-black tabular-nums ${right === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{score[right]}</p>
           <button
             onClick={() => openMenu(right)}
-            className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 ${
+            disabled={!!selectedTeam}
+            className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
               right === 'blue'
                 ? 'bg-team-blue/20 text-team-blue border-2 border-team-blue/30 hover:bg-team-blue/30'
                 : 'bg-team-red/20 text-team-red border-2 border-team-red/30 hover:bg-team-red/30'
