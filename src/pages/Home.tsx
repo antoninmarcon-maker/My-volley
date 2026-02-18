@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, History, Trash2, Eye, Play } from 'lucide-react';
+import logoCapbreton from '@/assets/logo-capbreton.jpeg';
 import { Input } from '@/components/ui/input';
 import { getAllMatches, createNewMatch, saveMatch, setActiveMatchId, deleteMatch } from '@/lib/matchStorage';
 import { MatchSummary } from '@/types/volleyball';
@@ -43,11 +44,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="px-4 py-6 border-b border-border">
-        <h1 className="text-2xl font-black text-foreground tracking-tight text-center">
-          🏐 Volley Tracker
-        </h1>
-        <p className="text-sm text-muted-foreground text-center mt-1">Suivi de matchs de volley-ball</p>
+      <header className="px-4 py-6 border-b border-border flex flex-col items-center gap-3">
+        <img src={logoCapbreton} alt="Volleyball Capbreton" className="w-16 h-16 rounded-full object-cover" />
+        <div>
+          <h1 className="text-2xl font-black text-foreground tracking-tight text-center">
+            🏐 Volley Tracker
+          </h1>
+          <p className="text-sm text-muted-foreground text-center mt-1">Suivi de matchs de volley-ball</p>
+        </div>
       </header>
 
       <main className="flex-1 overflow-auto p-4 max-w-lg mx-auto w-full space-y-6">
@@ -153,6 +157,12 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      <footer className="px-4 py-4 border-t border-border text-center">
+        <p className="text-xs text-muted-foreground">
+          Made with ❤️ by <span className="font-semibold text-foreground">Volleyball Capbreton</span>
+        </p>
+      </footer>
     </div>
   );
 }
