@@ -278,13 +278,6 @@ export function ScoreBoard({
           >
             <Flag size={16} /> Fin du Set
           </button>
-          <button
-            onClick={onReset}
-            disabled={!canUndo}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-30 transition-all"
-          >
-            <RotateCcw size={16} /> Reset
-          </button>
         </div>
       )}
     </div>
