@@ -75,7 +75,7 @@ export function VolleyballCourt({ points, selectedTeam, sidesSwapped = false, te
         </text>
 
         {/* Point markers */}
-        {points.map((point) => {
+        {points.filter(p => p.type === 'scored').map((point) => {
           const cx = point.x * 600;
           const cy = point.y * 400;
           const color = point.team === 'blue' ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)';

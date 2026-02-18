@@ -41,6 +41,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [filter, setFilter] = useState<Filter>('all');
   const [setFilter_, setSetFilter] = useState<SetFilter>('all');
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   const displayPoints = useMemo(() => {
     let pts: Point[];
@@ -167,10 +168,6 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
         ))}
       </div>
 
-      {/* Heatmap */}
-      <div className="rounded-xl overflow-hidden">
-        <canvas ref={canvasRef} width={600} height={400} className="w-full h-auto" />
-      </div>
 
       {/* Stats detail */}
       <div className="grid grid-cols-2 gap-3">
@@ -213,6 +210,20 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
         <p className="text-2xl font-black text-foreground">{ds.total}</p>
         <p className="text-xs text-muted-foreground uppercase tracking-wider">Points totaux</p>
       </div>
+
+      {/* Toggle heatmap */}
+      <button
+        onClick={() => setShowHeatmap(prev => !prev)}
+        className="w-full py-2.5 text-sm font-semibold rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all"
+      >
+        {showHeatmap ? 'Masquer la Heatmap' : 'Afficher la Heatmap'}
+      </button>
+
+      {showHeatmap && (
+        <div className="rounded-xl overflow-hidden">
+          <canvas ref={canvasRef} width={600} height={400} className="w-full h-auto" />
+        </div>
+      )}
     </div>
   );
 }

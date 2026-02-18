@@ -29,7 +29,7 @@ interface ScoreBoardProps {
 const ACTION_LABELS: { key: ActionType; label: string }[] = [
   { key: 'other', label: 'Autre' },
   { key: 'service', label: 'Service' },
-  { key: 'attack', label: 'Attaque' },
+  { key: 'attack', label: 'Attaque loupée' },
   { key: 'block_out', label: 'Block Out' },
 ];
 
