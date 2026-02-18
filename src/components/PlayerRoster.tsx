@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Plus, X, Pencil, Check } from 'lucide-react';
+import { Users, Plus, X, Pencil, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Player } from '@/types/volleyball';
 import { Input } from '@/components/ui/input';
 
@@ -11,6 +11,7 @@ interface PlayerRosterProps {
 
 export function PlayerRoster({ players, onSetPlayers, teamName }: PlayerRosterProps) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [newNumber, setNewNumber] = useState('');
   const [newName, setNewName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -60,62 +61,68 @@ export function PlayerRoster({ players, onSetPlayers, teamName }: PlayerRosterPr
   return (
     <div className="bg-card rounded-xl border border-border p-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-bold text-team-blue flex items-center gap-1.5">
-          <Users size={14} /> Roster {teamName}
-        </p>
+        <button onClick={() => setCollapsed(c => !c)} className="flex-1 flex items-center gap-1.5 text-left">
+          <Users size={14} className="text-team-blue" />
+          <p className="text-sm font-bold text-team-blue">Roster {teamName} ({players.length})</p>
+          {collapsed ? <ChevronDown size={14} className="text-muted-foreground" /> : <ChevronUp size={14} className="text-muted-foreground" />}
+        </button>
         <button onClick={() => setOpen(false)} className="p-1 rounded-md text-muted-foreground hover:text-foreground">
           <X size={16} />
         </button>
       </div>
 
-      {/* Player list */}
-      {players.length > 0 && (
-        <div className="space-y-1">
-          {players.map(p => (
-            <div key={p.id} className="flex items-center gap-2 bg-secondary/50 rounded-lg px-2.5 py-1.5">
-              {editingId === p.id ? (
-                <>
-                  <Input value={editNumber} onChange={e => setEditNumber(e.target.value)} className="h-7 w-14 text-xs" placeholder="#" />
-                  <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-7 flex-1 text-xs" placeholder="Nom" />
-                  <button onClick={saveEdit} className="p-1 text-primary"><Check size={14} /></button>
-                </>
-              ) : (
-                <>
-                  <span className="w-8 text-center text-xs font-black text-team-blue bg-team-blue/10 rounded py-0.5">#{p.number}</span>
-                  <span className="flex-1 text-xs font-medium text-foreground truncate">{p.name || '—'}</span>
-                  <button onClick={() => startEdit(p)} className="p-1 text-muted-foreground hover:text-foreground"><Pencil size={12} /></button>
-                  <button onClick={() => removePlayer(p.id)} className="p-1 text-destructive/60 hover:text-destructive"><X size={12} /></button>
-                </>
-              )}
+      {!collapsed && (
+        <>
+          {/* Player list */}
+          {players.length > 0 && (
+            <div className="space-y-1">
+              {players.map(p => (
+                <div key={p.id} className="flex items-center gap-2 bg-secondary/50 rounded-lg px-2.5 py-1.5">
+                  {editingId === p.id ? (
+                    <>
+                      <Input value={editNumber} onChange={e => setEditNumber(e.target.value)} className="h-7 w-14 text-xs" placeholder="#" />
+                      <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-7 flex-1 text-xs" placeholder="Nom" />
+                      <button onClick={saveEdit} className="p-1 text-primary"><Check size={14} /></button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-8 text-center text-xs font-black text-team-blue bg-team-blue/10 rounded py-0.5">#{p.number}</span>
+                      <span className="flex-1 text-xs font-medium text-foreground truncate">{p.name || '—'}</span>
+                      <button onClick={() => startEdit(p)} className="p-1 text-muted-foreground hover:text-foreground"><Pencil size={12} /></button>
+                      <button onClick={() => removePlayer(p.id)} className="p-1 text-destructive/60 hover:text-destructive"><X size={12} /></button>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Add player */}
-      <div className="flex gap-1.5">
-        <Input
-          value={newNumber}
-          onChange={e => setNewNumber(e.target.value)}
-          className="h-8 w-14 text-xs"
-          placeholder="#"
-          onKeyDown={e => e.key === 'Enter' && addPlayer()}
-        />
-        <Input
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-          className="h-8 flex-1 text-xs"
-          placeholder="Nom (optionnel)"
-          onKeyDown={e => e.key === 'Enter' && addPlayer()}
-        />
-        <button
-          onClick={addPlayer}
-          disabled={!newNumber.trim()}
-          className="px-2.5 h-8 rounded-md bg-team-blue text-primary-foreground text-xs font-semibold disabled:opacity-30 transition-all"
-        >
-          <Plus size={14} />
-        </button>
-      </div>
+          {/* Add player */}
+          <div className="flex gap-1.5">
+            <Input
+              value={newNumber}
+              onChange={e => setNewNumber(e.target.value)}
+              className="h-8 w-14 text-xs"
+              placeholder="#"
+              onKeyDown={e => e.key === 'Enter' && addPlayer()}
+            />
+            <Input
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              className="h-8 flex-1 text-xs"
+              placeholder="Nom (optionnel)"
+              onKeyDown={e => e.key === 'Enter' && addPlayer()}
+            />
+            <button
+              onClick={addPlayer}
+              disabled={!newNumber.trim()}
+              className="px-2.5 h-8 rounded-md bg-team-blue text-primary-foreground text-xs font-semibold disabled:opacity-30 transition-all"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
