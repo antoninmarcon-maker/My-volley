@@ -22,10 +22,75 @@ interface HeatmapViewProps {
 
 type SetFilter = 'all' | number;
 
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+function createStyledEl(tag: string, styles: Record<string, string>, textContent?: string): HTMLElement {
+  const el = document.createElement(tag);
+  Object.assign(el.style, styles);
+  if (textContent !== undefined) el.textContent = textContent;
+  return el;
+}
+
+function createStatRow(label: string, value: string | number, opts?: { bold?: boolean; indent?: boolean; borderTop?: boolean; valueColor?: string }) {
+  const row = createStyledEl('div', {
+    display: 'flex', justifyContent: 'space-between',
+    ...(opts?.indent ? { paddingLeft: '8px' } : {}),
+    ...(opts?.bold ? { fontWeight: '700' } : {}),
+    ...(opts?.borderTop ? { borderTop: '1px solid hsl(var(--border))', paddingTop: '4px', marginTop: '4px' } : {}),
+    color: 'hsl(var(--muted-foreground))',
+  });
+  row.appendChild(createStyledEl('span', {}, String(label)));
+  row.appendChild(createStyledEl('span', { fontWeight: '700', color: opts?.valueColor || 'hsl(var(--foreground))' }, String(value)));
+  return row;
+}
+
+function buildExportContainer(teamNames: { blue: string; red: string }, label: string, ds: ReturnType<typeof computeStats>): HTMLElement {
+  const container = document.createElement('div');
+  container.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px;';
+  container.className = 'bg-background rounded-2xl p-4 space-y-3';
+
+  // Header
+  const header = createStyledEl('div', { textAlign: 'center' });
+  const title = createStyledEl('p', { fontSize: '16px', fontWeight: '900', color: 'hsl(var(--foreground))' });
+  title.textContent = `🏐 ${teamNames.blue} vs ${teamNames.red}`;
+  header.appendChild(title);
+  const subtitle = createStyledEl('p', { fontSize: '10px', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.1em' }, label);
+  header.appendChild(subtitle);
+  container.appendChild(header);
+
+  // Team stats grid
+  const grid = createStyledEl('div', { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' });
+  for (const team of ['blue', 'red'] as const) {
+    const card = createStyledEl('div', { background: 'hsl(var(--card))', borderRadius: '12px', padding: '12px', border: '1px solid hsl(var(--border))' });
+    const teamTitle = createStyledEl('p', {
+      fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px',
+      color: team === 'blue' ? 'hsl(217,91%,60%)' : 'hsl(0,84%,60%)',
+    }, teamNames[team]);
+    card.appendChild(teamTitle);
+
+    const stats = createStyledEl('div', { fontSize: '11px', color: 'hsl(var(--foreground))' });
+    stats.appendChild(createStatRow('⚡ Gagnés', ds[team].scored, { bold: true }));
+    for (const [l, v] of [['Attaques', ds[team].attacks], ['Aces', ds[team].aces], ['Blocks', ds[team].blocks], ['Bidouilles', ds[team].bidouilles], ['2ndes mains', ds[team].secondeMains], ['Autres', ds[team].otherOffensive]] as [string, number][]) {
+      stats.appendChild(createStatRow(l, v, { indent: true }));
+    }
+    stats.appendChild(createStatRow('❌ Fautes adverses', ds[team].faults, { bold: true, borderTop: true, valueColor: 'hsl(var(--destructive))' }));
+    for (const [l, v] of [['Out', ds[team].outs], ['Filet', ds[team].netFaults], ['Srv loupés', ds[team].serviceMisses], ['Block Out', ds[team].blockOuts]] as [string, number][]) {
+      stats.appendChild(createStatRow(l, v, { indent: true }));
+    }
+    stats.appendChild(createStatRow('Total', ds[team].scored + ds[team].faults, { borderTop: true }));
+    card.appendChild(stats);
+    grid.appendChild(card);
+  }
+  container.appendChild(grid);
+
+  // Total
+  const totalCard = createStyledEl('div', { textAlign: 'center', background: 'hsl(var(--card))', borderRadius: '12px', padding: '12px', border: '1px solid hsl(var(--border))' });
+  totalCard.appendChild(createStyledEl('p', { fontSize: '24px', fontWeight: '900', color: 'hsl(var(--foreground))' }, String(ds.total)));
+  totalCard.appendChild(createStyledEl('p', { fontSize: '10px', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.1em' }, 'Points totaux'));
+  container.appendChild(totalCard);
+
+  // Watermark
+  container.appendChild(createStyledEl('p', { fontSize: '8px', textAlign: 'center', color: 'hsl(var(--muted-foreground))', opacity: '0.5' }, 'Volley Tracker · Capbreton'));
+
+  return container;
 }
 
 function computeStats(pts: Point[]) {
@@ -85,40 +150,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
 
       for (const exp of exports) {
         const ds = computeStats(exp.pts);
-        const container = document.createElement('div');
-        container.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px;';
-        container.className = 'bg-background rounded-2xl p-4 space-y-3';
-        const safeBlueName = escapeHtml(teamNames.blue);
-        const safeRedName = escapeHtml(teamNames.red);
-        container.innerHTML = `
-          <div style="text-align:center;">
-            <p style="font-size:16px;font-weight:900;color:hsl(var(--foreground))">🏐 ${safeBlueName} vs ${safeRedName}</p>
-            <p style="font-size:10px;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:0.1em">${escapeHtml(exp.label)}</p>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            ${(['blue', 'red'] as const).map(team => `
-              <div style="background:hsl(var(--card));border-radius:12px;padding:12px;border:1px solid hsl(var(--border))">
-                <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;color:${team === 'blue' ? 'hsl(217,91%,60%)' : 'hsl(0,84%,60%)'}">${escapeHtml(teamNames[team])}</p>
-                <div style="font-size:11px;color:hsl(var(--foreground))">
-                  <div style="display:flex;justify-content:space-between;font-weight:700;color:hsl(var(--muted-foreground))"><span>⚡ Gagnés</span><span style="color:hsl(var(--foreground))">${ds[team].scored}</span></div>
-                  ${[['Attaques', ds[team].attacks], ['Aces', ds[team].aces], ['Blocks', ds[team].blocks], ['Bidouilles', ds[team].bidouilles], ['2ndes mains', ds[team].secondeMains], ['Autres', ds[team].otherOffensive]].map(([l, v]) =>
-                    `<div style="display:flex;justify-content:space-between;padding-left:8px;color:hsl(var(--muted-foreground))"><span>${l}</span><span style="font-weight:700;color:hsl(var(--foreground))">${v}</span></div>`
-                  ).join('')}
-                  <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid hsl(var(--border));padding-top:4px;margin-top:4px;color:hsl(var(--muted-foreground))"><span>❌ Fautes adverses</span><span style="color:hsl(var(--destructive))">${ds[team].faults}</span></div>
-                  ${[['Out', ds[team].outs], ['Filet', ds[team].netFaults], ['Srv loupés', ds[team].serviceMisses], ['Block Out', ds[team].blockOuts]].map(([l, v]) =>
-                    `<div style="display:flex;justify-content:space-between;padding-left:8px;color:hsl(var(--muted-foreground))"><span>${l}</span><span style="font-weight:700;color:hsl(var(--foreground))">${v}</span></div>`
-                  ).join('')}
-                  <div style="display:flex;justify-content:space-between;border-top:1px solid hsl(var(--border));padding-top:4px;margin-top:4px;color:hsl(var(--muted-foreground))"><span>Total</span><span style="font-weight:700;color:hsl(var(--foreground))">${ds[team].scored + ds[team].faults}</span></div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="text-align:center;background:hsl(var(--card));border-radius:12px;padding:12px;border:1px solid hsl(var(--border))">
-            <p style="font-size:24px;font-weight:900;color:hsl(var(--foreground))">${ds.total}</p>
-            <p style="font-size:10px;color:hsl(var(--muted-foreground));text-transform:uppercase;letter-spacing:0.1em">Points totaux</p>
-          </div>
-          <p style="font-size:8px;text-align:center;color:hsl(var(--muted-foreground));opacity:0.5">Volley Tracker · Capbreton</p>
-        `;
+        const container = buildExportContainer(teamNames, exp.label, ds);
         document.body.appendChild(container);
         const canvas = await html2canvas(container, { backgroundColor: '#1a1a2e', scale: 2 });
         document.body.removeChild(container);
