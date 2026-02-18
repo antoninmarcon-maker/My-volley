@@ -100,7 +100,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   ${[['Attaques', ds[team].attacks], ['Aces', ds[team].aces], ['Blocks', ds[team].blocks], ['Bidouilles', ds[team].bidouilles], ['2ndes mains', ds[team].secondeMains], ['Autres', ds[team].otherOffensive]].map(([l, v]) =>
                     `<div style="display:flex;justify-content:space-between;padding-left:8px;color:hsl(var(--muted-foreground))"><span>${l}</span><span style="font-weight:700;color:hsl(var(--foreground))">${v}</span></div>`
                   ).join('')}
-                  <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid hsl(var(--border));padding-top:4px;margin-top:4px;color:hsl(var(--muted-foreground))"><span>❌ Fautes</span><span style="color:hsl(var(--destructive))">${ds[team].faults}</span></div>
+                  <div style="display:flex;justify-content:space-between;font-weight:700;border-top:1px solid hsl(var(--border));padding-top:4px;margin-top:4px;color:hsl(var(--muted-foreground))"><span>❌ Fautes adverses</span><span style="color:hsl(var(--destructive))">${ds[team].faults}</span></div>
                   ${[['Out', ds[team].outs], ['Filet', ds[team].netFaults], ['Srv loupés', ds[team].serviceMisses], ['Block Out', ds[team].blockOuts]].map(([l, v]) =>
                     `<div style="display:flex;justify-content:space-between;padding-left:8px;color:hsl(var(--muted-foreground))"><span>${l}</span><span style="font-weight:700;color:hsl(var(--foreground))">${v}</span></div>`
                   ).join('')}
