@@ -14,7 +14,6 @@ interface HeatmapViewProps {
   teamNames: { blue: string; red: string };
 }
 
-type Filter = 'all' | 'blue' | 'red';
 type SetFilter = 'all' | number;
 
 function computeStats(pts: Point[]) {
@@ -39,30 +38,24 @@ function computeStats(pts: Point[]) {
 
 export function HeatmapView({ points, completedSets, currentSetPoints, currentSetNumber, stats, teamNames }: HeatmapViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [filter, setFilter] = useState<Filter>('all');
   const [setFilter_, setSetFilter] = useState<SetFilter>('all');
   const [showHeatmap, setShowHeatmap] = useState(false);
 
-  const displayPoints = useMemo(() => {
-    let pts: Point[];
-    if (setFilter_ === 'all') {
-      pts = points;
-    } else if (setFilter_ === currentSetNumber) {
-      pts = currentSetPoints;
-    } else {
-      const set = completedSets.find(s => s.number === setFilter_);
-      pts = set ? set.points : [];
-    }
-    if (filter === 'all') return pts;
-    return pts.filter(p => p.team === filter);
-  }, [points, completedSets, currentSetPoints, currentSetNumber, setFilter_, filter]);
+  const filteredPoints = useMemo(() => {
+    if (setFilter_ === 'all') return points;
+    if (setFilter_ === currentSetNumber) return currentSetPoints;
+    const set = completedSets.find(s => s.number === setFilter_);
+    return set ? set.points : [];
+  }, [points, completedSets, currentSetPoints, currentSetNumber, setFilter_]);
+
+  // Heatmap only shows scored points (both teams)
+  const heatmapPoints = useMemo(() => {
+    return filteredPoints.filter(p => p.type === 'scored');
+  }, [filteredPoints]);
 
   const displayStats = useMemo(() => {
-    if (setFilter_ === 'all') return computeStats(points);
-    if (setFilter_ === currentSetNumber) return computeStats(currentSetPoints);
-    const set = completedSets.find(s => s.number === setFilter_);
-    return computeStats(set ? set.points : []);
-  }, [points, completedSets, currentSetPoints, currentSetNumber, setFilter_]);
+    return computeStats(filteredPoints);
+  }, [filteredPoints]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -98,10 +91,10 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
     ctx.lineTo(width * 0.667, height - 10);
     ctx.stroke();
 
-    if (displayPoints.length === 0) return;
+    if (heatmapPoints.length === 0) return;
 
     const radius = 40;
-    displayPoints.forEach(point => {
+    heatmapPoints.forEach(point => {
       const x = point.x * width;
       const y = point.y * height;
       const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
@@ -114,7 +107,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
     });
-  }, [displayPoints]);
+  }, [heatmapPoints, showHeatmap]);
 
   const setOptions: { key: SetFilter; label: string }[] = [
     { key: 'all', label: 'Tous les sets' },
@@ -142,32 +135,6 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
           </button>
         ))}
       </div>
-
-      {/* Team filter */}
-      <div className="flex gap-2 justify-center">
-        {([
-          { key: 'all' as Filter, label: 'Tous' },
-          { key: 'blue' as Filter, label: `🔵 ${teamNames.blue}` },
-          { key: 'red' as Filter, label: `🔴 ${teamNames.red}` },
-        ]).map(f => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-              filter === f.key
-                ? f.key === 'blue'
-                  ? 'bg-team-blue text-team-blue-foreground'
-                  : f.key === 'red'
-                  ? 'bg-team-red text-team-red-foreground'
-                  : 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
 
       {/* Stats detail */}
       <div className="grid grid-cols-2 gap-3">
