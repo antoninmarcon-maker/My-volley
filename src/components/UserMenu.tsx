@@ -38,7 +38,7 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
       message: feedbackMessage.trim(),
     });
     setSendingFeedback(false);
-    if (error) { toast.error('Erreur lors de l\'envoi.'); return; }
+    if (error) { console.error('[Feedback] Insert error:', error); toast.error('Erreur lors de l\'envoi.'); return; }
     toast.success('Merci pour votre retour !');
     setFeedbackMessage('');
     setShowFeedback(false);
