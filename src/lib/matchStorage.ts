@@ -60,11 +60,17 @@ export function getAllMatches(): MatchSummary[] {
     if (!Array.isArray(parsed)) return [];
     // Parse each match individually so one bad entry doesn't kill everything
     return parsed.reduce<MatchSummary[]>((acc, item) => {
-      try {
-        acc.push(MatchSummarySchema.parse(item) as unknown as MatchSummary);
-      } catch (e) {
-        // Skip invalid entries but log the error
-        console.warn('Skipping invalid match entry:', item?.id, e);
+      const result = MatchSummarySchema.safeParse(item);
+      if (result.success) {
+        acc.push(result.data as unknown as MatchSummary);
+      } else {
+        // Try partial recovery: keep the raw item if it has an id
+        if (item && typeof item === 'object' && item.id) {
+          console.warn('Match entry has validation issues, using raw data:', item.id, result.error.issues);
+          acc.push(item as MatchSummary);
+        } else {
+          console.warn('Skipping invalid match entry:', item?.id, result.error.issues);
+        }
       }
       return acc;
     }, []);
@@ -113,7 +119,10 @@ export function getLastRoster(): Player[] {
     const raw = localStorage.getItem(LAST_ROSTER_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return z.array(PlayerSchema).parse(parsed) as unknown as Player[];
+    const result = z.array(PlayerSchema).safeParse(parsed);
+    if (result.success) return result.data as unknown as Player[];
+    console.warn('Last roster validation failed, using raw data:', result.error.issues);
+    return Array.isArray(parsed) ? parsed as Player[] : [];
   } catch { return []; }
 }
 
