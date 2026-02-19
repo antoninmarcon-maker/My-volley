@@ -3,6 +3,7 @@ import { Download, ChevronDown, Copy, Image, FileSpreadsheet, Map, Share2 } from
 import html2canvas from 'html2canvas';
 import { Point, SetData, Player, isOffensiveAction, OFFENSIVE_ACTIONS, FAULT_ACTIONS } from '@/types/volleyball';
 import { PointTimeline } from './PointTimeline';
+import { CourtDisplay } from './CourtDisplay';
 import { PlayerStats } from './PlayerStats';
 import { exportMatchToExcel } from '@/lib/excelExport';
 import {
@@ -131,6 +132,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
   const [setFilter_, setSetFilter] = useState<SetFilter>('all');
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
+  const [showCourt, setShowCourt] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   const handleExport = useCallback(async () => {
@@ -496,13 +498,30 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
         <PointTimeline points={filteredPoints} teamNames={teamNames} />
       )}
 
-      <div className="flex gap-2">
+      {setFilter_ !== 'all' && showCourt && (
+        <div className="space-y-1">
+          <p className="text-[10px] text-center text-muted-foreground">
+            Terrain — {setOptions.find(o => o.key === setFilter_)?.label}
+          </p>
+          <CourtDisplay points={filteredPoints} teamNames={teamNames} />
+        </div>
+      )}
+
+      <div className="flex gap-2 flex-wrap">
         {setFilter_ !== 'all' && (
           <button
             onClick={() => setShowTimeline(prev => !prev)}
             className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all"
           >
             {showTimeline ? 'Masquer l\'historique' : 'Afficher l\'historique'}
+          </button>
+        )}
+        {setFilter_ !== 'all' && (
+          <button
+            onClick={() => setShowCourt(prev => !prev)}
+            className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all"
+          >
+            {showCourt ? 'Masquer le terrain' : 'Afficher le terrain'}
           </button>
         )}
         <button

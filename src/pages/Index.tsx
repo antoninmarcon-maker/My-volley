@@ -30,7 +30,7 @@ const Index = () => {
     points, allPoints, selectedTeam, selectedPointType, selectedAction,
     score, stats, setsScore, currentSetNumber, completedSets,
     teamNames, sidesSwapped, chronoRunning, chronoSeconds,
-    players, pendingPoint,
+    players, pendingPoint, servingTeam,
     setTeamNames, setPlayers, selectAction, cancelSelection, addPoint,
     assignPlayer, skipPlayerAssignment,
     undo, endSet, startNewSet, waitingForNewSet, resetMatch, switchSides, startChrono, pauseChrono,
@@ -104,6 +104,7 @@ const Index = () => {
               sidesSwapped={sidesSwapped}
               chronoRunning={chronoRunning}
               chronoSeconds={chronoSeconds}
+              servingTeam={servingTeam}
               onSelectAction={selectAction}
               onCancelSelection={cancelSelection}
               onUndo={undo}

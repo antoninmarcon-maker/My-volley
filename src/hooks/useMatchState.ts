@@ -101,6 +101,13 @@ export function useMatchState(matchId: string) {
     red: points.filter(p => p.team === 'red').length,
   };
 
+  // Serving team: the team that scored the last point serves next.
+  // At the start of a set (no points), null means unknown (show all actions).
+  const servingTeam: Team | null = useMemo(() => {
+    if (points.length === 0) return null;
+    return points[points.length - 1].team;
+  }, [points]);
+
   const stats = useMemo(() => {
     const allPoints = [...completedSets.flatMap(s => s.points), ...points];
     return {
@@ -225,6 +232,7 @@ export function useMatchState(matchId: string) {
     chronoSeconds,
     players,
     pendingPoint,
+    servingTeam,
     setTeamNames,
     setPlayers,
     selectAction,

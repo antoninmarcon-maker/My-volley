@@ -1,5 +1,5 @@
 import { Undo2, RotateCcw, Flag, ArrowLeftRight, Play, Pause, Timer, Pencil, Plus, X, ChevronDown } from 'lucide-react';
-import { Team, PointType, ActionType, OFFENSIVE_ACTIONS, FAULT_ACTIONS } from '@/types/volleyball';
+import { Team, PointType, ActionType, OffensiveAction, FaultAction, OFFENSIVE_ACTIONS, FAULT_ACTIONS } from '@/types/volleyball';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 
@@ -12,6 +12,7 @@ interface ScoreBoardProps {
   sidesSwapped: boolean;
   chronoRunning: boolean;
   chronoSeconds: number;
+  servingTeam: Team | null;
   onSelectAction: (team: Team, type: PointType, action: ActionType) => void;
   onCancelSelection: () => void;
   onUndo: () => void;
@@ -54,6 +55,7 @@ export function ScoreBoard({
   sidesSwapped,
   chronoRunning,
   chronoSeconds,
+  servingTeam,
   isFinished = false,
   waitingForNewSet = false,
   onStartNewSet,
@@ -142,7 +144,10 @@ export function ScoreBoard({
       {/* Score display with + buttons */}
       <div className="flex items-center justify-center gap-4">
         <div className="flex-1 text-center">
-          <p className={`text-xs font-semibold uppercase tracking-widest ${left === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{teamNames[left]}</p>
+          <div className="flex items-center justify-center gap-1.5">
+            <p className={`text-xs font-semibold uppercase tracking-widest ${left === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{teamNames[left]}</p>
+            {servingTeam === left && <span className="text-[10px]" title="Au service">🏐</span>}
+          </div>
           <p className={`text-5xl font-black tabular-nums ${left === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{score[left]}</p>
           {menuTeam === left && (
             <div className="flex justify-center mt-1">
@@ -163,7 +168,10 @@ export function ScoreBoard({
         </div>
         <div className="text-muted-foreground text-lg font-bold">VS</div>
         <div className="flex-1 text-center">
-          <p className={`text-xs font-semibold uppercase tracking-widest ${right === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{teamNames[right]}</p>
+          <div className="flex items-center justify-center gap-1.5">
+            <p className={`text-xs font-semibold uppercase tracking-widest ${right === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{teamNames[right]}</p>
+            {servingTeam === right && <span className="text-[10px]" title="Au service">🏐</span>}
+          </div>
           <p className={`text-5xl font-black tabular-nums ${right === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{score[right]}</p>
           {menuTeam === right && (
             <div className="flex justify-center mt-1">
@@ -212,7 +220,16 @@ export function ScoreBoard({
           </div>
           {/* Actions */}
           <div className="grid grid-cols-3 gap-1.5">
-            {(menuTab === 'scored' ? OFFENSIVE_ACTIONS : FAULT_ACTIONS).map(a => (
+            {(menuTab === 'scored' ? OFFENSIVE_ACTIONS : FAULT_ACTIONS)
+              .filter(a => {
+                if (!servingTeam || !menuTeam) return true;
+                // If menuTeam scores via ace → menuTeam must be serving
+                if (menuTab === 'scored' && a.key === 'ace' && servingTeam !== menuTeam) return false;
+                // If menuTeam scores via opponent's service_miss fault → opponent must be serving
+                if (menuTab === 'fault' && a.key === 'service_miss' && servingTeam === menuTeam) return false;
+                return true;
+              })
+              .map(a => (
               <button
                 key={a.key}
                 onClick={() => handleActionSelect(a.key)}
