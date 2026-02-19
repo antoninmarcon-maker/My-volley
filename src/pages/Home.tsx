@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2 } from 'lucide-react';
 import logoCapbreton from '@/assets/logo-capbreton.jpeg';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getAllMatches, createNewMatch, saveMatch, setActiveMatchId, deleteMatch, getMatch } from '@/lib/matchStorage';
 import { MatchSummary, SetData, Team, SportType } from '@/types/volleyball';
 import { PwaInstallBanner } from '@/components/PwaInstallBanner';
@@ -114,84 +115,86 @@ export default function Home() {
       <main className="flex-1 overflow-auto p-4 max-w-lg mx-auto w-full space-y-6">
         <PwaInstallBanner />
         {/* New match */}
-        {!showNew ? (
-          <button
-            onClick={() => setShowNew(true)}
-            className="group w-full relative flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-lg text-white overflow-hidden transition-all duration-300 active:scale-[0.97] hover:shadow-lg hover:shadow-action-scored/25"
-            style={{ background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' }}
-          >
-            <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
-            <Plus size={22} className="relative z-10 transition-transform duration-300 group-hover:rotate-90" /> 
-            <span className="relative z-10">Nouveau Match</span>
-          </button>
-        ) : (
-          <div className="bg-card rounded-xl p-5 border border-border space-y-4">
-            <h2 className="text-base font-bold text-foreground">Créer un match</h2>
-            
-            {/* Sport selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground block">Sport</label>
+        <button
+          onClick={() => setShowNew(true)}
+          className="group w-full relative flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-lg text-white overflow-hidden transition-all duration-300 active:scale-[0.97] hover:shadow-lg hover:shadow-action-scored/25"
+          style={{ background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' }}
+        >
+          <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
+          <Plus size={22} className="relative z-10 transition-transform duration-300 group-hover:rotate-90" />
+          <span className="relative z-10">Nouveau Match</span>
+        </button>
+
+        <Dialog open={showNew} onOpenChange={setShowNew}>
+          <DialogContent className="max-w-sm rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-center text-lg font-bold">Créer un match</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Sport selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-muted-foreground block">Sport</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedSport('volleyball')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${
+                      selectedSport === 'volleyball'
+                        ? 'bg-primary/15 text-primary border-primary/40'
+                        : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
+                    }`}
+                  >
+                    🏐 Volley-ball
+                  </button>
+                  <button
+                    onClick={() => setSelectedSport('basketball')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${
+                      selectedSport === 'basketball'
+                        ? 'bg-orange-500/15 text-orange-500 border-orange-500/40'
+                        : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
+                    }`}
+                  >
+                    🏀 Basket-ball
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-team-blue mb-1 block">Équipe Bleue <span className="text-muted-foreground font-normal">· votre équipe</span></label>
+                  <Input
+                    value={names.blue}
+                    onChange={e => setNames(prev => ({ ...prev, blue: e.target.value }))}
+                    placeholder="Nom de l'équipe bleue"
+                    className="h-10"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-team-red mb-1 block">Équipe Rouge</label>
+                  <Input
+                    value={names.red}
+                    onChange={e => setNames(prev => ({ ...prev, red: e.target.value }))}
+                    placeholder="Nom de l'équipe rouge"
+                    className="h-10"
+                  />
+                </div>
+              </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setSelectedSport('volleyball')}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${
-                    selectedSport === 'volleyball'
-                      ? 'bg-primary/15 text-primary border-primary/40'
-                      : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
-                  }`}
+                  onClick={() => setShowNew(false)}
+                  className="flex-1 py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-sm"
                 >
-                  🏐 Volley-ball
+                  Annuler
                 </button>
                 <button
-                  onClick={() => setSelectedSport('basketball')}
-                  className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all border-2 ${
-                    selectedSport === 'basketball'
-                      ? 'bg-orange-500/15 text-orange-500 border-orange-500/40'
-                      : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
-                  }`}
+                  onClick={handleCreate}
+                  className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-1.5"
                 >
-                  🏀 Basket-ball
+                  <Play size={16} /> Commencer
                 </button>
               </div>
             </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-team-blue mb-1 block">Équipe Bleue <span className="text-muted-foreground font-normal">· votre équipe (roster configurable)</span></label>
-                <Input
-                  value={names.blue}
-                  onChange={e => setNames(prev => ({ ...prev, blue: e.target.value }))}
-                  placeholder="Nom de l'équipe bleue"
-                  className="h-10"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-team-red mb-1 block">Équipe Rouge</label>
-                <Input
-                  value={names.red}
-                  onChange={e => setNames(prev => ({ ...prev, red: e.target.value }))}
-                  placeholder="Nom de l'équipe rouge"
-                  className="h-10"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowNew(false)}
-                className="flex-1 py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-sm"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleCreate}
-                className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-1.5"
-              >
-                <Play size={16} /> Commencer
-              </button>
-            </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
 
         {/* Match history */}
         <div className="space-y-3">
