@@ -65,9 +65,11 @@ function isZoneAllowed(
 
 function getZoneHighlights(
   team: Team, action: ActionType, pointType: PointType, sidesSwapped: boolean
-): { x: number; y: number; w: number; h: number }[] {
-  // All basketball actions: full court highlighted
-  return [{ x: COURT_L, y: COURT_T, w: COURT_R - COURT_L, h: COURT_B - COURT_T }];
+): 'full' | 'inside_arc' | 'outside_arc' {
+  if (pointType === 'fault') return 'full';
+  if (action === 'two_points') return 'inside_arc';
+  if (action === 'three_points') return 'outside_arc';
+  return 'full';
 }
 
 const ACTION_SHORT: Record<string, string> = {
@@ -132,22 +134,36 @@ export function BasketballCourt({ points, selectedTeam, selectedAction, selected
 
         {/* Dimming overlay when selection is active */}
         {hasSelection && zoneHighlights && (
-          <>
-            <rect x="0" y="0" width="600" height="400" fill="black" opacity="0.5" />
-            <defs>
-              <clipPath id="basket-allowed-zones">
-                {zoneHighlights.map((z, i) => (
-                  <rect key={i} x={z.x} y={z.y} width={z.w} height={z.h} />
-                ))}
-              </clipPath>
-            </defs>
-            <g clipPath="url(#basket-allowed-zones)">
-              <rect x="0" y="0" width="600" height="400" rx="8" fill="hsl(30, 50%, 35%)" />
-              <rect x="0" y="0" width="600" height="400" fill={selectedTeam === 'blue' ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)'} opacity="0.15">
-                <animate attributeName="opacity" values="0.1;0.2;0.1" dur="1.5s" repeatCount="indefinite" />
-              </rect>
-            </g>
-          </>
+          (() => {
+            const teamSide = sidesSwapped
+              ? (selectedTeam === 'blue' ? 'right' : 'left')
+              : (selectedTeam === 'blue' ? 'left' : 'right');
+            const oppSide = teamSide === 'left' ? 'right' : 'left';
+            const bx = oppSide === 'left' ? BASKET_X_LEFT : BASKET_X_RIGHT;
+            const color = selectedTeam === 'blue' ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)';
+
+            // Build the highlight path based on zone type
+            let highlightPath: string;
+            if (zoneHighlights === 'inside_arc') {
+              // Circle inside the arc
+              highlightPath = `M ${bx} ${BASKET_Y - ARC_RADIUS} A ${ARC_RADIUS} ${ARC_RADIUS} 0 1 ${oppSide === 'left' ? '1' : '0'} ${bx} ${BASKET_Y + ARC_RADIUS} A ${ARC_RADIUS} ${ARC_RADIUS} 0 1 ${oppSide === 'left' ? '1' : '0'} ${bx} ${BASKET_Y - ARC_RADIUS} Z`;
+            } else if (zoneHighlights === 'outside_arc') {
+              // Full court minus the arc circle
+              highlightPath = `M ${COURT_L} ${COURT_T} h ${COURT_R - COURT_L} v ${COURT_B - COURT_T} h -${COURT_R - COURT_L} Z M ${bx} ${BASKET_Y - ARC_RADIUS} A ${ARC_RADIUS} ${ARC_RADIUS} 0 1 ${oppSide === 'left' ? '0' : '1'} ${bx} ${BASKET_Y + ARC_RADIUS} A ${ARC_RADIUS} ${ARC_RADIUS} 0 1 ${oppSide === 'left' ? '0' : '1'} ${bx} ${BASKET_Y - ARC_RADIUS} Z`;
+            } else {
+              highlightPath = `M ${COURT_L} ${COURT_T} h ${COURT_R - COURT_L} v ${COURT_B - COURT_T} h -${COURT_R - COURT_L} Z`;
+            }
+
+            return (
+              <>
+                <rect x="0" y="0" width="600" height="400" fill="black" opacity="0.5" />
+                <path d={highlightPath} fill="hsl(30, 50%, 35%)" fillRule="evenodd" />
+                <path d={highlightPath} fill={color} fillRule="evenodd" opacity="0.15">
+                  <animate attributeName="opacity" values="0.1;0.2;0.1" dur="1.5s" repeatCount="indefinite" />
+                </path>
+              </>
+            );
+          })()
         )}
 
         {/* Court border */}
