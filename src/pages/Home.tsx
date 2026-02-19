@@ -25,14 +25,15 @@ function Instructions() {
         <h3 className="text-sm font-bold text-foreground">Comment ça marche ?</h3>
       </div>
       <div className="text-sm text-muted-foreground space-y-2">
-        <p><strong className="text-foreground">1. Créez un match</strong> en appuyant sur « Nouveau Match » ci-dessus et nommez les deux équipes.</p>
+        <p><strong className="text-foreground">1. Créez un match</strong> en appuyant sur « Nouveau Match » et nommez les deux équipes.</p>
         <p><strong className="text-foreground">2. Définissez votre roster</strong> : ajoutez les joueurs (numéro + nom) pour suivre leurs stats individuelles.</p>
-        <p><strong className="text-foreground">3. Appuyez sur « + »</strong> sous le score de l'équipe qui marque. Une flèche indique l'équipe sélectionnée.</p>
+        <p><strong className="text-foreground">3. Appuyez sur « + »</strong> sous le score de l'équipe qui marque. Une flèche animée indique l'équipe sélectionnée.</p>
         <p><strong className="text-foreground">4. Choisissez l'action</strong> : <em>Points Gagnés</em> (Attaque, Ace, Block, Bidouille, Seconde main) ou <em>Fautes Adverses</em> (Out, Filet, Service loupé, Block Out).</p>
         <p><strong className="text-foreground">5. Placez sur le terrain</strong> : la zone autorisée s'illumine. Cliquez puis sélectionnez le joueur concerné.</p>
-        <p><strong className="text-foreground">6. Gérez les sets</strong> : « Fin du Set » termine et inverse les côtés automatiquement.</p>
-        <p><strong className="text-foreground">7. Statistiques</strong> : consultez les stats par joueur (points et fautes dépliables) et la heatmap des actions.</p>
-        <p><strong className="text-foreground">8. Exportez</strong> : téléchargez un récapitulatif en image PNG ou en fichier Excel.</p>
+        <p><strong className="text-foreground">6. Gérez les sets</strong> : « Fin du Set » termine et inverse les côtés. Le gagnant du match est l'équipe avec le plus de sets remportés 🏆.</p>
+        <p><strong className="text-foreground">7. Statistiques</strong> : consultez les stats par joueur (points ⚡ et fautes ❌ dépliables) et la heatmap des actions.</p>
+        <p><strong className="text-foreground">8. Exportez & Partagez</strong> : téléchargez stats PNG, terrain par set, Excel ou partagez le score via WhatsApp, Telegram, X.</p>
+        <p><strong className="text-foreground">9. Installez l'app</strong> : sur mobile, suivez le bandeau pour ajouter l'app à votre écran d'accueil (hors-ligne supporté).</p>
       </div>
     </div>
   );
