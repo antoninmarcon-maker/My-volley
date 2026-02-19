@@ -167,6 +167,8 @@ const Index = () => {
               players={players}
               onSetPlayers={setPlayers}
               teamName={teamNames.blue}
+              sport={sport}
+              userId={user?.id}
             />
             <ScoreBoard
               score={score}
