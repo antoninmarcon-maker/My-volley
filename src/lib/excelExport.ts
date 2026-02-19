@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { Point, SetData, Player } from '@/types/volleyball';
 
 function formatDuration(seconds: number): string {

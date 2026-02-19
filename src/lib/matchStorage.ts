@@ -1,14 +1,60 @@
+import { z } from 'zod';
 import { MatchSummary, Player } from '@/types/volleyball';
 
 const MATCHES_KEY = 'volley-tracker-matches';
 const ACTIVE_MATCH_KEY = 'volley-tracker-active-match-id';
 const LAST_ROSTER_KEY = 'volley-tracker-last-roster';
 
+// --- Zod schemas for runtime validation ---
+
+const PlayerSchema = z.object({
+  id: z.string(),
+  number: z.string(),
+  name: z.string(),
+});
+
+const PointSchema = z.object({
+  id: z.string(),
+  team: z.enum(['blue', 'red']),
+  type: z.enum(['scored', 'fault']),
+  action: z.enum(['attack', 'ace', 'block', 'bidouille', 'seconde_main', 'other_offensive', 'out', 'net_fault', 'service_miss', 'block_out']),
+  x: z.number(),
+  y: z.number(),
+  timestamp: z.number(),
+  playerId: z.string().optional(),
+});
+
+const SetDataSchema = z.object({
+  id: z.string(),
+  number: z.number(),
+  points: z.array(PointSchema),
+  score: z.object({ blue: z.number(), red: z.number() }),
+  winner: z.enum(['blue', 'red']).nullable(),
+  duration: z.number(),
+});
+
+const MatchSummarySchema = z.object({
+  id: z.string(),
+  teamNames: z.object({ blue: z.string(), red: z.string() }),
+  completedSets: z.array(SetDataSchema),
+  currentSetNumber: z.number(),
+  points: z.array(PointSchema),
+  sidesSwapped: z.boolean(),
+  chronoSeconds: z.number(),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+  finished: z.boolean(),
+  players: z.array(PlayerSchema).optional(),
+});
+
+// --- Storage functions ---
+
 export function getAllMatches(): MatchSummary[] {
   try {
     const raw = localStorage.getItem(MATCHES_KEY);
     if (!raw) return [];
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return z.array(MatchSummarySchema).parse(parsed) as unknown as MatchSummary[];
   } catch { return []; }
 }
 
@@ -53,7 +99,8 @@ export function getLastRoster(): Player[] {
   try {
     const raw = localStorage.getItem(LAST_ROSTER_KEY);
     if (!raw) return [];
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return z.array(PlayerSchema).parse(parsed) as unknown as Player[];
   } catch { return []; }
 }
 
