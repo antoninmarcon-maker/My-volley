@@ -108,25 +108,21 @@ export default function Home() {
     }
   }, [user, guestDismissed]);
 
-  const handleCreate = async () => {
-    try {
-      const match = createNewMatch({
-        blue: names.blue.trim() || 'Bleue',
-        red: names.red.trim() || 'Rouge',
-      }, selectedSport);
-      saveMatch(match);
-      if (user) {
-        try {
-          await saveCloudMatch(user.id, match);
-        } catch (cloudErr) {
-          console.error('Cloud save failed, continuing locally:', cloudErr);
-        }
-      }
-      setActiveMatchId(match.id);
-      navigate(`/match/${match.id}`);
-    } catch (err) {
-      console.error('Match creation error:', err);
+  const handleCreate = () => {
+    const match = createNewMatch({
+      blue: names.blue.trim() || 'Bleue',
+      red: names.red.trim() || 'Rouge',
+    }, selectedSport);
+    saveMatch(match);
+    setActiveMatchId(match.id);
+    // Fire-and-forget cloud save — don't block navigation
+    if (user) {
+      saveCloudMatch(user.id, match).catch(err =>
+        console.error('Cloud save failed:', err)
+      );
     }
+    setShowNew(false);
+    navigate(`/match/${match.id}`);
   };
 
   const handleDelete = async (id: string) => {
