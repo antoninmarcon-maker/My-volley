@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Team, Point, PointType, ActionType, SetData, Player, SportType, isBasketScoredAction, getBasketPointValue } from '@/types/volleyball';
+import { Team, Point, PointType, ActionType, SetData, Player, SportType, isBasketScoredAction, getBasketPointValue } from '@/types/sports';
 import { getMatch, saveMatch, saveLastRoster } from '@/lib/matchStorage';
 
 export function useMatchState(matchId: string) {

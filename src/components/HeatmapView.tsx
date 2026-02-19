@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { Download, ChevronDown, Copy, Image, FileSpreadsheet, Map, Share2, Link as LinkIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { Point, SetData, Player, isOffensiveAction, isBasketScoredAction, SportType, OFFENSIVE_ACTIONS, FAULT_ACTIONS, BASKET_SCORED_ACTIONS, BASKET_FAULT_ACTIONS } from '@/types/volleyball';
+import { Point, SetData, Player, isOffensiveAction, isBasketScoredAction, SportType, OFFENSIVE_ACTIONS, FAULT_ACTIONS, BASKET_SCORED_ACTIONS, BASKET_FAULT_ACTIONS } from '@/types/sports';
 import { PointTimeline } from './PointTimeline';
 import { CourtDisplay } from './CourtDisplay';
 import { PlayerStats } from './PlayerStats';

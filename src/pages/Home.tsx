@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getAllMatches, createNewMatch, saveMatch, setActiveMatchId, deleteMatch, getMatch } from '@/lib/matchStorage';
 import { syncLocalMatchesToCloud, getCloudMatches, saveCloudMatch, deleteCloudMatch } from '@/lib/cloudStorage';
-import { MatchSummary, SetData, Team, SportType } from '@/types/volleyball';
+import { MatchSummary, SetData, Team, SportType } from '@/types/sports';
 import { PwaInstallBanner } from '@/components/PwaInstallBanner';
 import { AuthDialog } from '@/components/AuthDialog';
 import { UserMenu } from '@/components/UserMenu';

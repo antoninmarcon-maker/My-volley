@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Point, ActionType } from '@/types/volleyball';
+import { Point, ActionType } from '@/types/sports';
 import {
   ResponsiveContainer,
   LineChart,

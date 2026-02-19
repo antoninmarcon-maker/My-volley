@@ -1,5 +1,5 @@
 import { Undo2, RotateCcw, Flag, ArrowLeftRight, Play, Pause, Timer, Pencil, Plus, X, ChevronDown } from 'lucide-react';
-import { Team, PointType, ActionType, OffensiveAction, FaultAction, OFFENSIVE_ACTIONS, FAULT_ACTIONS, SportType, BASKET_SCORED_ACTIONS, BASKET_FAULT_ACTIONS } from '@/types/volleyball';
+import { Team, PointType, ActionType, OffensiveAction, FaultAction, OFFENSIVE_ACTIONS, FAULT_ACTIONS, SportType, BASKET_SCORED_ACTIONS, BASKET_FAULT_ACTIONS } from '@/types/sports';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 

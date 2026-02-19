@@ -1,4 +1,4 @@
-import { Point, SportType } from '@/types/volleyball';
+import { Point, SportType } from '@/types/sports';
 
 interface CourtDisplayProps {
   points: Point[];

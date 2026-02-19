@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Player } from '@/types/volleyball';
+import { Player } from '@/types/sports';
 import { X } from 'lucide-react';
 
 interface PlayerSelectorProps {

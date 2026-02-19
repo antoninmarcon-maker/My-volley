@@ -1,5 +1,5 @@
 import { useRef, useCallback, useMemo } from 'react';
-import { Point, Team, ActionType, PointType, isOffensiveAction } from '@/types/volleyball';
+import { Point, Team, ActionType, PointType, isOffensiveAction } from '@/types/sports';
 
 interface VolleyballCourtProps {
   points: Point[];

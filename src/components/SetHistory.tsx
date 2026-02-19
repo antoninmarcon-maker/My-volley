@@ -1,4 +1,4 @@
-import { SetData, SportType } from '@/types/volleyball';
+import { SetData, SportType } from '@/types/sports';
 import { ChevronDown, ChevronUp, Trophy, Clock } from 'lucide-react';
 import { useState } from 'react';
 

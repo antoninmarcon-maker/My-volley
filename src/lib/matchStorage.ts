@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MatchSummary, Player } from '@/types/volleyball';
+import { MatchSummary, Player } from '@/types/sports';
 
 const MATCHES_KEY = 'volley-tracker-matches';
 const ACTIVE_MATCH_KEY = 'volley-tracker-active-match-id';

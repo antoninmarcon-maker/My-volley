@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Activity, BarChart3, ArrowLeft, Loader2 } from 'lucide-react';
 import { getMatchByShareToken } from '@/lib/cloudStorage';
-import { MatchSummary } from '@/types/volleyball';
+import { MatchSummary } from '@/types/sports';
 import { SetHistory } from '@/components/SetHistory';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { VolleyballCourt } from '@/components/VolleyballCourt';

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Users, Plus, X, Pencil, Check, ChevronDown, ChevronUp } from 'lucide-react';
-import { Player } from '@/types/volleyball';
+import { Player } from '@/types/sports';
 import { Input } from '@/components/ui/input';
 
 interface PlayerRosterProps {

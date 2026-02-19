@@ -1,5 +1,5 @@
 import * as XLSX from '@e965/xlsx';
-import { Point, SetData, Player, SportType, isBasketScoredAction, getBasketPointValue, BASKET_SCORED_ACTIONS, BASKET_FAULT_ACTIONS } from '@/types/volleyball';
+import { Point, SetData, Player, SportType, isBasketScoredAction, getBasketPointValue, BASKET_SCORED_ACTIONS, BASKET_FAULT_ACTIONS } from '@/types/sports';
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
