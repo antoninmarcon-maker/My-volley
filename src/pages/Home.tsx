@@ -38,15 +38,17 @@ function Instructions({ onClose }: { onClose?: () => void }) {
         <h3 className="text-sm font-bold text-foreground">Comment ça marche ?</h3>
       </div>
       <div className="text-sm text-muted-foreground space-y-2">
-        <p><strong className="text-foreground">1. Créez un match</strong> : appuyez sur « Nouveau Match », choisissez le sport (🏐 Volley ou 🏀 Basket) et nommez les équipes.</p>
+        <p><strong className="text-foreground">1. Créez un match</strong> : appuyez sur « Nouveau Match », choisissez le sport (🏐 Volley, 🏀 Basket, 🎾 Tennis ou 🏓 Padel) et nommez les équipes.</p>
         <p><strong className="text-foreground">2. Roster</strong> : ajoutez vos joueurs (numéro + nom). Ils sont sauvegardés automatiquement pour les prochains matchs.</p>
         <p><strong className="text-foreground">3. Marquez les points</strong> : « + » sous le score → choisissez l'action → placez sur le terrain → sélectionnez le joueur.</p>
         <p><strong className="text-foreground">4. Actions par sport</strong> :</p>
         <ul className="list-disc list-inside pl-2 space-y-1 text-xs">
-          <li><strong>🏐 Volley</strong> : Attaque, Ace, Block, Bidouille, Seconde main, Service loupé, Filet, Out…</li>
-          <li><strong>🏀 Basket</strong> : Lancer franc (1pt), Tir intérieur (2pts), Tir à 3pts. Zones adaptées sur le terrain.</li>
+          <li><strong>🏐 Volley</strong> : Attaque, Ace, Block, Bidouille, Seconde main · Fautes adverses : Out, Filet, Service loupé…</li>
+          <li><strong>🏀 Basket</strong> : Lancer franc (1pt), Tir intérieur (2pts), Tir à 3pts · Zones adaptées sur le terrain.</li>
+          <li><strong>🎾 Tennis</strong> : Ace, Coup droit/Revers gagnant, Volée, Smash · Fautes adverses : Double faute, Out long/latéral… Scoring automatique 15-30-40-Jeu avec avantage et tie-break.</li>
+          <li><strong>🏓 Padel</strong> : Víbora, Bandeja, Smash, Bajada, Par 3 · Fautes adverses : Double faute, Grille, Vitre… Scoring identique au tennis avec option punto de oro.</li>
         </ul>
-        <p><strong className="text-foreground">5. Périodes</strong> : « Fin du Set » / « Fin du QT » pour passer à la suite. Les côtés s'inversent automatiquement en volley.</p>
+        <p><strong className="text-foreground">5. Périodes</strong> : « Fin du Set » / « Fin du QT » pour passer à la suite. En Tennis/Padel, le set se termine automatiquement quand un joueur gagne assez de jeux.</p>
         <p><strong className="text-foreground">6. Stats & Heatmap</strong> : onglet Statistiques pour les stats par joueur, la heatmap et l'analyse IA.</p>
         <p><strong className="text-foreground">7. Exportez</strong> : stats en PNG, terrain par set, Excel complet ou partage via un lien.</p>
       </div>

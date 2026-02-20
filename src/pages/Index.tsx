@@ -375,10 +375,18 @@ const Index = () => {
                   <p><strong className="text-foreground">4. Quart-temps</strong> : « Fin QT » termine la période en cours.</p>
                   <p><strong className="text-foreground">5. Statistiques</strong> : onglet Stats pour voir les paniers et fautes par joueur + heatmap des tirs.</p>
                 </>
+              ) : isTennisOrPadel ? (
+                <>
+                  <p><strong className="text-foreground">1. Appuyez sur « + »</strong> sous le nom de l'équipe concernée.</p>
+                  <p><strong className="text-foreground">2. Choisissez l'onglet</strong> : <em>Coups Gagnants</em> ({sport === 'tennis' ? 'Ace, Coup droit/Revers gagnant, Volée, Smash' : 'Víbora, Bandeja, Smash, Bajada, Par 3'}) ou <em>Fautes adverses</em> ({sport === 'tennis' ? 'Double faute, Out long/latéral, Filet' : 'Double faute, Grille, Vitre, Out'}).</p>
+                  <p><strong className="text-foreground">3. Placez sur le terrain</strong> la zone du coup, puis sélectionnez le joueur.</p>
+                  <p><strong className="text-foreground">4. Scoring automatique</strong> : 0 → 15 → 30 → 40 → Jeu. À 40-40 : Deuce puis Avantage{sport === 'padel' ? ' (ou punto de oro si configuré)' : ''}. Le set se termine automatiquement (6 jeux avec 2 d'écart, tie-break à 6-6).</p>
+                  <p><strong className="text-foreground">5. Statistiques</strong> : onglet Stats pour la heatmap, les stats par joueur et l'analyse IA.</p>
+                </>
               ) : (
                 <>
                   <p><strong className="text-foreground">1. Appuyez sur « + »</strong> sous le score de l'équipe concernée. Une flèche animée indique l'équipe sélectionnée.</p>
-                  <p><strong className="text-foreground">2. Choisissez l'onglet</strong> : <em>Points Gagnés</em> (Attaque, Ace, Block, Bidouille, Seconde main) ou <em>Fautes Adverses</em> (Out, Filet, Service loupé, Block Out).</p>
+                  <p><strong className="text-foreground">2. Choisissez l'onglet</strong> : <em>Points Gagnés</em> (Attaque, Ace, Block, Bidouille, Seconde main) ou <em>Fautes adverses</em> (Out, Filet, Service loupé, Block Out).</p>
                   <p><strong className="text-foreground">3. Cliquez sur l'action</strong> puis placez-la sur le terrain (zone autorisée illuminée) et sélectionnez le joueur.</p>
                   <p><strong className="text-foreground">4. Gérez les sets</strong> : « Fin du Set » termine et inverse les côtés. Le gagnant 🏆 = le plus de sets remportés.</p>
                   <p><strong className="text-foreground">5. Statistiques</strong> : onglet Stats pour voir les points ⚡ et fautes ❌ par joueur (dépliables) + heatmap.</p>
