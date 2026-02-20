@@ -232,6 +232,7 @@ export default function Settings() {
                       localStorage.setItem('customLogo', dataUrl);
                       setCustomLogo(dataUrl);
                       toast.success(t('settings.logoUpdated'));
+                      navigate('/');
                     };
                     reader.readAsDataURL(file);
                   }}
