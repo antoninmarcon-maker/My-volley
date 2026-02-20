@@ -24,8 +24,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpeg,jpg,woff,woff2}"],
       },
       manifest: {
-        name: "My Volley",
-        short_name: "My Volley",
+        name: "my volley",
+        short_name: "my volley",
         description: "Scouting multi-sports : volley, basket, tennis & padel",
         theme_color: "#0f172a",
         background_color: "#0f172a",

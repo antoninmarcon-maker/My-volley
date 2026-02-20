@@ -173,7 +173,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="px-4 py-3 border-b border-border flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-background px-4 py-3 border-b border-border flex items-center justify-between">
         <button
           onClick={() => navigate('/')}
           className="p-1.5 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors"
@@ -193,7 +193,7 @@ const Index = () => {
         ) : <div className="w-[30px]" />}
       </header>
 
-      <nav className="flex border-b border-border">
+      <nav className="sticky top-[49px] z-40 bg-background flex border-b border-border">
         <button
           onClick={() => setTab('match')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold transition-all ${
