@@ -4,6 +4,8 @@ import { getMatch, saveMatch, saveLastRoster } from '@/lib/matchStorage';
 
 export function useMatchState(matchId: string, ready: boolean = true) {
   const loadedRef = useRef<ReturnType<typeof getMatch>>(null);
+  const hasInitialized = useRef(false);
+
   if (ready && !loadedRef.current) {
     loadedRef.current = getMatch(matchId);
   }
@@ -19,6 +21,22 @@ export function useMatchState(matchId: string, ready: boolean = true) {
   const [players, setPlayers] = useState<Player[]>(loaded?.players ?? []);
   const [pendingPoint, setPendingPoint] = useState<Omit<Point, 'playerId'> | null>(null);
   const sport: SportType = loaded?.sport ?? 'volleyball';
+
+  // When ready becomes true after initial empty render, reload state from localStorage
+  useEffect(() => {
+    if (!ready || hasInitialized.current) return;
+    hasInitialized.current = true;
+    const match = getMatch(matchId);
+    if (!match) return;
+    loadedRef.current = match;
+    setCompletedSets(match.completedSets ?? []);
+    setCurrentSetNumber(match.currentSetNumber ?? 1);
+    setPoints(match.points ?? []);
+    setTeamNames(match.teamNames ?? { blue: 'Bleue', red: 'Rouge' });
+    setSidesSwapped(match.sidesSwapped ?? false);
+    setPlayers(match.players ?? []);
+    setChronoSeconds(match.chronoSeconds ?? 0);
+  }, [ready, matchId]);
 
   // Chrono
   const [chronoRunning, setChronoRunning] = useState(false);
