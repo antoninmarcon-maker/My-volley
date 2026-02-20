@@ -500,7 +500,7 @@ export default function Home() {
           {t('home.feedback')}
         </Link>
         <p className="text-[10px] text-muted-foreground hidden sm:block">
-          {t('common.madeWith')} <span className="font-semibold text-foreground">{t('common.volleyballCapbreton')}</span>
+          {t('credits.techNote')}
         </p>
         <Link
           to="/credits"
