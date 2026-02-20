@@ -256,7 +256,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-dvh bg-background flex flex-col">
       <header className="px-4 py-6 border-b border-border flex flex-col items-center gap-3 relative">
         <div className="absolute top-4 left-4">
           <Link
