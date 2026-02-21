@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus } from 'lucide-react';
 import logoCapbreton from '@/assets/logo-capbreton.jpeg';
 import { Input } from '@/components/ui/input';
+import { PlayerAutocomplete } from '@/components/PlayerAutocomplete';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getAllMatches, createNewMatch, saveMatch, setActiveMatchId, deleteMatch, getMatch } from '@/lib/matchStorage';
 import { syncLocalMatchesToCloud, getCloudMatches, saveCloudMatch, deleteCloudMatch, getCloudMatchById } from '@/lib/cloudStorage';
@@ -427,35 +428,26 @@ export default function Home() {
               {/* Player selection for Tennis/Padel */}
               {(selectedSport === 'tennis' || selectedSport === 'padel') ? (
                 <div className="space-y-3">
-                  {/* Datalist for auto-completion */}
-                  <datalist id="saved-players-autocomplete">
-                    {savedPlayersList.map(p => (
-                      <option key={p.id} value={p.name} />
-                    ))}
-                  </datalist>
-
                   <p className="text-xs font-semibold text-team-blue">{t('home.yourTeamLabel')}</p>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">
                       {matchFormat === 'doubles' ? t('home.bluePlayer1') : t('home.bluePlayer')}
                     </label>
-                    <Input
+                    <PlayerAutocomplete
                       value={racketPlayers.blue1}
-                      onChange={e => setRacketPlayers(prev => ({ ...prev, blue1: e.target.value }))}
+                      onChange={v => setRacketPlayers(prev => ({ ...prev, blue1: v }))}
+                      suggestions={savedPlayersList}
                       placeholder={t('home.playerNamePlaceholder')}
-                      list="saved-players-autocomplete"
-                      className="h-10"
                     />
                   </div>
                   {matchFormat === 'doubles' && (
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('home.bluePlayer2')}</label>
-                      <Input
+                      <PlayerAutocomplete
                         value={racketPlayers.blue2}
-                        onChange={e => setRacketPlayers(prev => ({ ...prev, blue2: e.target.value }))}
+                        onChange={v => setRacketPlayers(prev => ({ ...prev, blue2: v }))}
+                        suggestions={savedPlayersList}
                         placeholder={t('home.playerNamePlaceholder')}
-                        list="saved-players-autocomplete"
-                        className="h-10"
                       />
                     </div>
                   )}
@@ -468,23 +460,21 @@ export default function Home() {
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">
                       {matchFormat === 'doubles' ? t('home.redPlayer1') : t('home.redPlayer')}
                     </label>
-                    <Input
+                    <PlayerAutocomplete
                       value={racketPlayers.red1}
-                      onChange={e => setRacketPlayers(prev => ({ ...prev, red1: e.target.value }))}
+                      onChange={v => setRacketPlayers(prev => ({ ...prev, red1: v }))}
+                      suggestions={savedPlayersList}
                       placeholder={t('home.playerNamePlaceholder')}
-                      list="saved-players-autocomplete"
-                      className="h-10"
                     />
                   </div>
                   {matchFormat === 'doubles' && (
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">{t('home.redPlayer2')}</label>
-                      <Input
+                      <PlayerAutocomplete
                         value={racketPlayers.red2}
-                        onChange={e => setRacketPlayers(prev => ({ ...prev, red2: e.target.value }))}
+                        onChange={v => setRacketPlayers(prev => ({ ...prev, red2: v }))}
+                        suggestions={savedPlayersList}
                         placeholder={t('home.playerNamePlaceholder')}
-                        list="saved-players-autocomplete"
-                        className="h-10"
                       />
                     </div>
                   )}
