@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { getAllMatches, createNewMatch, saveMatch, setActiveMatchId, deleteMatch, getMatch } from '@/lib/matchStorage';
 import { syncLocalMatchesToCloud, getCloudMatches, saveCloudMatch, deleteCloudMatch, getCloudMatchById } from '@/lib/cloudStorage';
 import { updateTutorialStep } from '@/lib/pushNotifications';
-import { MatchSummary, SetData, Team, SportType } from '@/types/sports';
+import { MatchSummary, SetData, Team, SportType, MatchFormat, getDefaultMatchFormat } from '@/types/sports';
 import { toast } from 'sonner';
 import { PwaInstallBanner } from '@/components/PwaInstallBanner';
 import { AuthDialog } from '@/components/AuthDialog';
@@ -71,6 +71,8 @@ export default function Home() {
   const [showNew, setShowNew] = useState(false);
   const [names, setNames] = useState({ blue: '', red: '' });
   const [selectedSport, setSelectedSport] = useState<SportType>('volleyball');
+  const [matchFormat, setMatchFormat] = useState<MatchFormat>('singles');
+  const [racketPlayers, setRacketPlayers] = useState<{ blue1: string; blue2: string; red1: string; red2: string }>({ blue1: '', blue2: '', red1: '', red2: '' });
   const [finishingId, setFinishingId] = useState<string | null>(null);
   const [showSavedPlayers, setShowSavedPlayers] = useState(false);
   const [customLogo, setCustomLogo] = useState<string | null>(null);
@@ -161,10 +163,44 @@ export default function Home() {
   }, [user, guestDismissed, authLoaded]);
 
   const handleCreate = () => {
-    const match = createNewMatch({
-      blue: names.blue.trim() || t('scoreboard.blue'),
-      red: names.red.trim() || t('scoreboard.red'),
-    }, selectedSport);
+    const isRacket = selectedSport === 'tennis' || selectedSport === 'padel';
+    
+    let blueName: string;
+    let redName: string;
+    let matchPlayers: { id: string; name: string }[] = [];
+    
+    if (isRacket) {
+      const b1 = racketPlayers.blue1.trim();
+      const b2 = racketPlayers.blue2.trim();
+      const r1 = racketPlayers.red1.trim();
+      const r2 = racketPlayers.red2.trim();
+      
+      if (matchFormat === 'doubles') {
+        blueName = [b1, b2].filter(Boolean).join(' / ') || t('scoreboard.blue');
+        redName = [r1, r2].filter(Boolean).join(' / ') || t('scoreboard.red');
+        if (b1) matchPlayers.push({ id: crypto.randomUUID(), name: b1 });
+        if (b2) matchPlayers.push({ id: crypto.randomUUID(), name: b2 });
+        if (r1) matchPlayers.push({ id: crypto.randomUUID(), name: r1 });
+        if (r2) matchPlayers.push({ id: crypto.randomUUID(), name: r2 });
+      } else {
+        blueName = b1 || t('scoreboard.blue');
+        redName = r1 || t('scoreboard.red');
+        if (b1) matchPlayers.push({ id: crypto.randomUUID(), name: b1 });
+        if (r1) matchPlayers.push({ id: crypto.randomUUID(), name: r1 });
+      }
+    } else {
+      blueName = names.blue.trim() || t('scoreboard.blue');
+      redName = names.red.trim() || t('scoreboard.red');
+    }
+    
+    const metadata = isRacket ? { matchFormat } : undefined;
+    const match = createNewMatch({ blue: blueName, red: redName }, selectedSport, metadata);
+    
+    // For racket sports, override players from form (not last roster)
+    if (isRacket && matchPlayers.length > 0) {
+      match.players = matchPlayers;
+    }
+    
     saveMatch(match);
     setActiveMatchId(match.id);
     if (user) {
@@ -175,6 +211,7 @@ export default function Home() {
     // Tutorial step 0 → 1: first match created
     updateTutorialStep(1).catch(() => {});
     setShowNew(false);
+    setRacketPlayers({ blue1: '', blue2: '', red1: '', red2: '' });
     navigate(`/match/${match.id}`);
   };
 
@@ -337,7 +374,7 @@ export default function Home() {
                   ]).map(s => (
                     <button
                       key={s.key}
-                      onClick={() => setSelectedSport(s.key)}
+                      onClick={() => { setSelectedSport(s.key); setMatchFormat(getDefaultMatchFormat(s.key)); setRacketPlayers({ blue1: '', blue2: '', red1: '', red2: '' }); }}
                       className="py-3 rounded-xl font-bold text-sm transition-all border-2"
                       style={selectedSport === s.key
                         ? { background: `hsla(${s.hue}, 0.1)`, color: `hsl(${s.hue})`, borderColor: `hsla(${s.hue}, 0.5)` }
@@ -350,26 +387,98 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-semibold text-team-blue mb-1 block">{t('home.blueTeam')} <span className="text-muted-foreground font-normal">· {t('home.blueTeamHint')}</span></label>
-                  <Input
-                    value={names.blue}
-                    onChange={e => setNames(prev => ({ ...prev, blue: e.target.value }))}
-                    placeholder={t('home.blueTeamPlaceholder')}
-                    className="h-10"
-                  />
+              {/* Format selector for Tennis/Padel */}
+              {(selectedSport === 'tennis' || selectedSport === 'padel') && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground block">{t('home.format')}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['singles', 'doubles'] as MatchFormat[]).map(f => (
+                      <button
+                        key={f}
+                        onClick={() => setMatchFormat(f)}
+                        className={`py-2 rounded-xl font-bold text-xs transition-all border-2 ${
+                          matchFormat === f
+                            ? 'bg-primary/15 text-primary border-primary/40'
+                            : 'bg-secondary text-secondary-foreground border-transparent hover:bg-secondary/80'
+                        }`}
+                      >
+                        {f === 'singles' ? t('home.singles') : t('home.doubles')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-team-red mb-1 block">{t('home.redTeam')}</label>
-                  <Input
-                    value={names.red}
-                    onChange={e => setNames(prev => ({ ...prev, red: e.target.value }))}
-                    placeholder={t('home.redTeamPlaceholder')}
-                    className="h-10"
-                  />
+              )}
+
+              {/* Player selection for Tennis/Padel */}
+              {(selectedSport === 'tennis' || selectedSport === 'padel') ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-team-blue mb-1 block">
+                      {matchFormat === 'doubles' ? t('home.bluePlayer1') : t('home.bluePlayer')}
+                    </label>
+                    <Input
+                      value={racketPlayers.blue1}
+                      onChange={e => setRacketPlayers(prev => ({ ...prev, blue1: e.target.value }))}
+                      placeholder={t('home.playerNamePlaceholder')}
+                      className="h-10"
+                    />
+                  </div>
+                  {matchFormat === 'doubles' && (
+                    <div>
+                      <label className="text-xs font-semibold text-team-blue mb-1 block">{t('home.bluePlayer2')}</label>
+                      <Input
+                        value={racketPlayers.blue2}
+                        onChange={e => setRacketPlayers(prev => ({ ...prev, blue2: e.target.value }))}
+                        placeholder={t('home.playerNamePlaceholder')}
+                        className="h-10"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs font-semibold text-team-red mb-1 block">
+                      {matchFormat === 'doubles' ? t('home.redPlayer1') : t('home.redPlayer')}
+                    </label>
+                    <Input
+                      value={racketPlayers.red1}
+                      onChange={e => setRacketPlayers(prev => ({ ...prev, red1: e.target.value }))}
+                      placeholder={t('home.playerNamePlaceholder')}
+                      className="h-10"
+                    />
+                  </div>
+                  {matchFormat === 'doubles' && (
+                    <div>
+                      <label className="text-xs font-semibold text-team-red mb-1 block">{t('home.redPlayer2')}</label>
+                      <Input
+                        value={racketPlayers.red2}
+                        onChange={e => setRacketPlayers(prev => ({ ...prev, red2: e.target.value }))}
+                        placeholder={t('home.playerNamePlaceholder')}
+                        className="h-10"
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold text-team-blue mb-1 block">{t('home.blueTeam')} <span className="text-muted-foreground font-normal">· {t('home.blueTeamHint')}</span></label>
+                    <Input
+                      value={names.blue}
+                      onChange={e => setNames(prev => ({ ...prev, blue: e.target.value }))}
+                      placeholder={t('home.blueTeamPlaceholder')}
+                      className="h-10"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-team-red mb-1 block">{t('home.redTeam')}</label>
+                    <Input
+                      value={names.red}
+                      onChange={e => setNames(prev => ({ ...prev, red: e.target.value }))}
+                      placeholder={t('home.redTeamPlaceholder')}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowNew(false)}

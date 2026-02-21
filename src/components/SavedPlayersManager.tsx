@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Pencil, Check, Trash2, Users } from 'lucide-react';
+import { X, Pencil, Check, Trash2, Users, ChevronDown, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { SportType } from '@/types/sports';
+import { SportType, getScoredActionsForSport, getFaultActionsForSport } from '@/types/sports';
 import { getSavedPlayers, removeSavedPlayer } from '@/lib/savedPlayers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ interface PlayerWithStats extends SavedPlayer {
   totalPoints: number;
   totalFaults: number;
   matchCount: number;
+  actionDetails: Record<string, number>;
 }
 
 export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayersManagerProps) {
@@ -33,24 +34,24 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const loadPlayers = useCallback(async () => {
     setLoading(true);
     const saved = await getSavedPlayers(sport, userId);
 
-    // Fetch cumulative stats from all matches
     const { data: matches } = await supabase
       .from('matches')
       .select('match_data')
       .eq('user_id', userId);
 
-    const statsMap = new Map<string, { points: number; faults: number; matches: Set<string> }>();
+    const statsMap = new Map<string, { points: number; faults: number; matches: Set<string>; actions: Record<string, number> }>();
 
     if (matches) {
       for (const row of matches) {
         const matchData = row.match_data as any;
         if (!matchData || (matchData.sport || 'volleyball') !== sport) continue;
-        const matchPlayers: { id: string; number: string; name: string }[] = matchData.players || [];
+        const matchPlayers: { id: string; name: string }[] = matchData.players || [];
         const allPoints = [
           ...(matchData.completedSets || []).flatMap((s: any) => s.points || []),
           ...(matchData.points || []),
@@ -61,7 +62,7 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
           if (!sp) continue;
           
           if (!statsMap.has(sp.id)) {
-            statsMap.set(sp.id, { points: 0, faults: 0, matches: new Set() });
+            statsMap.set(sp.id, { points: 0, faults: 0, matches: new Set(), actions: {} });
           }
           const stat = statsMap.get(sp.id)!;
           stat.matches.add(matchData.id);
@@ -70,6 +71,9 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
             if (pt.playerId === mp.id) {
               if (pt.type === 'scored') stat.points += (pt.pointValue ?? 1);
               if (pt.type === 'fault') stat.faults++;
+              // Track action details
+              const actionKey = pt.action as string;
+              stat.actions[actionKey] = (stat.actions[actionKey] ?? 0) + 1;
             }
           }
         }
@@ -84,6 +88,7 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
         totalPoints: stat?.points ?? 0,
         totalFaults: stat?.faults ?? 0,
         matchCount: stat?.matches.size ?? 0,
+        actionDetails: stat?.actions ?? {},
       };
     });
 
@@ -114,6 +119,48 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
     toast.success(t('savedPlayers.nameChanged'));
   };
 
+  const scoredActions = getScoredActionsForSport(sport);
+  const faultActions = getFaultActionsForSport(sport);
+
+  const renderActionDetails = (p: PlayerWithStats) => {
+    const hasAnyAction = Object.keys(p.actionDetails).length > 0;
+    if (!hasAnyAction) return <p className="text-[11px] text-muted-foreground py-2">{t('savedPlayers.noPlayers')}</p>;
+
+    const scoredEntries = scoredActions.filter(a => p.actionDetails[a.key]);
+    const faultEntries = faultActions.filter(a => p.actionDetails[a.key]);
+
+    return (
+      <div className="space-y-2 pt-1">
+        {scoredEntries.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-action-scored uppercase tracking-wider mb-1">⚡ {t('savedPlayers.scored')}</p>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+              {scoredEntries.map(a => (
+                <div key={a.key} className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground">{t(`actions.${a.key}`, a.label)}</span>
+                  <span className="font-bold text-foreground tabular-nums">{p.actionDetails[a.key]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {faultEntries.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-action-fault uppercase tracking-wider mb-1">❌ {t('savedPlayers.faultsCategory')}</p>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+              {faultEntries.map(a => (
+                <div key={a.key} className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground">{t(`actions.${a.key}`, a.label)}</span>
+                  <span className="font-bold text-foreground tabular-nums">{p.actionDetails[a.key]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-2xl max-h-[80vh] overflow-y-auto">
@@ -134,7 +181,7 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
           ]).map(s => (
             <button
               key={s.key}
-              onClick={() => setSport(s.key)}
+              onClick={() => { setSport(s.key); setExpandedId(null); }}
               className={`py-2 rounded-xl font-bold text-xs transition-all border-2 ${
                 sport === s.key
                   ? 'bg-primary/15 text-primary border-primary/40'
@@ -155,7 +202,13 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
             {players.map(p => (
               <div key={p.id} className="bg-secondary/50 rounded-xl px-3 py-2.5 space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-team-blue">{p.name || '—'}</span>
+                  {/* Expand toggle */}
+                  <button
+                    onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                    className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {expandedId === p.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  </button>
                   {editingId === p.id ? (
                     <>
                       <input
@@ -177,11 +230,18 @@ export function SavedPlayersManager({ open, onOpenChange, userId }: SavedPlayers
                     </>
                   )}
                 </div>
-                <div className="flex gap-3 text-[11px] text-muted-foreground pl-11">
+                <div className="flex gap-3 text-[11px] text-muted-foreground pl-6">
                   <span>{p.matchCount} match{p.matchCount > 1 ? 's' : ''}</span>
                   <span>⚡ {p.totalPoints} {t('playerStats.pts')}</span>
                   <span>❌ {p.totalFaults} {t('savedPlayers.faults')}</span>
                 </div>
+
+                {/* Expanded action details */}
+                {expandedId === p.id && (
+                  <div className="pl-6 pt-1 border-t border-border/50 mt-1">
+                    {renderActionDetails(p)}
+                  </div>
+                )}
               </div>
             ))}
           </div>

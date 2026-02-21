@@ -166,6 +166,8 @@ export interface TennisScoreState {
   servingTeam: Team;
 }
 
+export type MatchFormat = 'singles' | 'doubles';
+
 export interface MatchMetadata {
   /** Number of sets to win (2 or 3) */
   setsToWin?: number;
@@ -175,6 +177,12 @@ export interface MatchMetadata {
   tiebreakEnabled?: boolean;
   /** Which team serves first in the match (tennis/padel) */
   initialServer?: Team;
+  /** Singles or doubles format (tennis/padel) */
+  matchFormat?: MatchFormat;
+}
+
+export function getDefaultMatchFormat(sport: SportType): MatchFormat {
+  return sport === 'padel' ? 'doubles' : 'singles';
 }
 
 export interface Player {

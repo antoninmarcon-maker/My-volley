@@ -248,14 +248,16 @@ const Index = () => {
               isFinished={isFinished}
               sport={sport}
             />
-            <PlayerRoster
-              players={players}
-              onSetPlayers={setPlayers}
-              teamName={teamNames.blue}
-              sport={sport}
-              userId={user?.id}
-              readOnly={isFinished}
-            />
+            {!isTennisOrPadel && (
+              <PlayerRoster
+                players={players}
+                onSetPlayers={setPlayers}
+                teamName={teamNames.blue}
+                sport={sport}
+                userId={user?.id}
+                readOnly={isFinished}
+              />
+            )}
             <ScoreBoard
               score={score}
               points={points}
@@ -288,7 +290,7 @@ const Index = () => {
             {sport === 'basketball' ? (
               <BasketballCourt points={points} selectedTeam={selectedTeam} selectedAction={selectedAction} selectedPointType={selectedPointType} sidesSwapped={sidesSwapped} teamNames={teamNames} onCourtClick={addPoint} />
             ) : sport === 'tennis' ? (
-              <TennisCourt points={points} selectedTeam={selectedTeam} selectedAction={selectedAction} selectedPointType={selectedPointType} sidesSwapped={sidesSwapped} teamNames={teamNames} onCourtClick={addPoint} />
+              <TennisCourt points={points} selectedTeam={selectedTeam} selectedAction={selectedAction} selectedPointType={selectedPointType} sidesSwapped={sidesSwapped} teamNames={teamNames} onCourtClick={addPoint} matchFormat={(metadata as any)?.matchFormat} />
             ) : sport === 'padel' ? (
               <PadelCourt points={points} selectedTeam={selectedTeam} selectedAction={selectedAction} selectedPointType={selectedPointType} sidesSwapped={sidesSwapped} teamNames={teamNames} onCourtClick={addPoint} />
             ) : (

@@ -1,5 +1,5 @@
 import { useRef, useCallback, useMemo, useEffect } from 'react';
-import { Point, Team, ActionType, PointType, isTennisScoredAction } from '@/types/sports';
+import { Point, Team, ActionType, PointType, isTennisScoredAction, MatchFormat } from '@/types/sports';
 
 interface TennisCourtProps {
   points: Point[];
@@ -9,6 +9,7 @@ interface TennisCourtProps {
   sidesSwapped: boolean;
   teamNames: { blue: string; red: string };
   onCourtClick: (x: number, y: number) => void;
+  matchFormat?: MatchFormat;
 }
 
 // Court dimensions in SVG coordinates (landscape: baseline left/right)
@@ -46,15 +47,23 @@ function getClickZone(svgX: number, svgY: number): ZoneType {
 function isZoneAllowed(
   zone: ZoneType,
   team: Team, action: ActionType, pointType: PointType,
-  sidesSwapped: boolean
+  sidesSwapped: boolean,
+  matchFormat?: MatchFormat
 ): boolean {
   const teamSide = sidesSwapped
     ? (team === 'blue' ? 'right' : 'left')
     : (team === 'blue' ? 'left' : 'right');
   const opponentSide = teamSide === 'left' ? 'right' : 'left';
 
+  // In singles, alleys are treated as outside
+  const isSingles = matchFormat === 'singles' || !matchFormat;
+
   if (isTennisScoredAction(action)) {
-    // Winners land in opponent's court
+    if (isSingles) {
+      // Singles: only main court allowed for winners (no alleys)
+      return zone === (opponentSide === 'left' ? 'left_court' : 'right_court');
+    }
+    // Doubles: alleys included
     const allowed = opponentSide === 'left'
       ? ['left_court', 'alley_left']
       : ['right_court', 'alley_right'];
@@ -64,16 +73,14 @@ function isZoneAllowed(
   // Faults
   switch (action) {
     case 'double_fault':
-      // Service box on opponent's side or outside
       return zone === 'outside' || zone === (opponentSide === 'left' ? 'left_court' : 'right_court');
     case 'net_error':
       return zone === 'net';
     case 'out_long':
     case 'out_wide':
-      return zone === 'outside';
+      return zone === 'outside' || (isSingles && (zone === 'alley_left' || zone === 'alley_right'));
     case 'unforced_error_forehand':
     case 'unforced_error_backhand':
-      // Can land anywhere (net, out, etc.)
       return true;
     default:
       return true;
@@ -81,14 +88,25 @@ function isZoneAllowed(
 }
 
 function getZoneHighlights(
-  team: Team, action: ActionType, pointType: PointType, sidesSwapped: boolean
+  team: Team, action: ActionType, pointType: PointType, sidesSwapped: boolean,
+  matchFormat?: MatchFormat
 ): { x: number; y: number; w: number; h: number }[] {
   const teamSide = sidesSwapped
     ? (team === 'blue' ? 'right' : 'left')
     : (team === 'blue' ? 'left' : 'right');
   const opponentSide = teamSide === 'left' ? 'right' : 'left';
 
+  const isSingles = matchFormat === 'singles' || !matchFormat;
+
   if (isTennisScoredAction(action)) {
+    if (isSingles) {
+      // Singles: only between singles sidelines
+      if (opponentSide === 'right') {
+        return [{ x: NET_X, y: ST, w: CR - NET_X, h: SB - ST }];
+      }
+      return [{ x: CL, y: ST, w: NET_X - CL, h: SB - ST }];
+    }
+    // Doubles: full doubles court
     if (opponentSide === 'right') {
       return [{ x: NET_X, y: CT, w: CR - NET_X, h: CB - CT }];
     }
@@ -99,13 +117,20 @@ function getZoneHighlights(
     case 'net_error':
       return [{ x: NET_X - 12, y: CT, w: 24, h: CB - CT }];
     case 'out_long':
-    case 'out_wide':
-      return [
+    case 'out_wide': {
+      const zones = [
         { x: 0, y: 0, w: CL, h: H },
         { x: CR, y: 0, w: W - CR, h: H },
         { x: CL, y: 0, w: CR - CL, h: CT },
         { x: CL, y: CB, w: CR - CL, h: H - CB },
       ];
+      // In singles, alleys are also "out"
+      if (isSingles) {
+        zones.push({ x: CL, y: CT, w: CR - CL, h: ST - CT });
+        zones.push({ x: CL, y: SB, w: CR - CL, h: CB - SB });
+      }
+      return zones;
+    }
     default:
       return [{ x: 0, y: 0, w: W, h: H }];
   }
@@ -121,7 +146,7 @@ const ACTION_SHORT: Record<string, string> = {
 
 export function TennisCourt({
   points, selectedTeam, selectedAction, selectedPointType,
-  sidesSwapped, teamNames, onCourtClick
+  sidesSwapped, teamNames, onCourtClick, matchFormat
 }: TennisCourtProps) {
   const courtRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -135,8 +160,8 @@ export function TennisCourt({
 
   const zoneHighlights = useMemo(() => {
     if (!hasSelection) return null;
-    return getZoneHighlights(selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped);
-  }, [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped]);
+    return getZoneHighlights(selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped, matchFormat);
+  }, [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, matchFormat]);
 
   const handleInteraction = useCallback(
     (clientX: number, clientY: number) => {
@@ -147,11 +172,11 @@ export function TennisCourt({
       const svgX = x * W;
       const svgY = y * H;
       const zone = getClickZone(svgX, svgY);
-      if (isZoneAllowed(zone, selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped)) {
+      if (isZoneAllowed(zone, selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped, matchFormat)) {
         onCourtClick(x, y);
       }
     },
-    [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, onCourtClick]
+    [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, onCourtClick, matchFormat]
   );
 
   const handleClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {

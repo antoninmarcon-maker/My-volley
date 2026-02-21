@@ -55,6 +55,16 @@
     "blueTeamPlaceholder": "Nom de l'équipe bleue",
     "redTeamPlaceholder": "Nom de l'équipe rouge",
     "start": "Commencer",
+    "format": "Format",
+    "singles": "Simple (1v1)",
+    "doubles": "Double (2v2)",
+    "bluePlayer": "Joueur Bleu",
+    "bluePlayer1": "Joueur Bleu 1",
+    "bluePlayer2": "Joueur Bleu 2",
+    "redPlayer": "Joueur Rouge",
+    "redPlayer1": "Joueur Rouge 1",
+    "redPlayer2": "Joueur Rouge 2",
+    "playerNamePlaceholder": "Nom du joueur",
     "finishMatch": "Terminer le match ?",
     "finishMatchDesc": "La période en cours sera finalisée et le match sera marqué comme terminé. Cette action est irréversible.",
     "finish": "Terminer",
@@ -348,7 +358,10 @@
     "nameChangeError": "Erreur lors de la modification",
     "matches": "{{count}} match",
     "matches_plural": "{{count}} matchs",
-    "faults": "fautes"
+    "faults": "fautes",
+    "actionDetails": "Détail des actions",
+    "scored": "Gagnés",
+    "faultsCategory": "Fautes"
   },
   "shared": {
     "matchNotFound": "Match introuvable",
