@@ -24,10 +24,40 @@ export function PlayerStats({ points, players, teamName, sport = 'volleyball' }:
       const faultWins = playerPoints.filter(p => p.team === 'blue' && p.type === 'fault');
       const negatives = playerPoints.filter(p => p.team === 'red');
 
+      // Basketball: faults by blue team are negative (missed shots, turnovers, fouls)
+      // Other sports: faults by blue team are positive (opponent errors attributed to player)
+      const playerFaults = isBasketball ? faultWins : [];
       const scoredCount = isBasketball
         ? scored.reduce((sum, p) => sum + (p.pointValue ?? 0), 0)
         : scored.length + faultWins.length;
-      const negativeCount = negatives.length;
+      const negativeCount = isBasketball
+        ? playerFaults.length + negatives.length
+        : negatives.length;
+
+      const faultBreakdown: { label: string; count: number }[] = [];
+      if (isBasketball) {
+        // Show blue team faults (own errors) and red team negatives
+        for (const a of BASKET_FAULT_ACTIONS) {
+          const count = playerFaults.filter(p => p.action === a.key).length;
+          if (count > 0) faultBreakdown.push({ label: a.label, count });
+        }
+        for (const a of BASKET_SCORED_ACTIONS) {
+          const count = negatives.filter(p => p.type === 'scored' && p.action === a.key).length;
+          if (count > 0) faultBreakdown.push({ label: a.label, count });
+        }
+      } else {
+        const negScoredActions = OFFENSIVE_ACTIONS;
+        const negFaultActions = FAULT_ACTIONS;
+        for (const a of negScoredActions) {
+          const count = negatives.filter(p => p.type === 'scored' && p.action === a.key).length;
+          if (count > 0) faultBreakdown.push({ label: a.label, count });
+        }
+        for (const a of negFaultActions) {
+          const count = negatives.filter(p => p.type === 'fault' && p.action === a.key).length;
+          if (count > 0) faultBreakdown.push({ label: a.label, count });
+        }
+      }
+
       const total = (isBasketball ? scored.length : scoredCount) + negativeCount;
       const efficiency = total > 0
         ? ((isBasketball ? scored.length : scoredCount) / total * 100)
@@ -42,19 +72,6 @@ export function PlayerStats({ points, players, teamName, sport = 'volleyball' }:
       if (!isBasketball && faultWins.length > 0) {
         scoredBreakdown.push({ label: t('playerStats.faultsLabel'), count: faultWins.length });
       }
-
-      const negScoredActions = isBasketball ? BASKET_SCORED_ACTIONS : OFFENSIVE_ACTIONS;
-      const negFaultActions = isBasketball ? BASKET_FAULT_ACTIONS : FAULT_ACTIONS;
-      const faultBreakdown = [
-        ...negScoredActions.map(a => ({
-          label: a.label,
-          count: negatives.filter(p => p.type === 'scored' && p.action === a.key).length,
-        })),
-        ...negFaultActions.map(a => ({
-          label: a.label,
-          count: negatives.filter(p => p.type === 'fault' && p.action === a.key).length,
-        })),
-      ].filter(b => b.count > 0);
 
       return {
         player,
