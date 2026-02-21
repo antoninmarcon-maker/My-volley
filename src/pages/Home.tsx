@@ -330,7 +330,7 @@ export default function Home() {
                     { key: 'volleyball' as SportType, icon: '🏐', label: t('home.volleyball'), hue: 'hsl(var(--primary))' },
                     { key: 'basketball' as SportType, icon: '🏀', label: t('home.basketball'), hue: 'hsl(30, 90%, 50%)' },
                     { key: 'tennis' as SportType, icon: '🎾', label: t('home.tennis'), hue: 'hsl(142, 70%, 40%)' },
-                    { key: 'padel' as SportType, icon: '🏓', label: t('home.padel'), hue: 'hsl(210, 80%, 50%)' },
+                    { key: 'padel' as SportType, icon: '🏓', label: t('home.padel'), hue: 'hsl(0, 84%, 60%)' },
                   ]).map(s => (
                     <button
                       key={s.key}
