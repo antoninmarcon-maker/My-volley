@@ -86,7 +86,7 @@ export default function ActionsConfig() {
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">{categoryLabel}</h3>
+          <h3 className={`text-sm font-semibold text-foreground ${isNeutral && customs.length === 0 ? 'animate-pulse' : ''}`}>{categoryLabel}</h3>
           <button
             onClick={() => { setAddingCategory(category); setNewLabel(''); setNewSigil(''); setNewShowOnCourt(false); }}
             className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium"
@@ -291,9 +291,9 @@ export default function ActionsConfig() {
 
           {SPORTS.map(s => (
             <TabsContent key={s.key} value={s.key} className="space-y-6 mt-4">
+              {renderCategory('neutral')}
               {renderCategory('scored')}
               {renderCategory('fault')}
-              {renderCategory('neutral')}
             </TabsContent>
           ))}
         </Tabs>
