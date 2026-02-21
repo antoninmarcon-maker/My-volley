@@ -349,9 +349,7 @@ const Index = () => {
               />
             </div>
             {metadata?.hasCourt === false ? (
-              <div className="bg-card p-6 rounded-xl border border-border text-center text-muted-foreground text-sm">
-                {t('stats.noHeatmap')}
-              </div>
+              <HeatmapView points={allPoints} completedSets={completedSets} currentSetPoints={points} currentSetNumber={currentSetNumber} stats={stats} teamNames={teamNames} players={players} sport={sport} matchId={matchId} isLoggedIn={!!user} hasCourt={false} />
             ) : (
               <HeatmapView points={allPoints} completedSets={completedSets} currentSetPoints={points} currentSetNumber={currentSetNumber} stats={stats} teamNames={teamNames} players={players} sport={sport} matchId={matchId} isLoggedIn={!!user} />
             )}

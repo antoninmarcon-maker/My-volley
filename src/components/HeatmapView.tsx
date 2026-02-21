@@ -29,6 +29,7 @@ interface HeatmapViewProps {
   sport?: SportType;
   matchId?: string;
   isLoggedIn?: boolean;
+  hasCourt?: boolean;
 }
 
 type SetFilter = 'all' | number;
@@ -141,7 +142,7 @@ function computeStats(pts: Point[], sport: SportType = 'volleyball'): { blue: Te
   return { blue: byTeam('blue'), red: byTeam('red'), total: pts.length, sport };
 }
 
-export function HeatmapView({ points, completedSets, currentSetPoints, currentSetNumber, stats, teamNames, players = [], sport = 'volleyball', matchId, isLoggedIn }: HeatmapViewProps) {
+export function HeatmapView({ points, completedSets, currentSetPoints, currentSetNumber, stats, teamNames, players = [], sport = 'volleyball', matchId, isLoggedIn, hasCourt = true }: HeatmapViewProps) {
   const { t } = useTranslation();
   const isBasketball = sport === 'basketball';
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -563,7 +564,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
           <PlayerStats points={filteredPoints} players={players} teamName={teamNames.blue} sport={sport} />
         )}
 
-        {showHeatmap && (
+        {hasCourt && showHeatmap && (
           <div>
             <p className="text-[10px] text-center text-muted-foreground mb-1">{t('heatmap.heatmapLabel')}</p>
             <div className="rounded-xl overflow-hidden">
@@ -577,14 +578,14 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
         <PointTimeline points={filteredPoints} teamNames={teamNames} />
       )}
 
-      {setFilter_ !== 'all' && showCourt && (
-        <div className="space-y-1">
-          <p className="text-[10px] text-center text-muted-foreground">
-            {t('heatmap.court')} — {setOptions.find(o => o.key === setFilter_)?.label}
-          </p>
-          <CourtDisplay points={filteredPoints} teamNames={teamNames} sport={sport} />
-        </div>
-      )}
+        {hasCourt && setFilter_ !== 'all' && showCourt && (
+          <div className="space-y-1">
+            <p className="text-[10px] text-center text-muted-foreground">
+              {t('heatmap.court')} — {setOptions.find(o => o.key === setFilter_)?.label}
+            </p>
+            <CourtDisplay points={filteredPoints} teamNames={teamNames} sport={sport} />
+          </div>
+        )}
 
       <div className="flex gap-2 flex-wrap">
         {setFilter_ !== 'all' && (
@@ -595,7 +596,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
             {showTimeline ? t('heatmap.hideTimeline') : t('heatmap.showTimeline')}
           </button>
         )}
-        {setFilter_ !== 'all' && (
+        {hasCourt && setFilter_ !== 'all' && (
           <button
             onClick={() => setShowCourt(prev => !prev)}
             className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all"
@@ -603,12 +604,14 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
             {showCourt ? t('heatmap.hideCourt') : t('heatmap.showCourt')}
           </button>
         )}
-        <button
-          onClick={() => setShowHeatmap(prev => !prev)}
-          className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all"
-        >
-          {showHeatmap ? t('heatmap.hideHeatmap') : t('heatmap.showHeatmap')}
-        </button>
+        {hasCourt && (
+          <button
+            onClick={() => setShowHeatmap(prev => !prev)}
+            className="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all"
+          >
+            {showHeatmap ? t('heatmap.hideHeatmap') : t('heatmap.showHeatmap')}
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2">
@@ -626,7 +629,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
               <Image size={14} className="mr-2" />
               {exporting ? t('heatmap.exporting') : t('heatmap.exportStatsPng', { suffix: setFilter_ !== 'all' ? ` — Set ${setFilter_}` : '' })}
             </DropdownMenuItem>
-            {setFilter_ !== 'all' && (
+            {hasCourt && setFilter_ !== 'all' && (
               <DropdownMenuItem onClick={() => exportCourtPng(filteredPoints, `Set ${setFilter_}${setFilter_ === currentSetNumber && !completedSets.some(s => s.number === setFilter_) ? ` (${t('home.setInProgress')})` : ''}`)} className="cursor-pointer">
                 <Map size={14} className="mr-2" />
                 {t('heatmap.courtSetPng', { n: setFilter_ })}
