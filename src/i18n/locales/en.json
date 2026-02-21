@@ -70,7 +70,7 @@
     "opponentsDefault": "Opponents",
     "optional": "optional",
     "interactiveCourt": "Use interactive court",
-    "interactiveCourtHint": "Disable to score faster (Scoreboard only).",
+    "interactiveCourtHint": "Disable to score faster.",
     "finishMatch": "Finish the match?",
     "finishMatchDesc": "The current period will be finalized and the match will be marked as finished. This action is irreversible.",
     "finish": "Finish",

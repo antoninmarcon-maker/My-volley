@@ -70,7 +70,7 @@
     "opponentsDefault": "Adversaires",
     "optional": "optionnel",
     "interactiveCourt": "Utiliser le terrain interactif",
-    "interactiveCourtHint": "Désactivez pour compter les points plus rapidement (Scoreboard uniquement).",
+    "interactiveCourtHint": "Désactivez pour compter les points plus rapidement.",
     "finishMatch": "Terminer le match ?",
     "finishMatchDesc": "La période en cours sera finalisée et le match sera marqué comme terminé. Cette action est irréversible.",
     "finish": "Terminer",
