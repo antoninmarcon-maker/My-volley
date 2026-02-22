@@ -105,6 +105,38 @@ export function deleteCustomAction(id: string): ActionsConfig {
 }
 
 /** Get the real ActionType key for a custom action (maps to "other_*") */
+// ── Advantage Rule per sport ──
+
+const ADVANTAGE_STORAGE_KEY = 'myvolley-advantage-rule';
+
+interface AdvantageRuleConfig {
+  tennis: boolean;
+  padel: boolean;
+}
+
+function getAdvantageConfig(): AdvantageRuleConfig {
+  try {
+    const raw = localStorage.getItem(ADVANTAGE_STORAGE_KEY);
+    if (!raw) return { tennis: true, padel: false };
+    return JSON.parse(raw);
+  } catch {
+    return { tennis: true, padel: false };
+  }
+}
+
+export function getAdvantageRule(sport: SportType): boolean {
+  if (sport !== 'tennis' && sport !== 'padel') return true;
+  return getAdvantageConfig()[sport];
+}
+
+export function setAdvantageRule(sport: SportType, value: boolean): void {
+  if (sport !== 'tennis' && sport !== 'padel') return;
+  const config = getAdvantageConfig();
+  config[sport] = value;
+  localStorage.setItem(ADVANTAGE_STORAGE_KEY, JSON.stringify(config));
+}
+
+/** Get the real ActionType key for a custom action (maps to "other_*") */
 export function getCustomActionRealKey(customAction: CustomAction): ActionType {
   const otherKeys = OTHER_ACTION_KEYS[customAction.sport];
   if (customAction.category === 'neutral') return otherKeys.neutral;

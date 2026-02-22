@@ -492,6 +492,8 @@
     "showOnCourt": "Terrain",
     "show": "Afficher",
     "hide": "Masquer",
+    "advantageRule": "Règle des Avantages (Deuce)",
+    "advantageRuleHint": "Si désactivé, le point à 40-40 sera décisif (Punto de Oro).",
     "volleyball": "Volley",
     "basketball": "Basket",
     "tennis": "Tennis",

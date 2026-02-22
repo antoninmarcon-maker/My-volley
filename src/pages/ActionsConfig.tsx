@@ -6,10 +6,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SportType, PointType, getScoredActionsForSport, getFaultActionsForSport, getNeutralActionsForSport } from '@/types/sports';
 import {
   getActionsConfig, toggleActionVisibility, addCustomAction,
   updateCustomAction, deleteCustomAction,
+  getAdvantageRule, setAdvantageRule as saveAdvantageRule,
 } from '@/lib/actionsConfig';
 import type { ActionsConfig as ActionsConfigType } from '@/lib/actionsConfig';
 
@@ -280,6 +282,33 @@ export default function ActionsConfig() {
     );
   };
 
+  const AdvantageRuleSetting = ({ sport: s }: { sport: 'tennis' | 'padel' }) => {
+    const [checked, setChecked] = useState(() => getAdvantageRule(s));
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center space-x-3 bg-secondary/30 p-3 rounded-xl border border-border">
+          <Switch
+            id={`advantage-${s}`}
+            checked={checked}
+            onCheckedChange={v => { setChecked(v); saveAdvantageRule(s, v); }}
+          />
+          <div className="flex-1">
+            <Label htmlFor={`advantage-${s}`} className="text-sm font-semibold cursor-pointer">
+              {t('actionsConfig.advantageRule')}
+            </Label>
+          </div>
+        </div>
+        {!checked && (
+          <Alert variant="default" className="py-2">
+            <AlertDescription className="text-xs text-muted-foreground">
+              {t('actionsConfig.advantageRuleHint')}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 bg-background px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] border-b border-border flex items-center gap-3">
@@ -303,6 +332,9 @@ export default function ActionsConfig() {
 
           {SPORTS.map(s => (
             <TabsContent key={s.key} value={s.key} className="space-y-6 mt-4">
+              {(s.key === 'tennis' || s.key === 'padel') && (
+                <AdvantageRuleSetting sport={s.key} />
+              )}
               {renderCategory('neutral')}
               {renderCategory('scored')}
               {renderCategory('fault')}

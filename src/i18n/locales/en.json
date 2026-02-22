@@ -492,6 +492,8 @@
     "showOnCourt": "Court",
     "show": "Show",
     "hide": "Hide",
+    "advantageRule": "Advantage Rule (Deuce)",
+    "advantageRuleHint": "If disabled, the point at 40-40 will be decisive (Punto de Oro).",
     "volleyball": "Volley",
     "basketball": "Basket",
     "tennis": "Tennis",
