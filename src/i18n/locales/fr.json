@@ -71,6 +71,8 @@
     "optional": "optionnel",
     "interactiveCourt": "Utiliser le terrain interactif",
     "interactiveCourtHint": "Désactivez pour compter les points plus rapidement.",
+    "advantageRule": "Règle des Avantages (Deuce)",
+    "advantageRuleHint": "Si désactivé, le point à 40-40 sera décisif (Punto de Oro).",
     "finishMatch": "Terminer le match ?",
     "finishMatchDesc": "La période en cours sera finalisée et le match sera marqué comme terminé. Cette action est irréversible.",
     "finish": "Terminer",
@@ -353,7 +355,9 @@
   "pwa": {
     "installApp": "Installer l'application",
     "iosInstall": "Appuyez sur le bouton « Partager » ⎙ puis « Sur l'écran d'accueil » pour installer l'app.",
-    "androidInstall": "Appuyez sur les trois points ⋮ puis « Installer l'application » pour un accès rapide."
+    "androidInstall": "Appuyez sur les trois points ⋮ puis « Installer l'application » pour un accès rapide.",
+    "updateAvailable": "Une nouvelle mise à jour est disponible !",
+    "update": "Mettre à jour"
   },
   "savedPlayers": {
     "title": "Joueurs enregistrés",
