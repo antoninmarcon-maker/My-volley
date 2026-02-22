@@ -342,6 +342,7 @@ export default function Settings() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <p className="text-xs text-primary/80 flex items-center gap-1">☁️ {t('settings.cloudSyncNote')}</p>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground">{t('settings.displayName')}</label>
               <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t('settings.displayNamePlaceholder')} className="h-9" maxLength={100} />
