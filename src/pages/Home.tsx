@@ -78,6 +78,7 @@ export default function Home() {
   const [matchFormat, setMatchFormat] = useState<MatchFormat>('singles');
   const [hasCourt, setHasCourt] = useState(true);
   const [racketPlayers, setRacketPlayers] = useState<{ blue1: string; blue2: string; red1: string; red2: string }>({ blue1: '', blue2: '', red1: '', red2: '' });
+  const [advantageRule, setAdvantageRule] = useState(true);
   const [finishingId, setFinishingId] = useState<string | null>(null);
   const [showSavedPlayers, setShowSavedPlayers] = useState(false);
   const [customLogo, setCustomLogo] = useState<string | null>(null);
@@ -226,7 +227,7 @@ export default function Home() {
       redName = names.red.trim() || t('scoreboard.red');
     }
     
-    const metadata = { ...(isRacket ? { matchFormat } : {}), hasCourt };
+    const metadata = { ...(isRacket ? { matchFormat, advantageRule } : {}), hasCourt };
     const match = createNewMatch({ blue: blueName, red: redName }, selectedSport, metadata);
     
     // For racket sports, override players from form (not last roster)
@@ -434,7 +435,7 @@ export default function Home() {
                   ]).map(s => (
                     <button
                       key={s.key}
-                      onClick={() => { setSelectedSport(s.key); setMatchFormat(getDefaultMatchFormat(s.key)); setRacketPlayers({ blue1: '', blue2: '', red1: '', red2: '' }); }}
+                      onClick={() => { setSelectedSport(s.key); setMatchFormat(getDefaultMatchFormat(s.key)); setRacketPlayers({ blue1: '', blue2: '', red1: '', red2: '' }); setAdvantageRule(s.key === 'tennis'); }}
                       className="py-3 rounded-xl font-bold text-sm transition-all border-2"
                       style={selectedSport === s.key
                         ? { background: `hsla(${s.hue}, 0.1)`, color: `hsl(${s.hue})`, borderColor: `hsla(${s.hue}, 0.5)` }
@@ -465,6 +466,14 @@ export default function Home() {
                         {f === 'singles' ? t('home.singles') : t('home.doubles')}
                       </button>
                     ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2 bg-secondary/30 p-3 rounded-xl border border-border">
+                    <Switch id="advantage-rule" checked={advantageRule} onCheckedChange={setAdvantageRule} />
+                    <div className="flex-1">
+                      <Label htmlFor="advantage-rule" className="text-sm font-semibold cursor-pointer">{t('home.advantageRule')}</Label>
+                      <p className="text-[10px] text-muted-foreground">{t('home.advantageRuleHint')}</p>
+                    </div>
                   </div>
                 </div>
               )}

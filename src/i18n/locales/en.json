@@ -71,6 +71,8 @@
     "optional": "optional",
     "interactiveCourt": "Use interactive court",
     "interactiveCourtHint": "Disable to score faster.",
+    "advantageRule": "Advantage Rule (Deuce)",
+    "advantageRuleHint": "If disabled, the point at 40-40 will be decisive (Punto de Oro).",
     "finishMatch": "Finish the match?",
     "finishMatchDesc": "The current period will be finalized and the match will be marked as finished. This action is irreversible.",
     "finish": "Finish",
@@ -353,7 +355,9 @@
   "pwa": {
     "installApp": "Install the app",
     "iosInstall": "Tap the \"Share\" button ⎙ then \"Add to Home Screen\" to install the app.",
-    "androidInstall": "Tap the three dots ⋮ then \"Install app\" for quick access."
+    "androidInstall": "Tap the three dots ⋮ then \"Install app\" for quick access.",
+    "updateAvailable": "A new update is available!",
+    "update": "Update"
   },
   "savedPlayers": {
     "title": "Saved players",
