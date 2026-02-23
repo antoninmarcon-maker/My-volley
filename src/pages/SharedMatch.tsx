@@ -78,7 +78,7 @@ export default function SharedMatch() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              const url = window.location.href;
+              const url = `https://my-volley.lovable.app${window.location.pathname}`;
               if (navigator.share) {
                 navigator.share({ title: `${match.teamNames.blue} vs ${match.teamNames.red}`, text: t('shared.followScore'), url });
               } else {
