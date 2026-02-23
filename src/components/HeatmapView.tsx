@@ -316,9 +316,18 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
     try {
       const token = await generateShareToken(matchId);
       if (!token) { toast.error(t('heatmap.linkError')); return; }
-      const url = `${window.location.origin}/shared/${token}`;
-      await navigator.clipboard.writeText(url);
-      toast.success(t('heatmap.linkCopied'));
+      const baseUrl = 'https://my-volley.lovable.app';
+      const url = `${baseUrl}/shared/${token}`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'My Volley — Stats du match', url });
+        } catch (e) {
+          // User cancelled share dialog, ignore
+        }
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success(t('heatmap.linkCopied'));
+      }
     } finally {
       setGeneratingLink(false);
     }
