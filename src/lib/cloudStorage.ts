@@ -13,7 +13,10 @@ export async function syncLocalMatchesToCloud(userId: string) {
   const localMatches = getLocalMatches();
   if (localMatches.length === 0) return;
 
-  for (const match of localMatches) {
+  // Never sync the demo match to the cloud
+  const matchesToSync = localMatches.filter(m => m.id !== 'demo-match-volley');
+
+  for (const match of matchesToSync) {
     const { data: existing } = await supabase
       .from('matches')
       .select('id')
@@ -24,7 +27,7 @@ export async function syncLocalMatchesToCloud(userId: string) {
       await saveCloudMatch(userId, match);
     }
   }
-  // Clean up local storage after successful sync to avoid duplicates
+  // Clean up local storage after successful sync (including demo match)
   localStorage.removeItem('volley-tracker-matches');
 }
 

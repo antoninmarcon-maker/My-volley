@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getDemoMatch, DEMO_MATCH_ID } from '@/lib/demoMatch';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus } from 'lucide-react';
 import logoCapbreton from '@/assets/logo-capbreton.jpeg';
@@ -160,7 +161,8 @@ export default function Home() {
       setShowAuth(false);
       return;
     }
-    if (!guestDismissed && getAllMatches().length > 0) {
+    const hasRealMatch = getAllMatches().some(m => m.id !== DEMO_MATCH_ID);
+    if (!guestDismissed && hasRealMatch) {
       const alreadyShownThisSession = sessionStorage.getItem('authPromptShown');
       if (!alreadyShownThisSession) {
         sessionStorage.setItem('authPromptShown', 'true');
@@ -371,6 +373,20 @@ export default function Home() {
           <Plus size={22} className="relative z-10 transition-transform duration-300 group-hover:rotate-90" />
           <span className="relative z-10">{t('home.newMatch')}</span>
         </button>
+
+        {!user && (
+          <button
+            onClick={() => {
+              saveMatch(getDemoMatch());
+              setActiveMatchId(DEMO_MATCH_ID);
+              navigate(`/match/${DEMO_MATCH_ID}`);
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-border bg-card text-foreground font-semibold text-sm hover:bg-secondary transition-all active:scale-[0.97]"
+          >
+            <Eye size={18} className="text-primary" />
+            {t('home.demoMatch')}
+          </button>
+        )}
 
         <Dialog open={showNew} onOpenChange={setShowNew}>
           <DialogContent className="max-w-sm rounded-2xl">
