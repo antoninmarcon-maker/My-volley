@@ -312,21 +312,33 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
       toast.error(t('heatmap.loginForLink'));
       return;
     }
+
     setGeneratingLink(true);
     try {
       const token = await generateShareToken(matchId);
-      if (!token) { toast.error(t('heatmap.linkError')); return; }
+      if (!token) {
+        toast.error(t('heatmap.linkError'));
+        return;
+      }
+
       const baseUrl = 'https://my-volley.lovable.app';
       const url = `${baseUrl}/shared/${token}`;
+
       if (navigator.share) {
         try {
           await navigator.share({ title: 'My Volley — Stats du match', url });
-        } catch (e) {
-          // User cancelled share dialog, ignore
+          return;
+        } catch (error) {
+          if (import.meta.env.DEV) console.warn('Native share failed, fallback to clipboard:', error);
         }
-      } else {
+      }
+
+      try {
         await navigator.clipboard.writeText(url);
         toast.success(t('heatmap.linkCopied'));
+      } catch (error) {
+        if (import.meta.env.DEV) console.error('Clipboard copy failed:', error);
+        window.open(url, '_blank', 'noopener,noreferrer');
       }
     } finally {
       setGeneratingLink(false);
