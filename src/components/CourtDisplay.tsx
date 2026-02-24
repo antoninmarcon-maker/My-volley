@@ -4,6 +4,7 @@ interface CourtDisplayProps {
   points: Point[];
   teamNames: { blue: string; red: string };
   sport?: SportType;
+  sidesSwapped?: boolean;
 }
 
 const VOLLEY_ACTION_SHORT: Record<string, string> = {
@@ -12,7 +13,7 @@ const VOLLEY_ACTION_SHORT: Record<string, string> = {
   other_offensive: '',
 };
 
-export function CourtDisplay({ points, teamNames }: CourtDisplayProps) {
+export function CourtDisplay({ points, teamNames, sidesSwapped = false }: CourtDisplayProps) {
   return (
     <div className="rounded-xl overflow-hidden">
       <svg viewBox="0 0 600 400" className="w-full h-auto">
@@ -23,11 +24,11 @@ export function CourtDisplay({ points, teamNames }: CourtDisplayProps) {
         <line x1="200" y1="20" x2="200" y2="380" stroke="white" strokeWidth="1.5" opacity="0.6" />
         <line x1="400" y1="20" x2="400" y2="380" stroke="white" strokeWidth="1.5" opacity="0.6" />
 
-        <text x="110" y="205" textAnchor="middle" fill="hsl(217, 91%, 60%)" fontSize="13" fontWeight="bold" opacity="0.5">{teamNames.blue}</text>
-        <text x="490" y="205" textAnchor="middle" fill="hsl(0, 84%, 60%)" fontSize="13" fontWeight="bold" opacity="0.5">{teamNames.red}</text>
+        <text x="110" y="205" textAnchor="middle" fill={sidesSwapped ? 'hsl(0, 84%, 60%)' : 'hsl(217, 91%, 60%)'} fontSize="13" fontWeight="bold" opacity="0.5">{sidesSwapped ? teamNames.red : teamNames.blue}</text>
+        <text x="490" y="205" textAnchor="middle" fill={sidesSwapped ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)'} fontSize="13" fontWeight="bold" opacity="0.5">{sidesSwapped ? teamNames.blue : teamNames.red}</text>
 
         {points.filter(p => !['service_miss'].includes(p.action)).map((point) => {
-          const cx = point.x * 600;
+          const cx = (sidesSwapped ? (1 - point.x) : point.x) * 600;
           const cy = point.y * 400;
           const color = point.team === 'blue' ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)';
           const isFault = point.type === 'fault';

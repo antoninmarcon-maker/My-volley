@@ -277,7 +277,7 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
 
         {/* Point markers (exclude service_miss and neutral without showOnCourt) */}
         {points.filter(p => p.action !== 'service_miss' && p.type !== 'neutral').map((point) => {
-          const cx = point.x * 600;
+          const cx = (sidesSwapped ? (1 - point.x) : point.x) * 600;
           const cy = point.y * 400;
           const color = point.team === 'blue' ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)';
           const isFault = point.type === 'fault';
@@ -309,7 +309,7 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
 
         {/* Neutral point markers (only if showOnCourt) */}
         {points.filter(p => p.type === 'neutral' && p.showOnCourt).map((point) => {
-          const cx = point.x * 600;
+          const cx = (sidesSwapped ? (1 - point.x) : point.x) * 600;
           const cy = point.y * 400;
           return (
             <g key={point.id} className="animate-point-drop">
