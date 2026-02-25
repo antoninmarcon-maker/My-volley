@@ -557,6 +557,9 @@ export default function Home() {
                           <span className="text-team-blue">{match.teamNames.blue}</span>
                           <span className="text-muted-foreground text-xs">vs</span>
                           <span className="text-team-red">{match.teamNames.red}</span>
+                          {(match as any).metadata?.isPerformanceMode && (
+                            <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary border border-primary/20">⚡ PERF</span>
+                          )}
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5">{formatDate(match.updatedAt)}</p>
                       </div>
