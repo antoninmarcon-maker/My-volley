@@ -73,6 +73,7 @@
     "inviteError": "Erreur d'envoi",
     "inviteErrorDesc": "Impossible de copier le lien. Réessayez.",
     "copyAppLink": "Copier le lien de l'app",
+    "shareOn": "Partager sur",
     "welcomeTitle": "Bienvenue sur My Volley",
     "welcomeText": "L'application dédiée aux coachs et joueurs de volleyball souhaitant analyser leur jeu avec précision. Comptez les points, générez des heatmaps et exportez vos statistiques.",
     "welcomeStart": "Commencer"

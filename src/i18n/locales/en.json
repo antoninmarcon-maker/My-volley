@@ -73,6 +73,7 @@
     "inviteError": "Send error",
     "inviteErrorDesc": "Could not copy the link. Please try again.",
     "copyAppLink": "Copy app link",
+    "shareOn": "Share on",
     "welcomeTitle": "Welcome to My Volley",
     "welcomeText": "The app dedicated to volleyball coaches and players who want to analyze their game with precision. Count points, generate heatmaps and export your statistics.",
     "welcomeStart": "Get Started"

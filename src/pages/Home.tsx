@@ -376,6 +376,7 @@ export default function Home() {
               <DialogDescription className="text-center text-sm text-muted-foreground">{t('home.inviteDesc')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
+              {/* Email */}
               <div className="flex gap-2">
                 <Input
                   type="email"
@@ -387,26 +388,57 @@ export default function Home() {
                 <button
                   disabled={!inviteEmail.trim() || !inviteEmail.includes('@')}
                   onClick={() => {
-                    const url = `${window.location.origin}`;
-                    navigator.clipboard.writeText(`${t('home.inviteText')} ${url}`)
-                      .then(() => toast.success(t('home.inviteLinkCopied')))
-                      .catch(() => toast.error(t('home.inviteError'), { description: t('home.inviteErrorDesc') }));
+                    const appUrl = 'https://my-volley.lovable.app';
+                    const subject = encodeURIComponent(t('home.inviteTitle'));
+                    const body = encodeURIComponent(`${t('home.inviteText')}\n\n${appUrl}`);
+                    window.open(`mailto:${encodeURIComponent(inviteEmail)}?subject=${subject}&body=${body}`, '_self');
+                    toast.success(t('home.inviteSent'));
                     setInviteEmail('');
+                    setShowShareInvite(false);
                   }}
                   className="px-3 h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-40 flex items-center gap-1.5"
                 >
                   <Mail size={14} /> {t('common.send')}
                 </button>
               </div>
+
+              <div className="relative flex items-center gap-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[10px] text-muted-foreground">{t('home.shareOn')}</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {/* Social buttons */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: 'WhatsApp', icon: '💬', url: `https://wa.me/?text=${encodeURIComponent(`${t('home.inviteText')} https://my-volley.lovable.app`)}` },
+                  { label: 'X', icon: '𝕏', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${t('home.inviteText')} https://my-volley.lovable.app`)}` },
+                  { label: 'Facebook', icon: '📘', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://my-volley.lovable.app')}` },
+                  { label: 'Telegram', icon: '✈️', url: `https://t.me/share/url?url=${encodeURIComponent('https://my-volley.lovable.app')}&text=${encodeURIComponent(t('home.inviteText'))}` },
+                ].map(s => (
+                  <button
+                    key={s.label}
+                    onClick={() => { window.open(s.url, '_blank'); setShowShareInvite(false); }}
+                    className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 transition-all text-xs font-medium text-foreground"
+                  >
+                    <span className="text-lg">{s.icon}</span>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
               <div className="relative flex items-center gap-2">
                 <div className="flex-1 h-px bg-border" />
                 <span className="text-[10px] text-muted-foreground">{t('common.or')}</span>
                 <div className="flex-1 h-px bg-border" />
               </div>
+
+              {/* Copy link */}
               <button
                 onClick={() => {
-                  const url = 'https://my-volley.lovable.app';
-                  navigator.clipboard.writeText(url).then(() => toast.success(t('heatmap.linkCopied'))).catch(() => toast.error(t('heatmap.linkCopyError')));
+                  navigator.clipboard.writeText('https://my-volley.lovable.app')
+                    .then(() => { toast.success(t('heatmap.linkCopied')); setShowShareInvite(false); })
+                    .catch(() => toast.error(t('heatmap.linkCopyError')));
                 }}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-sm hover:bg-secondary/80 transition-all"
               >
