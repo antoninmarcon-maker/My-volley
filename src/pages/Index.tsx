@@ -38,6 +38,9 @@ const Index = () => {
   // --- Replay mode (finished matches) ---
   const [replaySetIndex, setReplaySetIndex] = useState<number | null>(null);
 
+  // Performance mode: show player selector BEFORE court click
+  const [awaitingPlayerBeforeCourt, setAwaitingPlayerBeforeCourt] = useState(false);
+
   useEffect(() => {
     if (!matchId) { setLoading(false); return; }
     const ensureMatchLocal = async () => {
@@ -66,6 +69,7 @@ const Index = () => {
     teamNames, sidesSwapped, chronoRunning, chronoSeconds,
     players, pendingPoint, servingTeam, sport,
     isPerformanceMode, currentRallyActions, rallyInProgress, directionOrigin, pendingDirectionAction, canUndo,
+    preSelectedPlayerId, setPreSelectedPlayerId,
     setTeamNames, setPlayers, selectAction, cancelSelection, addPoint,
     assignPlayer, skipPlayerAssignment,
     undo, endSet, startNewSet, waitingForNewSet, lastEndedSetScore, resetMatch, switchSides, startChrono, pauseChrono,
@@ -150,8 +154,19 @@ const Index = () => {
   useEffect(() => {
     if (!selectedTeam || !selectedAction) {
       delete (window as any).__pendingPlaceOnCourt;
+      setAwaitingPlayerBeforeCourt(false);
       return;
     }
+
+    const needsAssignToPlayer = (window as any).__pendingCustomAssignToPlayer !== false;
+    const needsCourtPlacement = (window as any).__pendingPlaceOnCourt !== false && metadata?.hasCourt !== false && !SERVICE_FAULT_ACTIONS.includes(selectedAction);
+
+    // Performance mode: if action needs player AND court, show player selector first
+    if (isPerformanceMode && needsAssignToPlayer && needsCourtPlacement && players.length > 0 && !preSelectedPlayerId) {
+      setAwaitingPlayerBeforeCourt(true);
+      return; // Wait for player selection before proceeding to court
+    }
+
     const isAutoPoint =
       metadata?.hasCourt === false ||
       SERVICE_FAULT_ACTIONS.includes(selectedAction) ||
@@ -160,7 +175,7 @@ const Index = () => {
       delete (window as any).__pendingPlaceOnCourt;
       addPoint(0.5, 0.5);
     }
-  }, [matchState.selectedPointType, selectedTeam, selectedAction, addPoint]);
+  }, [matchState.selectedPointType, selectedTeam, selectedAction, addPoint, isPerformanceMode, players.length, preSelectedPlayerId]);
 
   // Player assignment logic
   useEffect(() => {
@@ -358,7 +373,26 @@ const Index = () => {
           </div>
         )}
 
-        {!isFinished && pendingPoint && players.length > 0 && (() => {
+        {/* Pre-court player selector (Performance mode: Action→Player→Court flow) */}
+        {!isFinished && awaitingPlayerBeforeCourt && selectedTeam && selectedAction && players.length > 0 && (
+          <PlayerSelector
+            players={players}
+            prompt={t('playerSelector.whoDidAction')}
+            onSelect={(playerId) => {
+              setPreSelectedPlayerId(playerId);
+              setAwaitingPlayerBeforeCourt(false);
+              // Now the court click banner will show (selectedTeam is still set)
+            }}
+            onSkip={() => {
+              setPreSelectedPlayerId(null);
+              setAwaitingPlayerBeforeCourt(false);
+            }}
+            sport={sport}
+          />
+        )}
+
+        {/* Post-court player selector (Standard mode or performance mode without court) */}
+        {!isFinished && !awaitingPlayerBeforeCourt && pendingPoint && players.length > 0 && (() => {
           if (pendingPoint.type === 'neutral') {
             return (
               <PlayerSelector players={players} prompt={t('playerSelector.whoDidAction')} onSelect={assignPlayer} onSkip={skipPlayerAssignment} sport={sport} />
