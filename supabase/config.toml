@@ -7,3 +7,5 @@ project_id = "ikjkkakphhpogjkrkazv"
     verify_jwt = false
   [functions.send-tutorial-push]
     verify_jwt = false
+  [functions.invite-user]
+    verify_jwt = false
