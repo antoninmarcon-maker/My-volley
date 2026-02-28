@@ -34,7 +34,7 @@ const BACK_DEPTH = 80; // pixels from baseline inward
 
 function getClickZone(svgX: number, svgY: number): ZoneType {
   const isInsideCourt = svgX >= COURT_LEFT && svgX <= COURT_RIGHT && svgY >= COURT_TOP && svgY <= COURT_BOTTOM;
-  
+
   if (isInsideCourt) {
     // Net zone: within 30px of center line (wider hitbox for mobile)
     if (Math.abs(svgX - NET_X) < 30) {
@@ -46,7 +46,7 @@ function getClickZone(svgX: number, svgY: number): ZoneType {
     if (svgX < NET_X) return 'left_court';
     return 'right_court';
   }
-  
+
   // Outside zones
   if (svgX < NET_X) return 'outside_left';
   return 'outside_right';
@@ -118,28 +118,36 @@ function getZoneHighlights(
     case 'service_miss': {
       // Behind opponent's baseline (where they served from, outside the court)
       if (opponentSide === 'left') {
-        return { allowed: [
-          { x: 0, y: 0, w: COURT_LEFT, h: 400 },
-        ]};
+        return {
+          allowed: [
+            { x: 0, y: 0, w: COURT_LEFT, h: 400 },
+          ]
+        };
       }
-      return { allowed: [
-        { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
-      ]};
+      return {
+        allowed: [
+          { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
+        ]
+      };
     }
     case 'out': {
       // Outside scoring team's court (ball went out on their side)
       if (teamSide === 'left') {
-        return { allowed: [
-          { x: 0, y: 0, w: COURT_LEFT, h: 400 },
-          { x: COURT_LEFT, y: 0, w: NET_X - COURT_LEFT, h: COURT_TOP },
-          { x: COURT_LEFT, y: COURT_BOTTOM, w: NET_X - COURT_LEFT, h: 400 - COURT_BOTTOM },
-        ]};
+        return {
+          allowed: [
+            { x: 0, y: 0, w: COURT_LEFT, h: 400 },
+            { x: COURT_LEFT, y: 0, w: NET_X - COURT_LEFT, h: COURT_TOP },
+            { x: COURT_LEFT, y: COURT_BOTTOM, w: NET_X - COURT_LEFT, h: 400 - COURT_BOTTOM },
+          ]
+        };
       }
-      return { allowed: [
-        { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
-        { x: NET_X, y: 0, w: COURT_RIGHT - NET_X, h: COURT_TOP },
-        { x: NET_X, y: COURT_BOTTOM, w: COURT_RIGHT - NET_X, h: 400 - COURT_BOTTOM },
-      ]};
+      return {
+        allowed: [
+          { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
+          { x: NET_X, y: 0, w: COURT_RIGHT - NET_X, h: COURT_TOP },
+          { x: NET_X, y: COURT_BOTTOM, w: COURT_RIGHT - NET_X, h: 400 - COURT_BOTTOM },
+        ]
+      };
     }
     case 'net_fault': {
       // Opponent's side of the net — wider hitbox (30px)
@@ -150,12 +158,14 @@ function getZoneHighlights(
     }
     case 'block_out': {
       // All outside zones (both sides)
-      return { allowed: [
-        { x: 0, y: 0, w: COURT_LEFT, h: 400 },
-        { x: COURT_LEFT, y: 0, w: COURT_RIGHT - COURT_LEFT, h: COURT_TOP },
-        { x: COURT_LEFT, y: COURT_BOTTOM, w: COURT_RIGHT - COURT_LEFT, h: 400 - COURT_BOTTOM },
-        { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
-      ]};
+      return {
+        allowed: [
+          { x: 0, y: 0, w: COURT_LEFT, h: 400 },
+          { x: COURT_LEFT, y: 0, w: COURT_RIGHT - COURT_LEFT, h: COURT_TOP },
+          { x: COURT_LEFT, y: COURT_BOTTOM, w: COURT_RIGHT - COURT_LEFT, h: 400 - COURT_BOTTOM },
+          { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
+        ]
+      };
     }
     default:
       return { allowed: [{ x: 0, y: 0, w: 600, h: 400 }] };
@@ -183,27 +193,33 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
   const handleInteraction = useCallback(
     (clientX: number, clientY: number) => {
       if (!courtRef.current) return;
-      
+
       const rect = courtRef.current.getBoundingClientRect();
       const rawX = (clientX - rect.left) / rect.width;
       const y = (clientY - rect.top) / rect.height;
-      
+
       // Normalize X so stored coordinates are always from blue's perspective (left=blue)
       const normalizedX = sidesSwapped ? 1 - rawX : rawX;
-      
+
       // Direction mode: allow any click for destination
       if (pendingDirectionAction && directionOrigin) {
         onCourtClick(normalizedX, y);
         return;
       }
-      
+
       if (!hasSelection) return;
-      
+
+      // Direction mode 1st click: bypass zone check — origin can be anywhere on court
+      if ((window as any).__pendingHasDirection) {
+        onCourtClick(normalizedX, y);
+        return;
+      }
+
       // Zone check uses raw (physical) coordinates
       const svgX = rawX * 600;
       const svgY = y * 400;
       const zone = getClickZone(svgX, svgY);
-      
+
       if (isZoneAllowed(zone, selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped)) {
         onCourtClick(normalizedX, y);
       }

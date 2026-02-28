@@ -34,7 +34,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
   // --- Performance Mode (Rally Tracking) ---
   const isPerformanceMode = loaded?.metadata?.isPerformanceMode ?? false;
   const [currentRallyActions, setCurrentRallyActions] = useState<RallyAction[]>([]);
-  
+
   // Direction mode: waiting for 2nd click
   const [directionOrigin, setDirectionOrigin] = useState<{ x: number; y: number } | null>(null);
   const [pendingDirectionAction, setPendingDirectionAction] = useState<{
@@ -136,29 +136,6 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setPendingDirectionAction({ team, type, action, customLabel, sigil, showOnCourt });
   }, []);
 
-  const completeDirectionAction = useCallback((endX: number, endY: number) => {
-    if (!pendingDirectionAction || !directionOrigin) return;
-    const { team, type, action, customLabel, sigil, showOnCourt } = pendingDirectionAction;
-    const rallyAction: RallyAction = {
-      id: crypto.randomUUID(),
-      team, type, action,
-      x: directionOrigin.x, y: directionOrigin.y,
-      startX: directionOrigin.x, startY: directionOrigin.y,
-      endX, endY,
-      timestamp: Date.now(),
-      ...(customLabel ? { customActionLabel: customLabel } : {}),
-      ...(sigil ? { sigil } : {}),
-      ...(showOnCourt ? { showOnCourt: true } : {}),
-      ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
-    };
-    
-    setDirectionOrigin(null);
-    setPendingDirectionAction(null);
-    
-    // Process this rally action the same way as a regular one
-    processRallyAction(rallyAction, team, type);
-  }, [pendingDirectionAction, directionOrigin]);
-
   // Process a rally action: accumulate neutrals, conclude on scored/fault
   const processRallyAction = useCallback((rallyAction: RallyAction, team: Team, type: PointType) => {
     if (type === 'neutral') {
@@ -182,7 +159,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         // Attach pre-selected player if available
         ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
       };
-      
+
       // If player was pre-selected, save directly; otherwise check if assignment needed
       if (preSelectedPlayerId) {
         setPoints(prev => [...prev, point]);
@@ -200,6 +177,29 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       setCurrentRallyActions([]);
     }
   }, [currentRallyActions, players.length, preSelectedPlayerId]);
+
+  const completeDirectionAction = useCallback((endX: number, endY: number) => {
+    if (!pendingDirectionAction || !directionOrigin) return;
+    const { team, type, action, customLabel, sigil, showOnCourt } = pendingDirectionAction;
+    const rallyAction: RallyAction = {
+      id: crypto.randomUUID(),
+      team, type, action,
+      x: directionOrigin.x, y: directionOrigin.y,
+      startX: directionOrigin.x, startY: directionOrigin.y,
+      endX, endY,
+      timestamp: Date.now(),
+      ...(customLabel ? { customActionLabel: customLabel } : {}),
+      ...(sigil ? { sigil } : {}),
+      ...(showOnCourt ? { showOnCourt: true } : {}),
+      ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
+    };
+
+    setDirectionOrigin(null);
+    setPendingDirectionAction(null);
+
+    // Process this rally action the same way as a regular one
+    processRallyAction(rallyAction, team, type);
+  }, [pendingDirectionAction, directionOrigin, processRallyAction, preSelectedPlayerId]);
 
   const addPoint = useCallback((x: number, y: number) => {
     // Priority: intercept 2nd direction click before any other check
@@ -249,13 +249,13 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         ...(customShowOnCourt ? { showOnCourt: true } : {}),
         ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
       };
-      
+
       const team = selectedTeam;
       const type = selectedPointType;
       setSelectedTeam(null);
       setSelectedPointType(null);
       setSelectedAction(null);
-      
+
       processRallyAction(rallyAction, team, type);
       return;
     }
