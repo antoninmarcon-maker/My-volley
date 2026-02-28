@@ -14,6 +14,8 @@ export interface CustomAction {
   assignToPlayer?: boolean;
   /** Whether this action requires a direction (2-click: origin + destination) */
   hasDirection?: boolean;
+  /** Whether we prompt for action quality rating (+ / ! / -) */
+  hasRating?: boolean;
 }
 
 export interface ActionsConfig {
@@ -43,7 +45,7 @@ async function syncActionsToCloud(config: ActionsConfig) {
     const userId = await getCurrentUserId();
     if (!userId) return;
     await patchCloudSettings(userId, { customActions: config.customActions, hiddenActions: config.hiddenActions });
-  } catch {}
+  } catch { }
 }
 
 export function getActionsConfig(): ActionsConfig { return getConfig(); }
@@ -65,7 +67,7 @@ export function toggleActionVisibility(actionKey: string): ActionsConfig {
 
 export function addCustomAction(
   label: string, sport: SportType, category: PointType,
-  points?: number, sigil?: string, showOnCourt?: boolean, assignToPlayer?: boolean, hasDirection?: boolean
+  points?: number, sigil?: string, showOnCourt?: boolean, assignToPlayer?: boolean, hasDirection?: boolean, hasRating?: boolean
 ): ActionsConfig {
   const config = getConfig();
   config.customActions.push({
@@ -74,12 +76,13 @@ export function addCustomAction(
     showOnCourt: hasDirection ? true : (showOnCourt ?? (category === 'neutral' ? false : true)),
     assignToPlayer: assignToPlayer ?? true,
     ...(hasDirection ? { hasDirection: true } : {}),
+    ...(hasRating ? { hasRating: true } : {}),
   });
   saveConfig(config);
   return config;
 }
 
-export function updateCustomAction(id: string, newLabel: string, points?: number, sigil?: string, showOnCourt?: boolean, assignToPlayer?: boolean, hasDirection?: boolean): ActionsConfig {
+export function updateCustomAction(id: string, newLabel: string, points?: number, sigil?: string, showOnCourt?: boolean, assignToPlayer?: boolean, hasDirection?: boolean, hasRating?: boolean): ActionsConfig {
   const config = getConfig();
   const action = config.customActions.find(a => a.id === id);
   if (action) {
@@ -92,6 +95,7 @@ export function updateCustomAction(id: string, newLabel: string, points?: number
       action.showOnCourt = showOnCourt;
     }
     if (assignToPlayer !== undefined) action.assignToPlayer = assignToPlayer;
+    if (hasRating !== undefined) action.hasRating = hasRating;
   }
   saveConfig(config);
   return config;
@@ -106,8 +110,8 @@ export function deleteCustomAction(id: string): ActionsConfig {
 
 // Advantage rule not needed for volleyball-only, but keep stubs for compatibility
 export function getAdvantageRule(_sport: SportType): boolean { return true; }
-export function setAdvantageRule(_sport: SportType, _value: boolean): void {}
-export function hydrateAdvantageRule(_cloud: any) {}
+export function setAdvantageRule(_sport: SportType, _value: boolean): void { }
+export function hydrateAdvantageRule(_cloud: any) { }
 
 export function getCustomActionRealKey(customAction: CustomAction): ActionType {
   const otherKeys = OTHER_ACTION_KEYS[customAction.sport];
@@ -117,10 +121,13 @@ export function getCustomActionRealKey(customAction: CustomAction): ActionType {
 
 export function getVisibleActions(
   sport: SportType, category: PointType,
-  defaultActions: { key: string; label: string; points?: number }[]
-): { key: string; label: string; points?: number; customId?: string; sigil?: string; showOnCourt?: boolean; hasDirection?: boolean }[] {
+  defaultActions: { key: string; label: string; points?: number; customId?: string; hasRating?: boolean }[]
+): { key: string; label: string; points?: number; customId?: string; sigil?: string; showOnCourt?: boolean; hasDirection?: boolean; hasRating?: boolean }[] {
   const config = getConfig();
-  const visible = defaultActions.filter(a => !config.hiddenActions.includes(a.key));
+  const visible = defaultActions.filter(a => !config.hiddenActions.includes(a.key)).map(a => ({
+    ...a,
+    hasRating: a.hasRating ?? (['attack'].includes(a.key) || ['Réception', 'Passe', 'Service', 'Attaque', 'Défense', 'Block', 'block'].includes(a.label))
+  }));
   const customs = config.customActions
     .filter(c => c.sport === sport && c.category === category && !config.hiddenActions.includes(c.id))
     .map(c => ({
@@ -129,6 +136,7 @@ export function getVisibleActions(
       ...(c.showOnCourt != null ? { showOnCourt: c.showOnCourt } : {}),
       ...(c.assignToPlayer != null ? { assignToPlayer: c.assignToPlayer } : {}),
       ...(c.hasDirection ? { hasDirection: true } : {}),
+      hasRating: c.hasRating ?? ['Réception', 'Passe', 'Service', 'Attaque', 'Défense'].includes(c.label),
     }));
   return [...visible, ...customs];
 }

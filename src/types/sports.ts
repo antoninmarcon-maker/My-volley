@@ -92,6 +92,7 @@ export interface Point {
   showOnCourt?: boolean;
   /** Rally sub-actions when Performance Mode is active */
   rallyActions?: RallyAction[];
+  rating?: 'negative' | 'neutral' | 'positive';
 }
 
 export interface SetData {
@@ -121,6 +122,7 @@ export interface RallyAction {
   /** Direction tracking: end coordinates */
   endX?: number;
   endY?: number;
+  rating?: 'negative' | 'neutral' | 'positive';
 }
 
 export interface MatchMetadata {

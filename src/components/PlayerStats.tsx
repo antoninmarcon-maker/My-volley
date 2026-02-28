@@ -69,21 +69,43 @@ export function PlayerStats({ points, players, teamName, matchId }: PlayerStatsP
       const negScoredActions = OFFENSIVE_ACTIONS;
       const negFaultActions = FAULT_ACTIONS;
       for (const a of negScoredActions) {
-        const count = negatives.filter(p => p.type === 'scored' && p.action === a.key).length;
-        if (count > 0) faultBreakdown.push({ label: a.label, count });
+        const actionPoints = negatives.filter(p => p.type === 'scored' && p.action === a.key);
+        const count = actionPoints.length;
+        if (count > 0) {
+          const pos = actionPoints.filter(p => p.rating === 'positive').length;
+          const neu = actionPoints.filter(p => p.rating === 'neutral').length;
+          const neg = actionPoints.filter(p => p.rating === 'negative').length;
+          const suffix = (pos || neu || neg) ? ` (${[pos && `${pos}+`, neu && `${neu}!`, neg && `${neg}-`].filter(Boolean).join(', ')})` : '';
+          faultBreakdown.push({ label: a.label + suffix, count });
+        }
       }
       for (const a of negFaultActions) {
-        const count = negatives.filter(p => p.type === 'fault' && p.action === a.key).length;
-        if (count > 0) faultBreakdown.push({ label: a.label, count });
+        const actionPoints = negatives.filter(p => p.type === 'fault' && p.action === a.key);
+        const count = actionPoints.length;
+        if (count > 0) {
+          const pos = actionPoints.filter(p => p.rating === 'positive').length;
+          const neu = actionPoints.filter(p => p.rating === 'neutral').length;
+          const neg = actionPoints.filter(p => p.rating === 'negative').length;
+          const suffix = (pos || neu || neg) ? ` (${[pos && `${pos}+`, neu && `${neu}!`, neg && `${neg}-`].filter(Boolean).join(', ')})` : '';
+          faultBreakdown.push({ label: a.label + suffix, count });
+        }
       }
 
       const total = scoredCount + negativeCount + neutrals.length;
       const efficiency = total > 0 ? (scoredCount / total * 100) : 0;
 
-      const scoredBreakdown = OFFENSIVE_ACTIONS.map(a => ({
-        label: a.label,
-        count: scored.filter(p => p.action === a.key).length,
-      })).filter(b => b.count > 0);
+      const scoredBreakdown = OFFENSIVE_ACTIONS.map(a => {
+        const actionPoints = scored.filter(p => p.action === a.key);
+        const count = actionPoints.length;
+        const pos = actionPoints.filter(p => p.rating === 'positive').length;
+        const neu = actionPoints.filter(p => p.rating === 'neutral').length;
+        const neg = actionPoints.filter(p => p.rating === 'negative').length;
+        const suffix = (pos || neu || neg) ? ` (${[pos && `${pos}+`, neu && `${neu}!`, neg && `${neg}-`].filter(Boolean).join(', ')})` : '';
+        return {
+          label: a.label + suffix,
+          count: count,
+        };
+      }).filter(b => b.count > 0);
 
       if (faultWins.length > 0) {
         scoredBreakdown.push({ label: t('playerStats.faultsLabel'), count: faultWins.length });
@@ -93,8 +115,13 @@ export function PlayerStats({ points, players, teamName, matchId }: PlayerStatsP
       const neutralLabels = new Map<string, string>();
       neutrals.forEach(p => { const label = p.customActionLabel || p.action; neutralLabels.set(label, label); });
       neutralLabels.forEach(label => {
-        const count = neutrals.filter(p => (p.customActionLabel || p.action) === label).length;
-        neutralBreakdown.push({ label, count });
+        const matchingPoints = neutrals.filter(p => (p.customActionLabel || p.action) === label);
+        const count = matchingPoints.length;
+        const pos = matchingPoints.filter(p => p.rating === 'positive').length;
+        const neu = matchingPoints.filter(p => p.rating === 'neutral').length;
+        const neg = matchingPoints.filter(p => p.rating === 'negative').length;
+        const suffix = (pos || neu || neg) ? ` (${[pos && `${pos}+`, neu && `${neu}!`, neg && `${neg}-`].filter(Boolean).join(', ')})` : '';
+        neutralBreakdown.push({ label: label + suffix, count });
       });
 
       return {

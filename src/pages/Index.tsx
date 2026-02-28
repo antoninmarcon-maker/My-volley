@@ -42,6 +42,9 @@ const Index = () => {
   // Performance mode: show player selector BEFORE court click
   const [awaitingPlayerBeforeCourt, setAwaitingPlayerBeforeCourt] = useState(false);
 
+  // Performance mode: show rating selector AFTER player selection and BEFORE court click
+  const [awaitingRating, setAwaitingRating] = useState(false);
+
   useEffect(() => {
     if (!matchId) { setLoading(false); return; }
     const ensureMatchLocal = async () => {
@@ -70,7 +73,7 @@ const Index = () => {
     teamNames, sidesSwapped, chronoRunning, chronoSeconds,
     players, pendingPoint, servingTeam, sport,
     isPerformanceMode, currentRallyActions, rallyInProgress, directionOrigin, pendingDirectionAction, canUndo,
-    preSelectedPlayerId, setPreSelectedPlayerId,
+    preSelectedPlayerId, setPreSelectedPlayerId, preSelectedRating, setPreSelectedRating,
     setTeamNames, setPlayers, selectAction, cancelSelection, addPoint,
     assignPlayer, skipPlayerAssignment,
     undo, endSet, startNewSet, waitingForNewSet, lastEndedSetScore, resetMatch, switchSides, startChrono, pauseChrono,
@@ -210,18 +213,29 @@ const Index = () => {
   useEffect(() => {
     if (!selectedTeam || !selectedAction) {
       delete (window as any).__pendingPlaceOnCourt;
+      delete (window as any).__pendingHasRating;
       setAwaitingPlayerBeforeCourt(false);
+      setAwaitingRating(false);
       return;
     }
 
     const needsAssignToPlayer = (window as any).__pendingCustomAssignToPlayer !== false;
     const needsCourtPlacement = (window as any).__pendingPlaceOnCourt !== false && metadata?.hasCourt !== false && !SERVICE_FAULT_ACTIONS.includes(selectedAction);
+    const needsRating = (window as any).__pendingHasRating === true;
 
     // Performance mode: if action needs player AND court, show player selector first
     if (isPerformanceMode && needsAssignToPlayer && needsCourtPlacement && players.length > 0 && !preSelectedPlayerId) {
       setAwaitingPlayerBeforeCourt(true);
       return; // Wait for player selection before proceeding to court
     }
+
+    // Performance mode: if action needs rating, show rating selector
+    if (isPerformanceMode && needsRating && !preSelectedRating) {
+      setAwaitingRating(true);
+      return;
+    }
+
+    setAwaitingRating(false);
 
     const isAutoPoint =
       metadata?.hasCourt === false ||
@@ -264,8 +278,7 @@ const Index = () => {
     const snapshot = JSON.stringify(match);
     if (snapshot === lastCloudSaveRef.current) return;
     lastCloudSaveRef.current = snapshot;
-    saveCloudMatch(user.id, match).catch(err =>
-      { if (import.meta.env.DEV) console.error('[CloudSync] save failed:', err); }
+    saveCloudMatch(user.id, match).catch(err => { if (import.meta.env.DEV) console.error('[CloudSync] save failed:', err); }
     );
   }, [user, matchId]);
 
@@ -280,7 +293,7 @@ const Index = () => {
     return () => {
       if (user && matchId) {
         const match = getMatch(matchId);
-        if (match) { saveCloudMatch(user.id, match).catch(() => {}); }
+        if (match) { saveCloudMatch(user.id, match).catch(() => { }); }
       }
     };
   }, [user, matchId]);
@@ -362,6 +375,8 @@ const Index = () => {
               onSwitchSides={switchSides} onStartChrono={startChrono} onPauseChrono={pauseChrono} onSetTeamNames={setTeamNames}
               canUndo={canUndo} isFinished={isFinished} waitingForNewSet={waitingForNewSet} lastEndedSetScore={lastEndedSetScore} onStartNewSet={startNewSet}
               rallyInProgress={rallyInProgress} rallyActionCount={currentRallyActions.length}
+              awaitingRating={awaitingRating}
+              onSelectRating={setPreSelectedRating}
             />
 
             {/* Direction mode indicator (live only) */}
@@ -414,6 +429,7 @@ const Index = () => {
                 directionOrigin={isInReplayView ? null : directionOrigin}
                 pendingDirectionAction={isInReplayView ? false : !!pendingDirectionAction}
                 isViewingMode={isInReplayView}
+                isPerformanceMode={isPerformanceMode}
                 viewingActions={viewingCourtData.actions}
                 viewingPoint={viewingCourtData.point}
                 playerAliases={playerAliases}

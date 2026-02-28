@@ -43,6 +43,7 @@ interface DataPoint {
   type: PointType;
   hasRally: boolean;
   rallyCount: number;
+  rating?: 'negative' | 'neutral' | 'positive';
 }
 
 export function PointTimeline({ points, teamNames, onSelectPoint, viewingPointIndex }: PointTimelineProps) {
@@ -71,6 +72,7 @@ export function PointTimeline({ points, teamNames, onSelectPoint, viewingPointIn
         action: p.action, team: p.team, type: p.type,
         hasRally: (p.rallyActions?.length ?? 0) > 0,
         rallyCount: p.rallyActions?.length ?? 0,
+        rating: p.rating,
       });
     });
 
@@ -114,7 +116,7 @@ export function PointTimeline({ points, teamNames, onSelectPoint, viewingPointIn
           </LineChart>
         </ResponsiveContainer>
       </div>
-      
+
       {/* Clickable point list */}
       {onSelectPoint && (
         <div className="max-h-40 overflow-y-auto space-y-1 scrollbar-thin">
@@ -125,11 +127,10 @@ export function PointTimeline({ points, teamNames, onSelectPoint, viewingPointIn
               <button
                 key={p.id}
                 onClick={() => onSelectPoint(i)}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all text-left ${
-                  isViewing
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all text-left ${isViewing
                     ? 'bg-primary/15 border border-primary/30 ring-1 ring-primary/20'
                     : 'bg-muted/30 hover:bg-muted/60 border border-transparent'
-                }`}
+                  }`}
               >
                 <span className="font-mono text-muted-foreground w-5 text-right">#{i + 1}</span>
                 <span className={`font-semibold ${p.team === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>
@@ -137,6 +138,9 @@ export function PointTimeline({ points, teamNames, onSelectPoint, viewingPointIn
                 </span>
                 <span className="flex-1 truncate text-foreground">
                   {p.customActionLabel || (ACTION_LABELS[p.action]?.full ?? p.action)}
+                  {p.rating === 'positive' && <span className="ml-1 text-green-500 font-bold">(+)</span>}
+                  {p.rating === 'neutral' && <span className="ml-1 text-orange-500 font-bold">(!)</span>}
+                  {p.rating === 'negative' && <span className="ml-1 text-destructive font-bold">(-)</span>}
                 </span>
                 {hasRally && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-semibold">
@@ -191,7 +195,12 @@ function CustomTooltip({ active, payload, teamNames, onSelectPoint }: any) {
       <p className="font-bold text-foreground">Point #{d.index} — {d.timeLabel}</p>
       <p className={`font-semibold ${d.team === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>{teamName}</p>
       <p className="text-muted-foreground">{d.type === 'scored' ? 'Point ✓' : 'Fault ✗'}</p>
-      <p className="text-foreground"><span className="font-bold">{actionInfo?.abbr}</span> — {actionInfo?.full}</p>
+      <p className="text-foreground">
+        <span className="font-bold">{actionInfo?.abbr}</span> — {actionInfo?.full}
+        {d.rating === 'positive' && <span className="ml-1 text-green-500 font-bold">(+)</span>}
+        {d.rating === 'neutral' && <span className="ml-1 text-orange-500 font-bold">(!)</span>}
+        {d.rating === 'negative' && <span className="ml-1 text-destructive font-bold">(-)</span>}
+      </p>
       <p className="text-muted-foreground">{teamNames.blue} {d.blue} - {d.red} {teamNames.red}</p>
       {d.hasRally && <p className="text-primary font-semibold">⚡ {d.rallyCount} actions</p>}
     </div>

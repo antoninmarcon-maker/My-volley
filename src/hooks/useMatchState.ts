@@ -45,6 +45,9 @@ export function useMatchState(matchId: string, ready: boolean = true) {
   // Pre-selected player: chosen BEFORE court click in performance mode (Action→Player→Court flow)
   const [preSelectedPlayerId, setPreSelectedPlayerId] = useState<string | null>(null);
 
+  // Pre-selected rating: chosen BEFORE court click in performance mode if hasRating is true
+  const [preSelectedRating, setPreSelectedRating] = useState<'negative' | 'neutral' | 'positive' | null>(null);
+
   useEffect(() => {
     if (!ready || hasInitialized.current) return;
     hasInitialized.current = true;
@@ -128,6 +131,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setDirectionOrigin(null);
     setPendingDirectionAction(null);
     setPreSelectedPlayerId(null);
+    setPreSelectedRating(null);
   }, []);
 
   // --- Direction mode helpers ---
@@ -138,6 +142,10 @@ export function useMatchState(matchId: string, ready: boolean = true) {
 
   // Process a rally action: accumulate neutrals, conclude on scored/fault
   const processRallyAction = useCallback((rallyAction: RallyAction, team: Team, type: PointType) => {
+    // Both neutral and concluding actions consume the pre-selected variables
+    setPreSelectedPlayerId(null);
+    setPreSelectedRating(null);
+
     if (type === 'neutral') {
       // Neutral: accumulate, don't conclude
       setCurrentRallyActions(prev => [...prev, rallyAction]);
@@ -161,9 +169,8 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       };
 
       // If player was pre-selected, save directly; otherwise check if assignment needed
-      if (preSelectedPlayerId) {
+      if (rallyAction.playerId) {
         setPoints(prev => [...prev, point]);
-        setPreSelectedPlayerId(null);
       } else {
         const shouldAssignPlayer = players.length > 0 && (
           rallyAction.type === 'neutral' || team === 'blue' || (team === 'red' && type === 'fault')
@@ -192,6 +199,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       ...(sigil ? { sigil } : {}),
       ...(showOnCourt ? { showOnCourt: true } : {}),
       ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
+      ...(preSelectedRating ? { rating: preSelectedRating } : {}),
     };
 
     setDirectionOrigin(null);
@@ -248,6 +256,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         ...(customSigil ? { sigil: customSigil } : {}),
         ...(customShowOnCourt ? { showOnCourt: true } : {}),
         ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
+        ...(preSelectedRating ? { rating: preSelectedRating } : {}),
       };
 
       const team = selectedTeam;
@@ -505,6 +514,8 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     canUndo,
     preSelectedPlayerId,
     setPreSelectedPlayerId,
+    preSelectedRating,
+    setPreSelectedRating,
     setTeamNames,
     setPlayers,
     selectAction,

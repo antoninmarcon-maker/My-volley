@@ -38,6 +38,8 @@ interface ScoreBoardProps {
   /** Performance Mode props */
   rallyInProgress?: boolean;
   rallyActionCount?: number;
+  awaitingRating?: boolean;
+  onSelectRating?: (rating: 'negative' | 'neutral' | 'positive') => void;
 }
 
 function formatTime(seconds: number) {
@@ -56,6 +58,7 @@ export function ScoreBoard({
   servingTeam, sport, metadata,
   isFinished = false, waitingForNewSet = false, lastEndedSetScore, onStartNewSet,
   rallyInProgress = false, rallyActionCount = 0,
+  awaitingRating = false, onSelectRating,
 }: ScoreBoardProps) {
   const { t } = useTranslation();
   const [editingNames, setEditingNames] = useState(false);
@@ -64,6 +67,18 @@ export function ScoreBoard({
   const [menuTab, setMenuTab] = useState<MenuTab>('scored');
   const [confirmEndSet, setConfirmEndSet] = useState(false);
   const [confirmEndMatch, setConfirmEndMatch] = useState(false);
+
+  const [showPerfOnboarding, setShowPerfOnboarding] = useState(() => {
+    if (metadata?.isPerformanceMode && !localStorage.getItem('myvolley-hasSeenPerfOnboarding')) {
+      return true;
+    }
+    return false;
+  });
+
+  const handleClosePerfOnboarding = () => {
+    localStorage.setItem('myvolley-hasSeenPerfOnboarding', 'true');
+    setShowPerfOnboarding(false);
+  };
 
   const periodLabel = getPeriodLabel(sport);
 
@@ -213,9 +228,8 @@ export function ScoreBoard({
             <button
               onClick={() => openMenu(left)}
               disabled={!!selectedTeam || waitingForNewSet}
-              className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-                left === 'blue' ? 'bg-team-blue/20 text-team-blue border-2 border-team-blue/30 hover:bg-team-blue/30' : 'bg-team-red/20 text-team-red border-2 border-team-red/30 hover:bg-team-red/30'
-              }`}
+              className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${left === 'blue' ? 'bg-team-blue/20 text-team-blue border-2 border-team-blue/30 hover:bg-team-blue/30' : 'bg-team-red/20 text-team-red border-2 border-team-red/30 hover:bg-team-red/30'
+                }`}
             >
               <Plus size={24} className="mx-auto" />
             </button>
@@ -237,9 +251,8 @@ export function ScoreBoard({
             <button
               onClick={() => openMenu(right)}
               disabled={!!selectedTeam || waitingForNewSet}
-              className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
-                right === 'blue' ? 'bg-team-blue/20 text-team-blue border-2 border-team-blue/30 hover:bg-team-blue/30' : 'bg-team-red/20 text-team-red border-2 border-team-red/30 hover:bg-team-red/30'
-              }`}
+              className={`mt-2 w-full py-3 rounded-xl font-bold text-lg transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${right === 'blue' ? 'bg-team-blue/20 text-team-blue border-2 border-team-blue/30 hover:bg-team-blue/30' : 'bg-team-red/20 text-team-red border-2 border-team-red/30 hover:bg-team-red/30'
+                }`}
             >
               <Plus size={24} className="mx-auto" />
             </button>
@@ -271,11 +284,10 @@ export function ScoreBoard({
               <button
                 key={a.customId ?? a.key}
                 onClick={() => handleActionSelect(a.key as ActionType, a.customId ? a.label : undefined, a.sigil, a.showOnCourt, (a as any).assignToPlayer, (a as any).hasDirection)}
-                className={`py-2.5 px-2 text-xs font-semibold rounded-lg transition-all active:scale-95 ${
-                  menuTab === 'scored' ? 'bg-action-scored/10 text-action-scored hover:bg-action-scored/20 border border-action-scored/20'
+                className={`py-2.5 px-2 text-xs font-semibold rounded-lg transition-all active:scale-95 ${menuTab === 'scored' ? 'bg-action-scored/10 text-action-scored hover:bg-action-scored/20 border border-action-scored/20'
                     : menuTab === 'fault' ? 'bg-action-fault/10 text-action-fault hover:bg-action-fault/20 border border-action-fault/20'
-                    : 'bg-muted/50 text-foreground hover:bg-muted border border-border'
-                }`}
+                      : 'bg-muted/50 text-foreground hover:bg-muted border border-border'
+                  }`}
               >
                 {a.customId ? a.label : t(`actions.${a.key}`, a.label)}
                 {a.sigil && <span className="ml-1 text-[10px] opacity-60">({a.sigil})</span>}
@@ -286,7 +298,7 @@ export function ScoreBoard({
       )}
 
       {/* Active selection indicator */}
-      {selectedTeam && selectedAction && (window as any).__pendingPlaceOnCourt !== false && (
+      {selectedTeam && selectedAction && (window as any).__pendingPlaceOnCourt !== false && !awaitingRating && (
         <div className="flex items-center justify-between bg-accent/50 rounded-lg p-2.5 border border-accent">
           <p className="text-sm text-foreground">
             <span className="font-bold">{teamNames[selectedTeam]}</span> — {
@@ -296,6 +308,30 @@ export function ScoreBoard({
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground animate-pulse">{selectedPointType === 'neutral' ? t('scoreboard.touchCourtNeutral') : t('scoreboard.touchCourt')}</span>
             <button onClick={onCancelSelection} className="p-1 rounded-md text-muted-foreground hover:text-foreground"><X size={14} /></button>
+          </div>
+        </div>
+      )}
+
+      {/* Rating UI */}
+      {awaitingRating && onSelectRating && (
+        <div className="bg-card rounded-xl border border-border p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-foreground">Évaluer la qualité de l'action</p>
+            <button onClick={onCancelSelection} className="p-1 rounded-md text-muted-foreground hover:text-foreground"><X size={16} /></button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => onSelectRating('negative')} className="flex flex-col items-center gap-1.5 py-4 px-2 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 border-2 border-transparent hover:border-destructive/30 transition-all active:scale-95">
+              <span className="text-3xl">🔴</span>
+              <span className="text-xs font-bold">Négatif (-)</span>
+            </button>
+            <button onClick={() => onSelectRating('neutral')} className="flex flex-col items-center gap-1.5 py-4 px-2 rounded-xl bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-2 border-transparent hover:border-orange-500/30 transition-all active:scale-95">
+              <span className="text-3xl">🟠</span>
+              <span className="text-xs font-bold">Neutre (!)</span>
+            </button>
+            <button onClick={() => onSelectRating('positive')} className="flex flex-col items-center gap-1.5 py-4 px-2 rounded-xl bg-green-500/10 text-green-500 hover:bg-green-500/20 border-2 border-transparent hover:border-green-500/30 transition-all active:scale-95">
+              <span className="text-3xl">🟢</span>
+              <span className="text-xs font-bold">Positif (+)</span>
+            </button>
           </div>
         </div>
       )}
@@ -356,6 +392,25 @@ export function ScoreBoard({
                 <Flag size={16} /> {t('common.confirm')}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Performance Mode Onboarding */}
+      {showPerfOnboarding && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={handleClosePerfOnboarding}>
+          <div className="bg-card rounded-2xl p-6 max-w-sm w-full border border-border space-y-4 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-foreground text-center flex items-center justify-center gap-2">
+              <span className="text-2xl">⚡</span> Bienvenue dans le Mode Performance !
+            </h2>
+            <div className="text-sm text-muted-foreground space-y-3">
+              <p>Vous pouvez maintenant tracker chaque échange de A à Z.</p>
+              <p>Les limites de placement sur le terrain sont <strong>désactivées</strong> pour vous offrir une liberté totale !</p>
+              <p>Enfin, dans le menu <strong>'Actions Personnalisées'</strong>, vous pouvez activer les <em>trajectoires</em> pour n'importe quelle action et activer l'<em>évaluation de la qualité (+, !, -)</em>.</p>
+            </div>
+            <button onClick={handleClosePerfOnboarding} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:opacity-90 mt-2">
+              J'ai compris
+            </button>
           </div>
         </div>
       )}

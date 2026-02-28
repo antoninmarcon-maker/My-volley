@@ -17,6 +17,8 @@ interface VolleyballCourtProps {
   viewingPoint?: Point | null;
   /** Whether we're in visualization (read-only) mode */
   isViewingMode?: boolean;
+  /** Whether performance mode is active (allows free placement) */
+  isPerformanceMode?: boolean;
   playerAliases?: Record<string, string>;
 }
 
@@ -172,7 +174,7 @@ function getZoneHighlights(
   }
 }
 
-export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, pendingDirectionAction, viewingActions = [], viewingPoint, isViewingMode, playerAliases }: VolleyballCourtProps) {
+export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, pendingDirectionAction, viewingActions = [], viewingPoint, isViewingMode, isPerformanceMode, playerAliases }: VolleyballCourtProps) {
   const courtRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -187,8 +189,9 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
 
   const zoneHighlights = useMemo(() => {
     if (!hasSelection) return null;
+    if (isPerformanceMode) return { allowed: [{ x: 0, y: 0, w: 600, h: 400 }] };
     return getZoneHighlights(selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped);
-  }, [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped]);
+  }, [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, isPerformanceMode]);
 
   const handleInteraction = useCallback(
     (clientX: number, clientY: number) => {
@@ -220,11 +223,11 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
       const svgY = y * 400;
       const zone = getClickZone(svgX, svgY);
 
-      if (isZoneAllowed(zone, selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped)) {
+      if (isPerformanceMode || isZoneAllowed(zone, selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped)) {
         onCourtClick(normalizedX, y);
       }
     },
-    [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, onCourtClick, pendingDirectionAction, directionOrigin]
+    [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, onCourtClick, pendingDirectionAction, directionOrigin, isPerformanceMode]
   );
 
   const handleClick = useCallback(
