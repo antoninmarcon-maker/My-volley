@@ -90,11 +90,16 @@ const Index = () => {
     }
   }, [isFinished, completedSets.length, replaySetIndex]);
 
-  // --- Replay set points ---
-  const replaySetPoints = useMemo(() => {
+  // --- Replay set points (all points for court display) ---
+  const replaySetAllPoints = useMemo(() => {
     if (!isFinished || replaySetIndex === null || !completedSets[replaySetIndex]) return [];
     return completedSets[replaySetIndex].points;
   }, [isFinished, replaySetIndex, completedSets]);
+
+  // --- Replay navigable points (only scored/fault, no neutrals) ---
+  const replayNavPoints = useMemo(() => {
+    return replaySetAllPoints.filter(p => p.type === 'scored' || p.type === 'fault');
+  }, [replaySetAllPoints]);
 
   // --- Visualization helpers ---
   const isViewingMode = viewingPointIndex !== null;
@@ -127,32 +132,29 @@ const Index = () => {
   // Derive the viewing action/point for the court
   const viewingCourtData = useMemo(() => {
     if (viewingPointIndex === null) return { actions: [], point: null };
-    const pts = isFinished ? replaySetPoints : allPoints;
+    const pts = isFinished ? replayNavPoints : allPoints;
     const point = pts[viewingPointIndex];
     if (!point) return { actions: [], point: null };
 
     const rallyActions = point.rallyActions ?? [];
-    if (isPerformanceMode && rallyActions.length > 0) {
+    if (rallyActions.length > 0) {
       if (cumulativeMode) {
-        // Show all actions up to and including current index
         return { actions: rallyActions.slice(0, viewingActionIndex + 1), point: null };
       } else {
-        // Show only current action
         const action = rallyActions[viewingActionIndex] ?? null;
         return { actions: action ? [action] : [], point: null };
       }
     }
     return { actions: [], point };
-  }, [viewingPointIndex, viewingActionIndex, allPoints, replaySetPoints, isFinished, isPerformanceMode, cumulativeMode]);
+  }, [viewingPointIndex, viewingActionIndex, allPoints, replayNavPoints, isFinished, cumulativeMode]);
 
   // Points to show on court in overview mode (all points of the set)
   const courtPoints = useMemo(() => {
     if (isFinished) {
-      if (viewingPointIndex === null) return replaySetPoints; // overview: show all
-      return replaySetPoints;
+      return replaySetAllPoints;
     }
     return points;
-  }, [isFinished, viewingPointIndex, replaySetPoints, points]);
+  }, [isFinished, replaySetAllPoints, points]);
 
   // Auto-point for service faults or when court is disabled or placeOnCourt=false
   const SERVICE_FAULT_ACTIONS = ['service_miss', 'gameplay_fault', 'opponent_fault', 'timeout'];
@@ -300,7 +302,7 @@ const Index = () => {
               score={isFinished && replaySetIndex !== null && completedSets[replaySetIndex]
                 ? completedSets[replaySetIndex].score
                 : score}
-              points={isFinished ? replaySetPoints : points}
+              points={isFinished ? replaySetAllPoints : points}
               selectedTeam={selectedTeam} selectedPointType={selectedPointType} selectedAction={selectedAction}
               currentSetNumber={isFinished && replaySetIndex !== null && completedSets[replaySetIndex]
                 ? completedSets[replaySetIndex].number
@@ -324,9 +326,9 @@ const Index = () => {
             )}
 
             {/* Play-by-Play Navigator: shown in replay mode OR live viewing mode */}
-            {isFinished && replaySetPoints.length > 0 && (
+            {isFinished && replayNavPoints.length > 0 && (
               <PlayByPlayNavigator
-                points={replaySetPoints}
+                points={replayNavPoints}
                 viewingPointIndex={viewingPointIndex}
                 viewingActionIndex={viewingActionIndex}
                 onChangePoint={handleChangePoint}
@@ -353,7 +355,7 @@ const Index = () => {
 
             {metadata?.hasCourt !== false && (
               <VolleyballCourt
-                points={isFinished && isOverview ? replaySetPoints : (isFinished ? [] : courtPoints)}
+                points={isFinished && isOverview ? replaySetAllPoints : (isFinished ? [] : courtPoints)}
                 selectedTeam={isInReplayView ? null : (pendingDirectionAction ? null : selectedTeam)}
                 selectedAction={isInReplayView ? null : (pendingDirectionAction ? null : selectedAction)}
                 selectedPointType={isInReplayView ? null : (pendingDirectionAction ? null : selectedPointType)}
