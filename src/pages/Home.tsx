@@ -76,6 +76,7 @@ export default function Home() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showShareInvite, setShowShareInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteSending, setInviteSending] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem('welcomeSeen') !== 'true') {
@@ -386,19 +387,24 @@ export default function Home() {
                   className="h-10 flex-1"
                 />
                 <button
-                  disabled={!inviteEmail.trim() || !inviteEmail.includes('@')}
-                  onClick={() => {
-                    const appUrl = 'https://my-volley.lovable.app';
-                    const subject = encodeURIComponent(t('home.inviteTitle'));
-                    const body = encodeURIComponent(`${t('home.inviteText')}\n\n${appUrl}`);
-                    window.open(`mailto:${encodeURIComponent(inviteEmail)}?subject=${subject}&body=${body}`, '_self');
-                    toast.success(t('home.inviteSent'));
-                    setInviteEmail('');
-                    setShowShareInvite(false);
+                  disabled={!inviteEmail.trim() || !inviteEmail.includes('@') || inviteSending}
+                  onClick={async () => {
+                    setInviteSending(true);
+                    try {
+                      const { error } = await supabase.functions.invoke('invite-user', { body: { email: inviteEmail.trim() } });
+                      if (error) throw error;
+                      toast.success(t('home.inviteSent'));
+                      setInviteEmail('');
+                      setShowShareInvite(false);
+                    } catch (err: any) {
+                      toast.error(t('home.inviteError'));
+                    } finally {
+                      setInviteSending(false);
+                    }
                   }}
                   className="px-3 h-10 rounded-lg bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-40 flex items-center gap-1.5"
                 >
-                  <Mail size={14} /> {t('common.send')}
+                  {inviteSending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />} {t('common.send')}
                 </button>
               </div>
 
