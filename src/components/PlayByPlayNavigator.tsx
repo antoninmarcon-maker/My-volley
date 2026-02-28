@@ -40,7 +40,7 @@ export function PlayByPlayNavigator({
   const lastIndex = points.length - 1;
 
   const rallyActions = point?.rallyActions ?? [];
-  const hasRally = isPerformanceMode && rallyActions.length > 1;
+  const hasRally = rallyActions.length > 1;
   const currentAction: RallyAction | null = hasRally ? rallyActions[viewingActionIndex] ?? null : null;
 
   const actionLabel = currentAction
