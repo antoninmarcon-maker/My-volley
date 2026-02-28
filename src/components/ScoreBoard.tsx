@@ -67,8 +67,10 @@ export function ScoreBoard({
 
   const periodLabel = getPeriodLabel(sport);
 
-  const left: Team = sidesSwapped ? 'red' : 'blue';
-  const right: Team = sidesSwapped ? 'blue' : 'red';
+  // Bug fix: when match is finished, always show blue=left, red=right (static)
+  // sidesSwapped only affects court rendering, not the scoreboard UI
+  const left: Team = isFinished ? 'blue' : (sidesSwapped ? 'red' : 'blue');
+  const right: Team = isFinished ? 'red' : (sidesSwapped ? 'blue' : 'red');
 
   const saveNames = () => {
     onSetTeamNames({

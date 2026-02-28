@@ -42,6 +42,9 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     customLabel?: string; sigil?: string; showOnCourt?: boolean;
   } | null>(null);
 
+  // Pre-selected player: chosen BEFORE court click in performance mode (Action→Player→Court flow)
+  const [preSelectedPlayerId, setPreSelectedPlayerId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!ready || hasInitialized.current) return;
     hasInitialized.current = true;
@@ -124,6 +127,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     // Also cancel direction mode
     setDirectionOrigin(null);
     setPendingDirectionAction(null);
+    setPreSelectedPlayerId(null);
   }, []);
 
   // --- Direction mode helpers ---
@@ -145,6 +149,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       ...(customLabel ? { customActionLabel: customLabel } : {}),
       ...(sigil ? { sigil } : {}),
       ...(showOnCourt ? { showOnCourt: true } : {}),
+      ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
     };
     
     setDirectionOrigin(null);
@@ -174,20 +179,27 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         ...(rallyAction.customActionLabel ? { customActionLabel: rallyAction.customActionLabel } : {}),
         ...(rallyAction.sigil ? { sigil: rallyAction.sigil } : {}),
         ...(rallyAction.showOnCourt ? { showOnCourt: true } : {}),
+        // Attach pre-selected player if available
+        ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
       };
       
-      // Check if player assignment needed
-      const shouldAssignPlayer = players.length > 0 && (
-        rallyAction.type === 'neutral' || team === 'blue' || (team === 'red' && type === 'fault')
-      );
-      if (shouldAssignPlayer) {
-        setPendingPoint(point);
-      } else {
+      // If player was pre-selected, save directly; otherwise check if assignment needed
+      if (preSelectedPlayerId) {
         setPoints(prev => [...prev, point]);
+        setPreSelectedPlayerId(null);
+      } else {
+        const shouldAssignPlayer = players.length > 0 && (
+          rallyAction.type === 'neutral' || team === 'blue' || (team === 'red' && type === 'fault')
+        );
+        if (shouldAssignPlayer) {
+          setPendingPoint(point);
+        } else {
+          setPoints(prev => [...prev, point]);
+        }
       }
       setCurrentRallyActions([]);
     }
-  }, [currentRallyActions, players.length]);
+  }, [currentRallyActions, players.length, preSelectedPlayerId]);
 
   const addPoint = useCallback((x: number, y: number) => {
     // Priority: intercept 2nd direction click before any other check
@@ -235,6 +247,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         ...(customLabel ? { customActionLabel: customLabel } : {}),
         ...(customSigil ? { sigil: customSigil } : {}),
         ...(customShowOnCourt ? { showOnCourt: true } : {}),
+        ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
       };
       
       const team = selectedTeam;
@@ -269,7 +282,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setSelectedTeam(null);
     setSelectedPointType(null);
     setSelectedAction(null);
-  }, [selectedTeam, selectedPointType, selectedAction, chronoRunning, players.length, isPerformanceMode, directionOrigin, pendingDirectionAction, completeDirectionAction, cancelSelection, startDirectionMode, processRallyAction]);
+  }, [selectedTeam, selectedPointType, selectedAction, chronoRunning, players.length, isPerformanceMode, directionOrigin, pendingDirectionAction, completeDirectionAction, cancelSelection, startDirectionMode, processRallyAction, preSelectedPlayerId]);
 
   const assignPlayer = useCallback((playerId: string) => {
     if (!pendingPoint) return;
@@ -490,6 +503,8 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     directionOrigin,
     pendingDirectionAction,
     canUndo,
+    preSelectedPlayerId,
+    setPreSelectedPlayerId,
     setTeamNames,
     setPlayers,
     selectAction,
