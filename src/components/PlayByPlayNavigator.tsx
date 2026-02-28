@@ -1,18 +1,22 @@
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Eye, Layers } from 'lucide-react';
 import { Point, RallyAction, ActionType } from '@/types/sports';
+import { Switch } from '@/components/ui/switch';
 import { useTranslation } from 'react-i18next';
 
 interface PlayByPlayNavigatorProps {
   points: Point[];
-  /** -1 = overview (all points), 0+ = specific point */
-  viewingPointIndex: number;
+  /** null = overview (all points), 0+ = specific point */
+  viewingPointIndex: number | null;
   viewingActionIndex: number;
-  onChangePoint: (index: number) => void;
+  onChangePoint: (index: number | null) => void;
   onChangeAction: (index: number) => void;
   onBackToLive?: () => void;
   /** If true, we're in finished-match replay (no "back to live" button) */
   isReplayMode?: boolean;
   isPerformanceMode?: boolean;
+  /** Cumulative toggle */
+  cumulativeMode?: boolean;
+  onToggleCumulative?: (value: boolean) => void;
 }
 
 const ACTION_LABELS: Partial<Record<ActionType, string>> = {
@@ -27,19 +31,58 @@ export function PlayByPlayNavigator({
   points, viewingPointIndex, viewingActionIndex,
   onChangePoint, onChangeAction, onBackToLive,
   isReplayMode = false, isPerformanceMode = false,
+  cumulativeMode = true, onToggleCumulative,
 }: PlayByPlayNavigatorProps) {
   const { t } = useTranslation();
   
-  const isOverview = viewingPointIndex === -1;
+  const isOverview = viewingPointIndex === null;
   const point = isOverview ? null : points[viewingPointIndex];
+  const lastIndex = points.length - 1;
 
   const rallyActions = point?.rallyActions ?? [];
-  const hasRally = isPerformanceMode && rallyActions.length > 0;
+  const hasRally = isPerformanceMode && rallyActions.length > 1;
   const currentAction: RallyAction | null = hasRally ? rallyActions[viewingActionIndex] ?? null : null;
 
   const actionLabel = currentAction
     ? (currentAction.customActionLabel || t(`actions.${currentAction.action}`, ACTION_LABELS[currentAction.action] ?? currentAction.action))
     : null;
+
+  // --- Navigation handlers ---
+  const handleFastBackward = () => {
+    // << : always go to first point (index 0)
+    if (points.length > 0) {
+      onChangePoint(0);
+    }
+  };
+
+  const handlePrev = () => {
+    if (isOverview) {
+      // From overview, < goes to last point
+      if (points.length > 0) onChangePoint(lastIndex);
+    } else if (viewingPointIndex === 0) {
+      // From point 0, go back to overview
+      onChangePoint(null);
+    } else {
+      onChangePoint(viewingPointIndex! - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (isOverview) {
+      // From overview, > goes to first point
+      if (points.length > 0) onChangePoint(0);
+    } else if (viewingPointIndex === lastIndex) {
+      // From last point, > goes back to overview
+      onChangePoint(null);
+    } else {
+      onChangePoint(viewingPointIndex! + 1);
+    }
+  };
+
+  const handleFastForward = () => {
+    // >> : go to overview
+    onChangePoint(null);
+  };
 
   return (
     <div className="bg-card rounded-xl border border-border p-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -60,23 +103,23 @@ export function PlayByPlayNavigator({
         <span className="text-xs text-muted-foreground font-mono">
           {isOverview
             ? t('playByPlay.overview', { total: points.length, defaultValue: `Vue d'ensemble · ${points.length} pts` })
-            : t('playByPlay.pointOf', { current: viewingPointIndex + 1, total: points.length })}
+            : t('playByPlay.pointOf', { current: viewingPointIndex! + 1, total: points.length })}
         </span>
       </div>
 
-      {/* Point navigation with first/last buttons */}
+      {/* Point navigation */}
       <div className="flex items-center justify-between gap-1">
         <button
-          onClick={() => onChangePoint(-1)}
-          disabled={isOverview}
+          onClick={handleFastBackward}
+          disabled={(!isOverview && viewingPointIndex === 0) || points.length === 0}
           className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-30 transition-all"
-          title="Vue d'ensemble"
+          title="Premier point"
         >
           <ChevronsLeft size={16} />
         </button>
         <button
-          onClick={() => onChangePoint(viewingPointIndex - 1)}
-          disabled={isOverview}
+          onClick={handlePrev}
+          disabled={points.length === 0}
           className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-30 transition-all"
         >
           <ChevronLeft size={18} />
@@ -87,7 +130,7 @@ export function PlayByPlayNavigator({
           ) : point ? (
             <>
               <p className="text-sm font-bold text-foreground">
-                Point #{viewingPointIndex + 1}
+                Point #{viewingPointIndex! + 1}
               </p>
               <p className={`text-xs font-semibold truncate ${point.team === 'blue' ? 'text-team-blue' : 'text-team-red'}`}>
                 {point.type === 'scored' ? '⚡' : point.type === 'fault' ? '❌' : '📊'}{' '}
@@ -98,23 +141,23 @@ export function PlayByPlayNavigator({
           ) : null}
         </div>
         <button
-          onClick={() => onChangePoint(viewingPointIndex + 1)}
-          disabled={viewingPointIndex >= points.length - 1}
+          onClick={handleNext}
+          disabled={points.length === 0}
           className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-30 transition-all"
         >
           <ChevronRight size={18} />
         </button>
         <button
-          onClick={() => onChangePoint(points.length - 1)}
-          disabled={viewingPointIndex >= points.length - 1}
+          onClick={handleFastForward}
+          disabled={isOverview}
           className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 disabled:opacity-30 transition-all"
-          title="Dernier point"
+          title="Vue d'ensemble"
         >
           <ChevronsRight size={16} />
         </button>
       </div>
 
-      {/* Rally sub-action navigation (only in performance mode with rally data) */}
+      {/* Rally sub-action navigation */}
       {hasRally && !isOverview && (
         <div className="flex items-center justify-between gap-2 bg-muted/50 rounded-lg p-2">
           <button
@@ -126,7 +169,7 @@ export function PlayByPlayNavigator({
           </button>
           <div className="flex-1 text-center">
             <p className="text-xs font-semibold text-foreground">
-              {t('playByPlay.actionOf', { current: viewingActionIndex + 1, total: rallyActions.length })}
+              {t('playByPlay.actionOf', { current: viewingActionIndex + 1, total: rallyActions.length, defaultValue: `Action ${viewingActionIndex + 1}/${rallyActions.length}` })}
               {' : '}
               <span className={currentAction?.team === 'blue' ? 'text-team-blue' : 'text-team-red'}>
                 {actionLabel}
@@ -151,6 +194,20 @@ export function PlayByPlayNavigator({
           >
             <ChevronRight size={14} />
           </button>
+        </div>
+      )}
+
+      {/* Cumulative toggle (only when viewing a specific point with rally actions) */}
+      {!isOverview && hasRally && onToggleCumulative && (
+        <div className="flex items-center justify-between px-1 pt-1">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Layers size={13} />
+            <span>Affichage cumulatif</span>
+          </div>
+          <Switch
+            checked={cumulativeMode}
+            onCheckedChange={onToggleCumulative}
+          />
         </div>
       )}
     </div>

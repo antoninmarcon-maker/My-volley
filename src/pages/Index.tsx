@@ -33,7 +33,8 @@ const Index = () => {
 
   // --- Play-by-Play Visualization states ---
   const [viewingPointIndex, setViewingPointIndex] = useState<number | null>(null);
-  const [viewingActionIndex, setViewingActionIndex] = useState<number | null>(null);
+  const [viewingActionIndex, setViewingActionIndex] = useState<number>(0);
+  const [cumulativeMode, setCumulativeMode] = useState(true);
 
   // --- Replay mode (finished matches) ---
   const [replaySetIndex, setReplaySetIndex] = useState<number | null>(null);
@@ -84,7 +85,7 @@ const Index = () => {
   useEffect(() => {
     if (isFinished && completedSets.length > 0 && replaySetIndex === null) {
       setReplaySetIndex(completedSets.length - 1);
-      setViewingPointIndex(-1); // overview
+      setViewingPointIndex(null); // overview
       setViewingActionIndex(0);
     }
   }, [isFinished, completedSets.length, replaySetIndex]);
@@ -103,12 +104,10 @@ const Index = () => {
     setViewingActionIndex(0);
   }, []);
 
-  const handleChangePoint = useCallback((index: number) => {
-    const pts = isFinished ? replaySetPoints : allPoints;
-    if (index < -1 || index >= pts.length) return;
+  const handleChangePoint = useCallback((index: number | null) => {
     setViewingPointIndex(index);
     setViewingActionIndex(0);
-  }, [allPoints, replaySetPoints, isFinished]);
+  }, []);
 
   const handleChangeAction = useCallback((index: number) => {
     setViewingActionIndex(index);
@@ -116,35 +115,41 @@ const Index = () => {
 
   const handleBackToLive = useCallback(() => {
     setViewingPointIndex(null);
-    setViewingActionIndex(null);
+    setViewingActionIndex(0);
   }, []);
 
   const handleSelectReplaySet = useCallback((index: number) => {
     setReplaySetIndex(index);
-    setViewingPointIndex(-1); // overview
+    setViewingPointIndex(null); // overview
     setViewingActionIndex(0);
   }, []);
 
   // Derive the viewing action/point for the court
   const viewingCourtData = useMemo(() => {
-    if (viewingPointIndex === null || viewingPointIndex === -1) return { action: null, point: null };
+    if (viewingPointIndex === null) return { actions: [], point: null };
     const pts = isFinished ? replaySetPoints : allPoints;
     const point = pts[viewingPointIndex];
-    if (!point) return { action: null, point: null };
+    if (!point) return { actions: [], point: null };
 
     const rallyActions = point.rallyActions ?? [];
-    if (isPerformanceMode && rallyActions.length > 0 && viewingActionIndex !== null) {
-      const action = rallyActions[viewingActionIndex] ?? null;
-      return { action, point: null };
+    if (isPerformanceMode && rallyActions.length > 0) {
+      if (cumulativeMode) {
+        // Show all actions up to and including current index
+        return { actions: rallyActions.slice(0, viewingActionIndex + 1), point: null };
+      } else {
+        // Show only current action
+        const action = rallyActions[viewingActionIndex] ?? null;
+        return { actions: action ? [action] : [], point: null };
+      }
     }
-    return { action: null, point };
-  }, [viewingPointIndex, viewingActionIndex, allPoints, replaySetPoints, isFinished, isPerformanceMode]);
+    return { actions: [], point };
+  }, [viewingPointIndex, viewingActionIndex, allPoints, replaySetPoints, isFinished, isPerformanceMode, cumulativeMode]);
 
   // Points to show on court in overview mode (all points of the set)
   const courtPoints = useMemo(() => {
     if (isFinished) {
-      if (viewingPointIndex === -1) return replaySetPoints; // overview: show all
-      return replaySetPoints; // still pass all for context but viewing mode will show single
+      if (viewingPointIndex === null) return replaySetPoints; // overview: show all
+      return replaySetPoints;
     }
     return points;
   }, [isFinished, viewingPointIndex, replaySetPoints, points]);
@@ -250,7 +255,7 @@ const Index = () => {
 
   // Determine if we're in replay viewing mode (overview or specific point)
   const isInReplayView = isFinished && viewingPointIndex !== null;
-  const isOverview = viewingPointIndex === -1;
+  const isOverview = viewingPointIndex === null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -322,23 +327,27 @@ const Index = () => {
             {isFinished && replaySetPoints.length > 0 && (
               <PlayByPlayNavigator
                 points={replaySetPoints}
-                viewingPointIndex={viewingPointIndex ?? -1}
-                viewingActionIndex={viewingActionIndex ?? 0}
+                viewingPointIndex={viewingPointIndex}
+                viewingActionIndex={viewingActionIndex}
                 onChangePoint={handleChangePoint}
                 onChangeAction={handleChangeAction}
                 isReplayMode={true}
                 isPerformanceMode={isPerformanceMode}
+                cumulativeMode={cumulativeMode}
+                onToggleCumulative={setCumulativeMode}
               />
             )}
             {!isFinished && isViewingMode && (
               <PlayByPlayNavigator
                 points={allPoints}
-                viewingPointIndex={viewingPointIndex!}
-                viewingActionIndex={viewingActionIndex ?? 0}
+                viewingPointIndex={viewingPointIndex}
+                viewingActionIndex={viewingActionIndex}
                 onChangePoint={handleChangePoint}
                 onChangeAction={handleChangeAction}
                 onBackToLive={handleBackToLive}
                 isPerformanceMode={isPerformanceMode}
+                cumulativeMode={cumulativeMode}
+                onToggleCumulative={setCumulativeMode}
               />
             )}
 
@@ -353,8 +362,8 @@ const Index = () => {
                 onCourtClick={addPoint}
                 directionOrigin={isInReplayView ? null : directionOrigin}
                 pendingDirectionAction={isInReplayView ? false : !!pendingDirectionAction}
-                isViewingMode={isInReplayView && !isOverview}
-                viewingAction={viewingCourtData.action}
+                isViewingMode={isInReplayView}
+                viewingActions={viewingCourtData.actions}
                 viewingPoint={viewingCourtData.point}
                 playerAliases={playerAliases}
               />
