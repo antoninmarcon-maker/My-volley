@@ -15,7 +15,7 @@ import { getMatch, saveMatch } from '@/lib/matchStorage';
 import { getCloudMatchById, saveCloudMatch } from '@/lib/cloudStorage';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
-import type { MatchSummary, Player, RallyAction } from '@/types/sports';
+import type { MatchSummary, Player, RallyAction, Point } from '@/types/sports';
 import { useTranslation } from 'react-i18next';
 
 type Tab = 'match' | 'stats';
@@ -96,9 +96,58 @@ const Index = () => {
     return completedSets[replaySetIndex].points;
   }, [isFinished, replaySetIndex, completedSets]);
 
-  // --- Replay navigable points (only scored/fault, no neutrals) ---
+  // --- Replay navigable points (only scored/fault, with reconstructed rallyActions) ---
   const replayNavPoints = useMemo(() => {
-    return replaySetAllPoints.filter(p => p.type === 'scored' || p.type === 'fault');
+    const allPts = replaySetAllPoints;
+    const result: Point[] = [];
+    let pendingNeutrals: Point[] = [];
+
+    for (const p of allPts) {
+      if (p.type === 'neutral') {
+        pendingNeutrals.push(p);
+      } else {
+        // scored or fault — check if rallyActions already exist
+        if (p.rallyActions && p.rallyActions.length > 0) {
+          result.push(p);
+        } else {
+          // Reconstruct rallyActions from pending neutrals + this concluding point
+          const reconstructedRally: RallyAction[] = [
+            ...pendingNeutrals.map(n => ({
+              id: n.id,
+              team: n.team,
+              type: n.type,
+              action: n.action,
+              x: n.x,
+              y: n.y,
+              playerId: n.playerId,
+              timestamp: n.timestamp,
+              customActionLabel: n.customActionLabel,
+              sigil: n.sigil,
+              showOnCourt: n.showOnCourt,
+            } as RallyAction)),
+            {
+              id: p.id,
+              team: p.team,
+              type: p.type,
+              action: p.action,
+              x: p.x,
+              y: p.y,
+              playerId: p.playerId,
+              timestamp: p.timestamp,
+              customActionLabel: p.customActionLabel,
+              sigil: p.sigil,
+              showOnCourt: p.showOnCourt,
+            } as RallyAction,
+          ];
+          result.push({
+            ...p,
+            rallyActions: reconstructedRally.length > 1 ? reconstructedRally : undefined,
+          });
+        }
+        pendingNeutrals = [];
+      }
+    }
+    return result;
   }, [replaySetAllPoints]);
 
   // --- Visualization helpers ---
