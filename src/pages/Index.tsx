@@ -435,6 +435,7 @@ const Index = () => {
                   viewingPoint={viewingCourtData.point}
                   playerAliases={playerAliases}
                   pendingHasDirection={pendingActionMeta?.hasDirection}
+                  awaitingRating={awaitingRating}
                 />
               );
             })()}

@@ -21,8 +21,8 @@ interface VolleyballCourtProps {
   isPerformanceMode?: boolean;
   activeRallyActions?: RallyAction[];
   playerAliases?: Record<string, string>;
-  /** Whether the current action awaits a direction (trajectory) click */
   pendingHasDirection?: boolean;
+  awaitingRating?: boolean;
 }
 
 // Court dimensions in SVG coordinates
@@ -177,18 +177,18 @@ function getZoneHighlights(
   }
 }
 
-export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, pendingDirectionAction, viewingActions = [], activeRallyActions = [], viewingPoint, isViewingMode, isPerformanceMode, playerAliases, pendingHasDirection }: VolleyballCourtProps) {
+export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, pendingDirectionAction, viewingActions = [], activeRallyActions = [], viewingPoint, isViewingMode, isPerformanceMode, playerAliases, pendingHasDirection, awaitingRating }: VolleyballCourtProps) {
   const courtRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const hasSelection = !isViewingMode && ((!!selectedTeam && !!selectedAction && !!selectedPointType) || !!pendingDirectionAction);
 
-  // Auto-scroll to court when placement mode is active
+  // Auto-scroll to court when placement mode or rating mode is active
   useEffect(() => {
-    if (hasSelection && containerRef.current) {
-      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if ((hasSelection || awaitingRating) && containerRef.current) {
+      containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
-  }, [hasSelection]);
+  }, [hasSelection, awaitingRating]);
 
   const zoneHighlights = useMemo(() => {
     if (!hasSelection) return null;
