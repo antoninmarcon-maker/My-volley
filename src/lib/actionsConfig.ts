@@ -160,7 +160,7 @@ export function getVisibleActions(
       assignToPlayer: overrides.assignToPlayer ?? true, // Default true for actions requiring assigning
       hasDirection: overrides.hasDirection ?? false,
       showOnCourt: overrides.showOnCourt ?? (overrides.hasDirection ? true : undefined),
-      hasRating: overrides.hasRating ?? a.hasRating ?? (['attack'].includes(a.key) || ['Réception', 'Passe', 'Service', 'Attaque', 'Défense', 'Block', 'block'].includes(a.label))
+      hasRating: overrides.hasRating ?? a.hasRating ?? false
     };
   });
   const customs = config.customActions
@@ -171,7 +171,7 @@ export function getVisibleActions(
       ...(c.showOnCourt != null ? { showOnCourt: c.showOnCourt } : {}),
       ...(c.assignToPlayer != null ? { assignToPlayer: c.assignToPlayer } : {}),
       ...(c.hasDirection ? { hasDirection: true } : {}),
-      hasRating: c.hasRating ?? ['Réception', 'Passe', 'Service', 'Attaque', 'Défense'].includes(c.label),
+      hasRating: c.hasRating ?? false,
     }));
   return [...visible, ...customs];
 }

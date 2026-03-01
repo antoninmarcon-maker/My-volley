@@ -20,7 +20,11 @@ interface ScoreBoardProps {
   servingTeam: Team | null;
   sport: SportType;
   metadata?: MatchMetadata;
-  onSelectAction: (team: Team, type: PointType, action: ActionType) => void;
+  onSelectAction: (team: Team, type: PointType, action: ActionType, meta?: {
+    placeOnCourt?: boolean; assignToPlayer?: boolean;
+    customLabel?: string; sigil?: string; showOnCourt?: boolean;
+    hasDirection?: boolean; hasRating?: boolean;
+  }) => void;
   onCancelSelection: () => void;
   onUndo: () => void;
   onReset: () => void;
@@ -40,6 +44,15 @@ interface ScoreBoardProps {
   rallyActionCount?: number;
   awaitingRating?: boolean;
   onSelectRating?: (rating: 'negative' | 'neutral' | 'positive') => void;
+  pendingActionMeta?: {
+    placeOnCourt: boolean;
+    assignToPlayer: boolean;
+    customLabel?: string;
+    sigil?: string;
+    showOnCourt?: boolean;
+    hasDirection: boolean;
+    hasRating: boolean;
+  } | null;
 }
 
 function formatTime(seconds: number) {
@@ -58,7 +71,7 @@ export function ScoreBoard({
   servingTeam, sport, metadata,
   isFinished = false, waitingForNewSet = false, lastEndedSetScore, onStartNewSet,
   rallyInProgress = false, rallyActionCount = 0,
-  awaitingRating = false, onSelectRating,
+  awaitingRating = false, onSelectRating, pendingActionMeta,
 }: ScoreBoardProps) {
   const { t } = useTranslation();
   const [editingNames, setEditingNames] = useState(false);
@@ -100,26 +113,16 @@ export function ScoreBoard({
     const type: PointType = menuTab;
 
     const placeOnCourt = showOnCourt ?? (type === 'neutral' ? false : true);
-    (window as any).__pendingPlaceOnCourt = placeOnCourt;
-    (window as any).__pendingCustomAssignToPlayer = assignToPlayer ?? true;
 
-    if (customLabel) { (window as any).__pendingCustomActionLabel = customLabel; }
-    if (sigil) { (window as any).__pendingCustomSigil = sigil; }
-    if (showOnCourt) { (window as any).__pendingCustomShowOnCourt = true; }
-    // Always set explicitly to avoid leaking from a previous trajectory-enabled action
-    if (hasDirection) {
-      (window as any).__pendingHasDirection = true;
-    } else {
-      delete (window as any).__pendingHasDirection;
-    }
-
-    if (hasRating) {
-      (window as any).__pendingHasRating = true;
-    } else {
-      delete (window as any).__pendingHasRating;
-    }
-
-    onSelectAction(menuTeam, type, action);
+    onSelectAction(menuTeam, type, action, {
+      placeOnCourt,
+      assignToPlayer: assignToPlayer ?? true,
+      customLabel,
+      sigil,
+      showOnCourt,
+      hasDirection: hasDirection ?? false,
+      hasRating: hasRating ?? false,
+    });
     setMenuTeam(null);
   };
 
@@ -309,11 +312,11 @@ export function ScoreBoard({
       )}
 
       {/* Active selection indicator */}
-      {selectedTeam && selectedAction && (window as any).__pendingPlaceOnCourt !== false && !awaitingRating && (
+      {selectedTeam && selectedAction && pendingActionMeta?.placeOnCourt !== false && !awaitingRating && (
         <div className="flex items-center justify-between bg-accent/50 rounded-lg p-2.5 border border-accent">
           <p className="text-sm text-foreground">
             <span className="font-bold">{teamNames[selectedTeam]}</span> — {
-              (window as any).__pendingCustomActionLabel || t(`actions.${selectedAction}`, allActions.find(a => a.key === selectedAction)?.label ?? selectedAction)
+              pendingActionMeta?.customLabel || t(`actions.${selectedAction}`, allActions.find(a => a.key === selectedAction)?.label ?? selectedAction)
             }
           </p>
           <div className="flex items-center gap-2">

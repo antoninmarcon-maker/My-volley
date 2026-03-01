@@ -73,7 +73,7 @@ const Index = () => {
     teamNames, sidesSwapped, chronoRunning, chronoSeconds,
     players, pendingPoint, servingTeam, sport,
     isPerformanceMode, currentRallyActions, rallyInProgress, directionOrigin, pendingDirectionAction, canUndo,
-    preSelectedPlayerId, setPreSelectedPlayerId, preSelectedRating, setPreSelectedRating,
+    preSelectedPlayerId, setPreSelectedPlayerId, preSelectedRating, setPreSelectedRating, pendingActionMeta,
     setTeamNames, setPlayers, selectAction, cancelSelection, addPoint,
     assignPlayer, skipPlayerAssignment,
     undo, endSet, startNewSet, waitingForNewSet, lastEndedSetScore, resetMatch, switchSides, startChrono, pauseChrono,
@@ -212,26 +212,27 @@ const Index = () => {
   const SERVICE_FAULT_ACTIONS = ['service_miss', 'gameplay_fault', 'timeout'];
   useEffect(() => {
     if (!selectedTeam || !selectedAction) {
-      delete (window as any).__pendingPlaceOnCourt;
-      delete (window as any).__pendingHasRating;
       setAwaitingPlayerBeforeCourt(false);
       setAwaitingRating(false);
       return;
     }
 
+    const meta = pendingActionMeta;
     const isStandardAssignmentNeeded = selectedPointType === 'neutral' || (selectedTeam === 'blue' && selectedPointType === 'scored') || (selectedTeam === 'red' && selectedPointType === 'fault');
-    const needsAssignToPlayer = (window as any).__pendingCustomAssignToPlayer !== false && isStandardAssignmentNeeded;
-    const needsCourtPlacement = (window as any).__pendingPlaceOnCourt !== false && metadata?.hasCourt !== false && !SERVICE_FAULT_ACTIONS.includes(selectedAction);
-    const needsRating = (window as any).__pendingHasRating === true;
+    const needsAssignToPlayer = meta?.assignToPlayer !== false && isStandardAssignmentNeeded;
+    const needsCourtPlacement = meta?.placeOnCourt !== false && metadata?.hasCourt !== false && !SERVICE_FAULT_ACTIONS.includes(selectedAction);
+    const globalRatingsEnabled = metadata?.enableRatings !== false;
+    const perActionRating = meta?.hasRating === true;
+    const needsRating = globalRatingsEnabled || perActionRating;
 
-    // Performance mode: if action needs player AND court, show player selector first
+    // If action needs player AND court, show player selector first (performance mode)
     if (isPerformanceMode && needsAssignToPlayer && needsCourtPlacement && players.length > 0 && !preSelectedPlayerId) {
       setAwaitingPlayerBeforeCourt(true);
-      return; // Wait for player selection before proceeding to court
+      return;
     }
 
-    // Performance mode: if action needs rating, show rating selector
-    if (isPerformanceMode && needsRating && !preSelectedRating) {
+    // If action needs rating, show rating selector (both modes)
+    if (needsRating && !preSelectedRating) {
       setAwaitingRating(true);
       return;
     }
@@ -241,24 +242,16 @@ const Index = () => {
     const isAutoPoint =
       metadata?.hasCourt === false ||
       SERVICE_FAULT_ACTIONS.includes(selectedAction) ||
-      (window as any).__pendingPlaceOnCourt === false;
+      meta?.placeOnCourt === false;
     if (isAutoPoint) {
-      delete (window as any).__pendingPlaceOnCourt;
       addPoint(0.5, 0.5);
     }
-  }, [matchState.selectedPointType, selectedTeam, selectedAction, addPoint, isPerformanceMode, players.length, preSelectedPlayerId]);
+  }, [matchState.selectedPointType, selectedTeam, selectedAction, addPoint, isPerformanceMode, players.length, preSelectedPlayerId, preSelectedRating, pendingActionMeta]);
 
   // Player assignment logic
   useEffect(() => {
     if (!pendingPoint || players.length === 0) return;
-    if ((window as any).__pendingCustomAssignToPlayer === false) {
-      delete (window as any).__pendingCustomAssignToPlayer;
-      skipPlayerAssignment();
-      return;
-    }
-    if ((window as any).__pendingCustomAssignToPlayer !== undefined) {
-      delete (window as any).__pendingCustomAssignToPlayer;
-    }
+    // assignToPlayer is now handled via pendingActionMeta inside addPoint
     const isBlueScored = pendingPoint.team === 'blue' && pendingPoint.type === 'scored';
     const isRedScored = pendingPoint.team === 'red' && pendingPoint.type === 'scored';
     const isRedFault = pendingPoint.team === 'red' && pendingPoint.type === 'fault';
@@ -378,6 +371,7 @@ const Index = () => {
               rallyInProgress={rallyInProgress} rallyActionCount={currentRallyActions.length}
               awaitingRating={awaitingRating}
               onSelectRating={setPreSelectedRating}
+              pendingActionMeta={pendingActionMeta}
             />
 
             {/* Direction mode indicator (live only) */}
@@ -418,25 +412,32 @@ const Index = () => {
               />
             )}
 
-            {metadata?.hasCourt !== false && (
-              <VolleyballCourt
-                points={isFinished && isOverview ? replaySetAllPoints : (isFinished ? [] : courtPoints)}
-                selectedTeam={isInReplayView ? null : (pendingDirectionAction ? null : selectedTeam)}
-                selectedAction={isInReplayView ? null : (pendingDirectionAction ? null : selectedAction)}
-                selectedPointType={isInReplayView ? null : (pendingDirectionAction ? null : selectedPointType)}
-                sidesSwapped={sidesSwapped}
-                teamNames={teamNames}
-                onCourtClick={addPoint}
-                directionOrigin={isInReplayView ? null : directionOrigin}
-                pendingDirectionAction={isInReplayView ? false : !!pendingDirectionAction}
-                isViewingMode={isInReplayView}
-                isPerformanceMode={isPerformanceMode}
-                viewingActions={viewingCourtData.actions}
-                activeRallyActions={currentRallyActions}
-                viewingPoint={viewingCourtData.point}
-                playerAliases={playerAliases}
-              />
-            )}
+            {metadata?.hasCourt !== false && (() => {
+              const activeCourtActions = isPerformanceMode
+                ? currentRallyActions
+                : currentRallyActions;
+
+              return (
+                <VolleyballCourt
+                  points={isFinished && isOverview ? replaySetAllPoints : (isFinished ? [] : courtPoints)}
+                  selectedTeam={isInReplayView ? null : (pendingDirectionAction ? null : selectedTeam)}
+                  selectedAction={isInReplayView ? null : (pendingDirectionAction ? null : selectedAction)}
+                  selectedPointType={isInReplayView ? null : (pendingDirectionAction ? null : selectedPointType)}
+                  sidesSwapped={isFinished && replaySetIndex !== null ? (replaySetIndex % 2 !== 0) : sidesSwapped}
+                  teamNames={teamNames}
+                  onCourtClick={addPoint}
+                  directionOrigin={isInReplayView ? null : directionOrigin}
+                  pendingDirectionAction={isInReplayView ? false : !!pendingDirectionAction}
+                  isViewingMode={isInReplayView}
+                  isPerformanceMode={isPerformanceMode}
+                  viewingActions={viewingCourtData.actions}
+                  activeRallyActions={activeCourtActions}
+                  viewingPoint={viewingCourtData.point}
+                  playerAliases={playerAliases}
+                  pendingHasDirection={pendingActionMeta?.hasDirection}
+                />
+              );
+            })()}
           </div>
         ) : (
           <div className="space-y-4">

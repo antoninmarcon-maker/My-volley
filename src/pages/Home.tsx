@@ -68,7 +68,8 @@ export default function Home() {
   const [names, setNames] = useState({ blue: '', red: '' });
   const [hasCourt, setHasCourt] = useState(true);
   const [isPerformanceMode, setIsPerformanceMode] = useState(false);
-  
+  const [enableRatings, setEnableRatings] = useState(true);
+
   const [finishingId, setFinishingId] = useState<string | null>(null);
   const [showSavedPlayers, setShowSavedPlayers] = useState(false);
   const [customLogo, setCustomLogo] = useState<string | null>(null);
@@ -193,19 +194,18 @@ export default function Home() {
   const handleCreate = () => {
     const blueName = names.blue.trim() || t('scoreboard.blue');
     const redName = names.red.trim() || t('scoreboard.red');
-    
-    const metadata = { hasCourt, isPerformanceMode };
+
+    const metadata = { hasCourt, isPerformanceMode, enableRatings };
     const match = createNewMatch({ blue: blueName, red: redName }, 'volleyball', metadata);
-    
+
     saveMatch(match);
     setActiveMatchId(match.id);
     localStorage.setItem('hasCreatedMatch', 'true');
     if (user) {
-      saveCloudMatch(user.id, match).catch(err =>
-        { if (import.meta.env.DEV) console.error('Cloud save failed:', err); }
+      saveCloudMatch(user.id, match).catch(err => { if (import.meta.env.DEV) console.error('Cloud save failed:', err); }
       );
     }
-    updateTutorialStep(1).catch(() => {});
+    updateTutorialStep(1).catch(() => { });
     setShowNew(false);
     navigate(`/match/${match.id}`);
   };
@@ -524,6 +524,13 @@ export default function Home() {
                   </div>
                 </div>
               )}
+              <div className="flex items-center space-x-2 bg-secondary/30 p-2 rounded-xl border border-border">
+                <Switch id="enable-ratings" checked={enableRatings} onCheckedChange={setEnableRatings} />
+                <div className="flex-1">
+                  <Label htmlFor="enable-ratings" className="text-xs font-semibold cursor-pointer">⭐ Notations (+/!/−)</Label>
+                  <p className="text-[9px] text-muted-foreground">Évaluer la qualité de chaque action</p>
+                </div>
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowNew(false)}
@@ -552,65 +559,65 @@ export default function Home() {
             <Instructions />
           ) : (
             <>
-            <div className="flex items-center gap-2">
-              <History size={16} className="text-muted-foreground" />
-              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('home.previousMatches')}</h2>
-            </div>
-            <div className="space-y-2">
-              {matches.map(match => {
-                const sc = matchScore(match);
-                const totalPoints = match.completedSets.reduce((sum, s) => sum + s.points.length, 0) + match.points.length;
-                return (
-                  <div key={match.id} className="bg-card rounded-xl p-4 border border-border">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 text-sm font-bold">
-                          <span className="text-base">🏐</span>
-                          <span className="text-team-blue">{match.teamNames.blue}</span>
-                          <span className="text-muted-foreground text-xs">vs</span>
-                          <span className="text-team-red">{match.teamNames.red}</span>
-                          {(match as any).metadata?.isPerformanceMode && (
-                            <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary border border-primary/20">⚡ PERF</span>
-                          )}
+              <div className="flex items-center gap-2">
+                <History size={16} className="text-muted-foreground" />
+                <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('home.previousMatches')}</h2>
+              </div>
+              <div className="space-y-2">
+                {matches.map(match => {
+                  const sc = matchScore(match);
+                  const totalPoints = match.completedSets.reduce((sum, s) => sum + s.points.length, 0) + match.points.length;
+                  return (
+                    <div key={match.id} className="bg-card rounded-xl p-4 border border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 text-sm font-bold">
+                            <span className="text-base">🏐</span>
+                            <span className="text-team-blue">{match.teamNames.blue}</span>
+                            <span className="text-muted-foreground text-xs">vs</span>
+                            <span className="text-team-red">{match.teamNames.red}</span>
+                            {(match as any).metadata?.isPerformanceMode && (
+                              <span className="ml-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary border border-primary/20">⚡ PERF</span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{formatDate(match.updatedAt)}</p>
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{formatDate(match.updatedAt)}</p>
+                        <div className="text-right">
+                          <p className="text-lg font-black text-foreground tabular-nums">{sc.blue} - {sc.red}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {match.finished
+                              ? (sc.blue > sc.red ? `🏆 ${match.teamNames.blue}` : sc.red > sc.blue ? `🏆 ${match.teamNames.red}` : t('home.equality'))
+                              : `Set ${match.currentSetNumber} ${t('home.setInProgress')}`} · {totalPoints} pts
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-black text-foreground tabular-nums">{sc.blue} - {sc.red}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {match.finished
-                            ? (sc.blue > sc.red ? `🏆 ${match.teamNames.blue}` : sc.red > sc.blue ? `🏆 ${match.teamNames.red}` : t('home.equality'))
-                            : `Set ${match.currentSetNumber} ${t('home.setInProgress')}`} · {totalPoints} pts
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleResume(match.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/15 text-primary font-semibold text-xs border border-primary/20 hover:bg-primary/25 transition-all"
-                      >
-                        {match.finished ? <><Eye size={14} /> {t('common.view')}</> : <><Play size={14} /> {t('common.resume')}</>}
-                      </button>
-                      {!match.finished && (
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => setFinishingId(match.id)}
-                          className="px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all"
-                          title={t('home.finishMatch')}
+                          onClick={() => handleResume(match.id)}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/15 text-primary font-semibold text-xs border border-primary/20 hover:bg-primary/25 transition-all"
                         >
-                          <CheckCircle2 size={14} />
+                          {match.finished ? <><Eye size={14} /> {t('common.view')}</> : <><Play size={14} /> {t('common.resume')}</>}
                         </button>
-                      )}
-                      <button
-                        onClick={() => setDeletingId(match.id)}
-                        className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        {!match.finished && (
+                          <button
+                            onClick={() => setFinishingId(match.id)}
+                            className="px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all"
+                            title={t('home.finishMatch')}
+                          >
+                            <CheckCircle2 size={14} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setDeletingId(match.id)}
+                          className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>

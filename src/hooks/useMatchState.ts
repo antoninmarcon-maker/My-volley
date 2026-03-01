@@ -45,8 +45,20 @@ export function useMatchState(matchId: string, ready: boolean = true) {
   // Pre-selected player: chosen BEFORE court click in performance mode (Action→Player→Court flow)
   const [preSelectedPlayerId, setPreSelectedPlayerId] = useState<string | null>(null);
 
-  // Pre-selected rating: chosen BEFORE court click in performance mode if hasRating is true
+  // Pre-selected rating: chosen BEFORE court click if ratings are enabled
   const [preSelectedRating, setPreSelectedRating] = useState<'negative' | 'neutral' | 'positive' | null>(null);
+
+  // --- Pending action metadata (replaces window.__pending* globals) ---
+  interface PendingActionMeta {
+    placeOnCourt: boolean;
+    assignToPlayer: boolean;
+    customLabel?: string;
+    sigil?: string;
+    showOnCourt?: boolean;
+    hasDirection: boolean;
+    hasRating: boolean;
+  }
+  const [pendingActionMeta, setPendingActionMeta] = useState<PendingActionMeta | null>(null);
 
   useEffect(() => {
     if (!ready || hasInitialized.current) return;
@@ -117,16 +129,30 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setChronoSeconds(0);
   }, []);
 
-  const selectAction = useCallback((team: Team, type: PointType, action: ActionType) => {
+  const selectAction = useCallback((team: Team, type: PointType, action: ActionType, meta?: {
+    placeOnCourt?: boolean; assignToPlayer?: boolean;
+    customLabel?: string; sigil?: string; showOnCourt?: boolean;
+    hasDirection?: boolean; hasRating?: boolean;
+  }) => {
     setSelectedTeam(team);
     setSelectedPointType(type);
     setSelectedAction(action);
+    setPendingActionMeta({
+      placeOnCourt: meta?.placeOnCourt ?? true,
+      assignToPlayer: meta?.assignToPlayer ?? true,
+      customLabel: meta?.customLabel,
+      sigil: meta?.sigil,
+      showOnCourt: meta?.showOnCourt,
+      hasDirection: meta?.hasDirection ?? false,
+      hasRating: meta?.hasRating ?? false,
+    });
   }, []);
 
   const cancelSelection = useCallback(() => {
     setSelectedTeam(null);
     setSelectedPointType(null);
     setSelectedAction(null);
+    setPendingActionMeta(null);
     // Also cancel direction mode
     setDirectionOrigin(null);
     setPendingDirectionAction(null);
@@ -227,14 +253,15 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     if (selectedAction === 'timeout') {
       setChronoRunning(false);
     }
-    const customLabel = (window as any).__pendingCustomActionLabel;
-    if (customLabel) delete (window as any).__pendingCustomActionLabel;
-    const customSigil = (window as any).__pendingCustomSigil;
-    if (customSigil) delete (window as any).__pendingCustomSigil;
-    const customShowOnCourt = (window as any).__pendingCustomShowOnCourt;
-    if (customShowOnCourt !== undefined) delete (window as any).__pendingCustomShowOnCourt;
-    const hasDirection = (window as any).__pendingHasDirection;
-    if (hasDirection !== undefined) delete (window as any).__pendingHasDirection;
+    // Read action metadata from pendingActionMeta state (replaces window.__pending*)
+    const meta = pendingActionMeta;
+    const customLabel = meta?.customLabel;
+    const customSigil = meta?.sigil;
+    const customShowOnCourt = meta?.showOnCourt;
+    const hasDirection = meta?.hasDirection ?? false;
+
+    // Clear pendingActionMeta after consuming
+    setPendingActionMeta(null);
 
     // --- Performance Mode with direction: 1st click (origin) ---
     if (isPerformanceMode && hasDirection && !directionOrigin) {
@@ -269,7 +296,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       return;
     }
 
-    // --- Standard Mode (unchanged) ---
+    // --- Standard Mode ---
     const point: Point = {
       id: crypto.randomUUID(),
       team: selectedTeam,
@@ -281,6 +308,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       ...(customLabel ? { customActionLabel: customLabel } : {}),
       ...(customSigil ? { sigil: customSigil } : {}),
       ...(customShowOnCourt ? { showOnCourt: true } : {}),
+      ...(preSelectedRating ? { rating: preSelectedRating } : {}),
     };
     // Show player selector for blue team scored points + red team fault points + neutral points
     if (players.length > 0 && (point.type === 'neutral' || (point.team === 'blue' && point.type === 'scored') || (point.team === 'red' && point.type === 'fault'))) {
@@ -291,7 +319,8 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setSelectedTeam(null);
     setSelectedPointType(null);
     setSelectedAction(null);
-  }, [selectedTeam, selectedPointType, selectedAction, chronoRunning, players.length, isPerformanceMode, directionOrigin, pendingDirectionAction, completeDirectionAction, cancelSelection, startDirectionMode, processRallyAction, preSelectedPlayerId]);
+    setPreSelectedRating(null);
+  }, [selectedTeam, selectedPointType, selectedAction, chronoRunning, players.length, isPerformanceMode, directionOrigin, pendingDirectionAction, completeDirectionAction, cancelSelection, startDirectionMode, processRallyAction, preSelectedPlayerId, preSelectedRating, pendingActionMeta]);
 
   const assignPlayer = useCallback((playerId: string) => {
     if (!pendingPoint) return;
@@ -516,6 +545,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setPreSelectedPlayerId,
     preSelectedRating,
     setPreSelectedRating,
+    pendingActionMeta,
     setTeamNames,
     setPlayers,
     selectAction,

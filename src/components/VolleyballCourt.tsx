@@ -21,6 +21,8 @@ interface VolleyballCourtProps {
   isPerformanceMode?: boolean;
   activeRallyActions?: RallyAction[];
   playerAliases?: Record<string, string>;
+  /** Whether the current action awaits a direction (trajectory) click */
+  pendingHasDirection?: boolean;
 }
 
 // Court dimensions in SVG coordinates
@@ -175,7 +177,7 @@ function getZoneHighlights(
   }
 }
 
-export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, pendingDirectionAction, viewingActions = [], activeRallyActions = [], viewingPoint, isViewingMode, isPerformanceMode, playerAliases }: VolleyballCourtProps) {
+export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, pendingDirectionAction, viewingActions = [], activeRallyActions = [], viewingPoint, isViewingMode, isPerformanceMode, playerAliases, pendingHasDirection }: VolleyballCourtProps) {
   const courtRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -214,7 +216,7 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
       if (!hasSelection) return;
 
       // Direction mode 1st click: bypass zone check — origin can be anywhere on court
-      if ((window as any).__pendingHasDirection) {
+      if (pendingHasDirection) {
         onCourtClick(normalizedX, y);
         return;
       }

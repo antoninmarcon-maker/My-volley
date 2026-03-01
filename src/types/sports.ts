@@ -130,6 +130,8 @@ export interface MatchMetadata {
   hasCourt?: boolean;
   /** Whether performance mode (rally tracking) is enabled */
   isPerformanceMode?: boolean;
+  /** Whether action quality ratings (+/!/−) are enabled (default: true) */
+  enableRatings?: boolean;
   /** Snapshot map to keep historical player names even after roster edits */
   playerAliases?: Record<string, string>;
 }
