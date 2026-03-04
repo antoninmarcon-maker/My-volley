@@ -422,10 +422,10 @@ export default function Home() {
               {/* Social buttons */}
               <div className="grid grid-cols-4 gap-2">
                 {[
-                  { label: 'WhatsApp', icon: '💬', url: `https://wa.me/?text=${encodeURIComponent(`${t('home.inviteText')} https://my-volley.lovable.app`)}` },
-                  { label: 'X', icon: '𝕏', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${t('home.inviteText')} https://my-volley.lovable.app`)}` },
-                  { label: 'Facebook', icon: '📘', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://my-volley.lovable.app')}` },
-                  { label: 'Telegram', icon: '✈️', url: `https://t.me/share/url?url=${encodeURIComponent('https://my-volley.lovable.app')}&text=${encodeURIComponent(t('home.inviteText'))}` },
+                  { label: 'WhatsApp', icon: '💬', url: `https://wa.me/?text=${encodeURIComponent(`${t('home.inviteText')} https://www.my-volley.com`)}` },
+                  { label: 'X', icon: '𝕏', url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${t('home.inviteText')} https://www.my-volley.com`)}` },
+                  { label: 'Facebook', icon: '📘', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://www.my-volley.com')}` },
+                  { label: 'Telegram', icon: '✈️', url: `https://t.me/share/url?url=${encodeURIComponent('https://www.my-volley.com')}&text=${encodeURIComponent(t('home.inviteText'))}` },
                 ].map(s => (
                   <button
                     key={s.label}
@@ -447,7 +447,7 @@ export default function Home() {
               {/* Copy link */}
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText('https://my-volley.lovable.app')
+                  navigator.clipboard.writeText('https://www.my-volley.com')
                     .then(() => { toast.success(t('heatmap.linkCopied')); setShowShareInvite(false); })
                     .catch(() => toast.error(t('heatmap.linkCopyError')));
                 }}

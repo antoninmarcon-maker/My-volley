@@ -345,7 +345,7 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
         return;
       }
 
-      const baseUrl = 'https://my-volley.lovable.app';
+      const baseUrl = 'https://www.my-volley.com';
       const url = `${baseUrl}/shared/${token}`;
       setShareLinkUrl(url);
       setShareLinkDialogOpen(true);
@@ -443,8 +443,8 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
               key={o.key}
               onClick={() => setSetFilter(o.key)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${setFilter_ === o.key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                 }`}
             >
               {o.label}

@@ -329,10 +329,13 @@ export function ScoreBoard({
 
       {/* Rating UI */}
       {awaitingRating && onSelectRating && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center sm:items-center p-4">
-          <div className="bg-card rounded-2xl p-4 max-w-sm w-full border border-border space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-end justify-center sm:items-center p-4">
+          <div className={`bg-card rounded-2xl p-4 max-w-sm w-full border-2 ${selectedTeam === 'red' ? 'border-team-red/30' : 'border-team-blue/30'} space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-200`} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-foreground">Évaluer la qualité de l'action</p>
+              <p className="text-sm font-bold text-foreground">
+                <span className={`mr-1 ${selectedTeam === 'red' ? 'text-team-red' : 'text-team-blue'}`}>[{selectedTeam ? teamNames[selectedTeam] : ''}]</span>
+                Évaluer l'action
+              </p>
               <button onClick={onCancelSelection} className="p-1 rounded-md text-muted-foreground hover:text-foreground">
                 <X size={16} />
               </button>

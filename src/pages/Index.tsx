@@ -360,7 +360,7 @@ const Index = () => {
               onSelectSet={handleSelectReplaySet}
             />
             {!isFinished && (
-              <PlayerRoster players={players} onSetPlayers={setPlayers} teamName={teamNames.blue} sport={sport} userId={user?.id} readOnly={isFinished} />
+              <PlayerRoster players={players} onSetPlayers={setPlayers} teamName={teamNames.blue} sport={sport} userId={user?.id} readOnly={isReplayModeActive} />
             )}
             <ScoreBoard
               score={replaySetIndex !== null && completedSets[replaySetIndex]
@@ -465,10 +465,12 @@ const Index = () => {
         )}
 
         {/* Pre-court player selector (Performance mode: Action→Player→Court flow) */}
-        {!isFinished && awaitingPlayerBeforeCourt && selectedTeam && selectedAction && players.length > 0 && (
+        {!isReplayModeActive && awaitingPlayerBeforeCourt && selectedTeam && selectedAction && players.length > 0 && (
           <PlayerSelector
             players={players}
             prompt={t('playerSelector.whoDidAction')}
+            team={selectedTeam}
+            teamName={teamNames[selectedTeam]}
             onSelect={(playerId) => {
               setPreSelectedPlayerId(playerId);
               setAwaitingPlayerBeforeCourt(false);
@@ -483,17 +485,18 @@ const Index = () => {
         )}
 
         {/* Post-court player selector (Standard mode or performance mode without court) */}
-        {!isFinished && !awaitingPlayerBeforeCourt && pendingPoint && players.length > 0 && (() => {
+        {!isReplayModeActive && !awaitingPlayerBeforeCourt && pendingPoint && players.length > 0 && (() => {
           if (pendingPoint.type === 'neutral') {
             return (
-              <PlayerSelector players={players} prompt={t('playerSelector.whoDidAction')} onSelect={assignPlayer} onSkip={skipPlayerAssignment} sport={sport} />
+              <PlayerSelector players={players} prompt={t('playerSelector.whoDidAction')} onSelect={assignPlayer} onSkip={skipPlayerAssignment} sport={sport} team={pendingPoint.team} teamName={teamNames[pendingPoint.team]} />
             );
           }
           const showSelector = pendingPoint.type === 'scored' || (pendingPoint.team === 'red' && pendingPoint.type === 'fault');
           if (!showSelector) return null;
           const isFaultByBlue = pendingPoint.team === 'red' && (pendingPoint.type === 'fault' || pendingPoint.type === 'scored');
+          const faultingTeam = pendingPoint.team === 'blue' ? 'red' : 'blue';
           return (
-            <PlayerSelector players={players} prompt={isFaultByBlue ? t('playerSelector.whoFaulted') : t('playerSelector.whoScored')} onSelect={assignPlayer} onSkip={skipPlayerAssignment} sport={sport} />
+            <PlayerSelector players={players} prompt={isFaultByBlue ? t('playerSelector.whoFaulted') : t('playerSelector.whoScored')} onSelect={assignPlayer} onSkip={skipPlayerAssignment} sport={sport} team={isFaultByBlue ? faultingTeam : pendingPoint.team} teamName={teamNames[isFaultByBlue ? faultingTeam : pendingPoint.team]} />
           );
         })()}
       </main>

@@ -11,9 +11,11 @@ interface PlayerSelectorProps {
   onSelect: (playerId: string) => void;
   onSkip: () => void;
   sport?: SportType;
+  team?: Team | null;
+  teamName?: string;
 }
 
-export function PlayerSelector({ players, prompt, onSelect, onSkip, sport = 'volleyball' }: PlayerSelectorProps) {
+export function PlayerSelector({ players, prompt, onSelect, onSkip, sport = 'volleyball', team, teamName }: PlayerSelectorProps) {
   const { t } = useTranslation();
   const [interactive, setInteractive] = useState(false);
   const jerseyEnabled = getJerseyConfig()[sport];
@@ -23,11 +25,16 @@ export function PlayerSelector({ players, prompt, onSelect, onSkip, sport = 'vol
     return () => clearTimeout(timer);
   }, []);
 
+  const colorClass = team === 'red' ? 'team-red' : 'team-blue';
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center sm:items-center p-4" onClick={() => interactive && onSkip()}>
-      <div className="bg-card rounded-2xl p-4 max-w-sm w-full border border-border space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-200" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[60] bg-black/60 flex items-end justify-center sm:items-center p-4" onClick={() => interactive && onSkip()}>
+      <div className={`bg-card rounded-2xl p-4 max-w-sm w-full border-2 ${team === 'red' ? 'border-team-red/30' : 'border-team-blue/30'} space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-200`} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <p className="text-sm font-bold text-foreground">{prompt}</p>
+          <p className="text-sm font-bold text-foreground">
+            {teamName && <span className={`mr-1 ${team === 'red' ? 'text-team-red' : 'text-team-blue'}`}>[{teamName}]</span>}
+            {prompt}
+          </p>
           <button onClick={onSkip} className="p-1 rounded-md text-muted-foreground hover:text-foreground">
             <X size={16} />
           </button>
@@ -36,11 +43,11 @@ export function PlayerSelector({ players, prompt, onSelect, onSkip, sport = 'vol
           {players.map(p => {
             const num = jerseyEnabled ? (getPlayerNumber(p.id) || p.number) : undefined;
             return (
-              <button key={p.id} onClick={() => onSelect(p.id)} className="flex flex-col items-center gap-0.5 py-3 px-1 rounded-xl bg-team-blue/10 border border-team-blue/20 hover:bg-team-blue/20 active:scale-95 transition-all">
+              <button key={p.id} onClick={() => onSelect(p.id)} className={`flex flex-col items-center gap-0.5 py-3 px-1 rounded-xl bg-${colorClass}/10 border border-${colorClass}/20 hover:bg-${colorClass}/20 active:scale-95 transition-all`}>
                 {num && (
-                  <span className="text-[10px] font-black text-team-blue/60">#{num}</span>
+                  <span className={`text-[10px] font-black text-${colorClass}/60`}>#{num}</span>
                 )}
-                <span className={`font-black text-team-blue ${num ? 'text-sm' : 'text-lg'}`}>{p.name || '—'}</span>
+                <span className={`font-black text-${colorClass} ${num ? 'text-sm' : 'text-lg'}`}>{p.name || '—'}</span>
               </button>
             );
           })}

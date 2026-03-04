@@ -78,7 +78,7 @@ export default function SharedMatch() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              const url = `https://my-volley.lovable.app${window.location.pathname}`;
+              const url = `https://www.my-volley.com${window.location.pathname}`;
               if (navigator.share) {
                 navigator.share({ title: `${match.teamNames.blue} vs ${match.teamNames.red}`, text: t('shared.followScore'), url });
               } else {
@@ -137,7 +137,7 @@ export default function SharedMatch() {
                 {match.finished ? t('shared.matchFinished') : t('shared.setInProgress', { period: 'Set', number: match.currentSetNumber })}
               </p>
             </div>
-            <VolleyballCourt points={match.points} selectedTeam={null} selectedAction="attack" selectedPointType="scored" sidesSwapped={match.sidesSwapped} teamNames={match.teamNames} onCourtClick={() => {}} />
+            <VolleyballCourt points={match.points} selectedTeam={null} selectedAction="attack" selectedPointType="scored" sidesSwapped={match.sidesSwapped} teamNames={match.teamNames} onCourtClick={() => { }} />
           </div>
         ) : (
           <HeatmapView
