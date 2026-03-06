@@ -77,7 +77,11 @@
     "shareOn": "Share on",
     "welcomeTitle": "Welcome to My Volley",
     "welcomeText": "The app dedicated to volleyball coaches and players who want to analyze their game with precision. Count points, generate heatmaps and export your statistics.",
-    "welcomeStart": "Get Started"
+    "welcomeStart": "Get Started",
+    "shareMatch": "Share match",
+    "shareMatchText": "Check out the stats from this match!",
+    "exportExcel": "Export Excel",
+    "viewStats": "Detailed statistics"
   },
   "credits": {
     "title": "Project Story",
@@ -240,7 +244,8 @@
     "faultVolley": "Opponent Faults",
     "whoServes": "Who serves first?",
     "neutralTab": "Stats",
-    "touchCourtNeutral": "Tap the court where the action occurred"
+    "touchCourtNeutral": "Tap the court where the action occurred",
+    "confirmTrajectory": "Draw then confirm the trajectory"
   },
   "roster": {
     "defineRoster": "Set roster {{team}}",

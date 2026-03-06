@@ -390,7 +390,7 @@ const Index = () => {
             {/* Direction mode indicator (live only) */}
             {!isFinished && pendingDirectionAction && directionOrigin && (
               <div className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg bg-accent/20 border border-accent">
-                <span className="text-xs font-bold text-accent-foreground flex-1">🎯 {t('scoreboard.confirmTrajectory', 'Tracer puis Valider')}</span>
+                <span className="text-xs font-bold text-accent-foreground flex-1">🎯 {t('scoreboard.confirmTrajectory')}</span>
                 <div className="flex gap-2">
                   <button onClick={cancelSelection} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-xs font-semibold hover:bg-secondary/80">
                     <X size={14} /> {t('common.cancel', 'Annuler')}
