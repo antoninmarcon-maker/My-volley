@@ -35,8 +35,9 @@ export function useMatchState(matchId: string, ready: boolean = true) {
   const isPerformanceMode = loaded?.metadata?.isPerformanceMode ?? false;
   const [currentRallyActions, setCurrentRallyActions] = useState<RallyAction[]>([]);
 
-  // Direction mode: waiting for 2nd click
+  // Direction mode: dragging arrow
   const [directionOrigin, setDirectionOrigin] = useState<{ x: number; y: number } | null>(null);
+  const [directionDest, setDirectionDest] = useState<{ x: number; y: number } | null>(null);
   const [pendingDirectionAction, setPendingDirectionAction] = useState<{
     team: Team; type: PointType; action: ActionType;
     customLabel?: string; sigil?: string; showOnCourt?: boolean;
@@ -155,6 +156,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setPendingActionMeta(null);
     // Also cancel direction mode
     setDirectionOrigin(null);
+    setDirectionDest(null);
     setPendingDirectionAction(null);
     setPreSelectedPlayerId(null);
     setPreSelectedRating(null);
@@ -163,7 +165,12 @@ export function useMatchState(matchId: string, ready: boolean = true) {
   // --- Direction mode helpers ---
   const startDirectionMode = useCallback((team: Team, type: PointType, action: ActionType, x: number, y: number, customLabel?: string, sigil?: string, showOnCourt?: boolean) => {
     setDirectionOrigin({ x, y });
+    setDirectionDest({ x, y }); // default to origin so they are superimposed initially
     setPendingDirectionAction({ team, type, action, customLabel, sigil, showOnCourt });
+  }, []);
+
+  const updateDirectionDest = useCallback((x: number, y: number) => {
+    setDirectionDest({ x, y });
   }, []);
 
   // Process a rally action: accumulate neutrals, conclude on scored/fault
@@ -211,15 +218,15 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     }
   }, [currentRallyActions, players.length, preSelectedPlayerId]);
 
-  const completeDirectionAction = useCallback((endX: number, endY: number) => {
-    if (!pendingDirectionAction || !directionOrigin) return;
+  const confirmDirectionAction = useCallback(() => {
+    if (!pendingDirectionAction || !directionOrigin || !directionDest) return;
     const { team, type, action, customLabel, sigil, showOnCourt } = pendingDirectionAction;
     const rallyAction: RallyAction = {
       id: crypto.randomUUID(),
       team, type, action,
       x: directionOrigin.x, y: directionOrigin.y,
       startX: directionOrigin.x, startY: directionOrigin.y,
-      endX, endY,
+      endX: directionDest.x, endY: directionDest.y,
       timestamp: Date.now(),
       ...(customLabel ? { customActionLabel: customLabel } : {}),
       ...(sigil ? { sigil } : {}),
@@ -229,17 +236,18 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     };
 
     setDirectionOrigin(null);
+    setDirectionDest(null);
     setPendingDirectionAction(null);
 
     // Process this rally action the same way as a regular one
     processRallyAction(rallyAction, team, type);
-  }, [pendingDirectionAction, directionOrigin, processRallyAction, preSelectedPlayerId]);
+    cancelSelection();
+  }, [pendingDirectionAction, directionOrigin, directionDest, processRallyAction, preSelectedPlayerId, preSelectedRating, cancelSelection]);
 
   const addPoint = useCallback((x: number, y: number) => {
-    // Priority: intercept 2nd direction click before any other check
+    // Priority: intercept direction clicks. If we are dragging, we update destination instead of finishing immediately.
     if (pendingDirectionAction && directionOrigin) {
-      completeDirectionAction(x, y);
-      cancelSelection();
+      updateDirectionDest(x, y);
       return;
     }
 
@@ -323,7 +331,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     if (!players.length || (point.type !== 'neutral' && !(point.team === 'blue' && point.type === 'scored') && !(point.team === 'red' && point.type === 'fault'))) {
       setPreSelectedRating(null);
     }
-  }, [selectedTeam, selectedPointType, selectedAction, chronoRunning, players.length, isPerformanceMode, directionOrigin, pendingDirectionAction, completeDirectionAction, cancelSelection, startDirectionMode, processRallyAction, preSelectedPlayerId, preSelectedRating, pendingActionMeta]);
+  }, [selectedTeam, selectedPointType, selectedAction, chronoRunning, players.length, isPerformanceMode, directionOrigin, pendingDirectionAction, confirmDirectionAction, updateDirectionDest, cancelSelection, startDirectionMode, processRallyAction, preSelectedPlayerId, preSelectedRating, pendingActionMeta]);
 
   const assignPlayer = useCallback((playerId: string) => {
     if (!pendingPoint) return;
@@ -544,6 +552,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     currentRallyActions,
     rallyInProgress,
     directionOrigin,
+    directionDest,
     pendingDirectionAction,
     canUndo,
     preSelectedPlayerId,
@@ -556,6 +565,8 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     selectAction,
     cancelSelection,
     addPoint,
+    updateDirectionDest,
+    confirmDirectionAction,
     assignPlayer,
     skipPlayerAssignment,
     undo,

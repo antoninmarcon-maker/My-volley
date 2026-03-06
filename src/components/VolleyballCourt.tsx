@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo, useEffect } from 'react';
+import { useRef, useCallback, useMemo, useEffect, useState } from 'react';
 import { Point, Team, ActionType, PointType, RallyAction, isOffensiveAction } from '@/types/sports';
 
 interface VolleyballCourtProps {
@@ -10,6 +10,7 @@ interface VolleyballCourtProps {
   teamNames: { blue: string; red: string };
   onCourtClick: (x: number, y: number) => void;
   directionOrigin?: { x: number; y: number } | null;
+  directionDest?: { x: number; y: number } | null;
   pendingDirectionAction?: boolean;
   /** Visualization mode: array of actions to display (cumulative) */
   viewingActions?: RallyAction[];
@@ -184,9 +185,10 @@ function getZoneHighlights(
   }
 }
 
-export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, pendingDirectionAction, viewingActions = [], activeRallyActions = [], viewingPoint, isViewingMode, isPerformanceMode, playerAliases, pendingHasDirection, awaitingRating }: VolleyballCourtProps) {
+export function VolleyballCourt({ points, selectedTeam, selectedAction, selectedPointType, sidesSwapped = false, teamNames = { blue: 'Bleue', red: 'Rouge' }, onCourtClick, directionOrigin, directionDest, pendingDirectionAction, viewingActions = [], activeRallyActions = [], viewingPoint, isViewingMode, isPerformanceMode, playerAliases, pendingHasDirection, awaitingRating }: VolleyballCourtProps) {
   const courtRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isPointerDown, setIsPointerDown] = useState(false);
 
   const hasSelection = !isViewingMode && ((!!selectedTeam && !!selectedAction && !!selectedPointType) || !!pendingDirectionAction);
 
@@ -245,22 +247,26 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
     [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, onCourtClick, pendingDirectionAction, directionOrigin, isPerformanceMode]
   );
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
-      handleInteraction(e.clientX, e.clientY);
-    },
-    [handleInteraction]
-  );
+  const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (!hasSelection) return;
+    setIsPointerDown(true);
+    (e.target as Element).setPointerCapture(e.pointerId);
+    handleInteraction(e.clientX, e.clientY);
+  }, [hasSelection, handleInteraction]);
 
-  const handleTouch = useCallback(
-    (e: React.TouchEvent<SVGSVGElement>) => {
-      if (!hasSelection) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-      handleInteraction(touch.clientX, touch.clientY);
-    },
-    [hasSelection, handleInteraction]
-  );
+  const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (!isPointerDown) return;
+    // Only actively trace coords if we are in direction mode
+    if (pendingDirectionAction) {
+      handleInteraction(e.clientX, e.clientY);
+    }
+  }, [isPointerDown, pendingDirectionAction, handleInteraction]);
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (!isPointerDown) return;
+    setIsPointerDown(false);
+    (e.target as Element).releasePointerCapture(e.pointerId);
+  }, [isPointerDown]);
 
   const topTeam: Team = sidesSwapped ? 'red' : 'blue';
   const bottomTeam: Team = sidesSwapped ? 'blue' : 'red';
@@ -281,9 +287,11 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
       <svg
         ref={courtRef}
         viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`}
-        className={`w-full h-auto ${hasSelection ? 'cursor-crosshair' : ''} ${isViewingMode ? 'cursor-default' : ''}`}
-        onClick={isViewingMode ? undefined : handleClick}
-        onTouchStart={isViewingMode ? undefined : handleTouch}
+        className={`w-full h-auto ${hasSelection ? 'cursor-crosshair touching-none' : ''} ${isViewingMode ? 'cursor-default' : ''}`}
+        style={hasSelection ? { touchAction: 'none' } : {}}
+        onPointerDown={isViewingMode ? undefined : handlePointerDown}
+        onPointerMove={isViewingMode ? undefined : handlePointerMove}
+        onPointerUp={isViewingMode ? undefined : handlePointerUp}
         data-court="true"
       >
         {/* Court layout elements */}
@@ -401,17 +409,35 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
           </>
         )}
 
-        {/* Direction anchor point (blinking) - Active across logic */}
+        {/* Direction anchor point & live dragging arrow */}
         {!isViewingMode && directionOrigin && pendingDirectionAction && (() => {
           const cx = (sidesSwapped ? (1 - directionOrigin.x) : directionOrigin.x) * 600;
           const cy = directionOrigin.y * 400;
+          const color = 'hsl(45, 93%, 58%)';
+
+          if (directionDest) {
+            const dx = (sidesSwapped ? (1 - directionDest.x) : directionDest.x) * 600;
+            const dy = directionDest.y * 400;
+            return (
+              <g>
+                <defs>
+                  <marker id="live-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill={color} />
+                  </marker>
+                </defs>
+                <line x1={cx} y1={cy} x2={dx} y2={dy} stroke={color} strokeWidth={2.5} markerEnd="url(#live-arrow)" opacity={0.8} />
+                <circle cx={cx} cy={cy} r={6} fill={color} opacity={0.7} stroke="white" strokeWidth={1.5} />
+              </g>
+            );
+          }
+
           return (
             <g>
-              <circle cx={cx} cy={cy} r={12} fill="none" stroke="hsl(45, 93%, 58%)" strokeWidth={2.5}>
+              <circle cx={cx} cy={cy} r={12} fill="none" stroke={color} strokeWidth={2.5}>
                 <animate attributeName="r" values="8;14;8" dur="1s" repeatCount="indefinite" />
                 <animate attributeName="opacity" values="1;0.4;1" dur="1s" repeatCount="indefinite" />
               </circle>
-              <circle cx={cx} cy={cy} r={4} fill="hsl(45, 93%, 58%)" />
+              <circle cx={cx} cy={cy} r={4} fill={color} />
             </g>
           );
         })()}

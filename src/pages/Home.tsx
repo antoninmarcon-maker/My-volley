@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDemoMatch, DEMO_MATCH_ID } from '@/lib/demoMatch';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail } from 'lucide-react';
+import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail, MoreVertical, FileSpreadsheet, BarChart2 } from 'lucide-react';
 import logoCapbreton from '@/assets/logo-capbreton.jpeg';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -16,6 +16,8 @@ import { PwaInstallBanner } from '@/components/PwaInstallBanner';
 import { AuthDialog } from '@/components/AuthDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { SavedPlayersManager } from '@/components/SavedPlayersManager';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { exportMatchToExcel } from '@/lib/excelExport';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
@@ -229,6 +231,25 @@ export default function Home() {
     }
     setDeletingId(null);
     await loadMatches(user);
+  };
+
+  const handleShareMatch = async (match: MatchSummary) => {
+    const url = `${window.location.origin}/match/${match.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Match: ${match.teamNames.blue} vs ${match.teamNames.red}`,
+          text: t('home.shareMatchText', 'Regarde les statistiques de ce match !'),
+          url,
+        });
+      } catch {
+        // ignore cancellation
+      }
+    } else {
+      navigator.clipboard.writeText(url)
+        .then(() => toast.success(t('heatmap.linkCopied', 'Lien copié')))
+        .catch(() => toast.error(t('heatmap.linkCopyError', 'Erreur de copie')));
+    }
   };
 
   const handleFinishMatch = async (id: string) => {
@@ -593,27 +614,64 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => handleResume(match.id)}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/15 text-primary font-semibold text-xs border border-primary/20 hover:bg-primary/25 transition-all"
-                        >
-                          {match.finished ? <><Eye size={14} /> {t('common.view')}</> : <><Play size={14} /> {t('common.resume')}</>}
-                        </button>
-                        {!match.finished && (
-                          <button
-                            onClick={() => setFinishingId(match.id)}
-                            className="px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all"
-                            title={t('home.finishMatch')}
-                          >
-                            <CheckCircle2 size={14} />
-                          </button>
+                        {match.finished ? (
+                          <>
+                            <button
+                              onClick={() => handleResume(match.id)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/15 text-primary font-semibold text-xs border border-primary/20 hover:bg-primary/25 transition-all"
+                            >
+                              <BarChart2 size={14} /> {t('common.view', 'Voir')}
+                            </button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="px-3 py-2 rounded-lg bg-secondary/80 text-secondary-foreground hover:bg-secondary transition-all outline-none">
+                                  <MoreVertical size={16} />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56 rounded-xl border-border bg-card shadow-lg">
+                                <DropdownMenuItem onClick={() => handleShareMatch(match)} className="cursor-pointer py-2.5">
+                                  <Share2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-xs">{t('home.shareMatch', 'Partager le match')}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => exportMatchToExcel(match.completedSets, match.points, match.currentSetNumber, match.teamNames, match.players || [])} className="cursor-pointer py-2.5">
+                                  <FileSpreadsheet className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-xs">{t('home.exportExcel', 'Export Excel')}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleResume(match.id)} className="cursor-pointer py-2.5">
+                                  <BarChart2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-xs">{t('home.viewStats', 'Statistiques détaillées')}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-border/50" />
+                                <DropdownMenuItem onClick={() => setDeletingId(match.id)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive py-2.5">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  <span className="font-semibold text-xs">{t('common.delete')}</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleResume(match.id)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/15 text-primary font-semibold text-xs border border-primary/20 hover:bg-primary/25 transition-all"
+                            >
+                              <Play size={14} /> {t('common.resume')}
+                            </button>
+                            <button
+                              onClick={() => setFinishingId(match.id)}
+                              className="px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all"
+                              title={t('home.finishMatch')}
+                            >
+                              <CheckCircle2 size={14} />
+                            </button>
+                            <button
+                              onClick={() => setDeletingId(match.id)}
+                              className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
                         )}
-                        <button
-                          onClick={() => setDeletingId(match.id)}
-                          className="px-3 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
-                        >
-                          <Trash2 size={14} />
-                        </button>
                       </div>
                     </div>
                   );
