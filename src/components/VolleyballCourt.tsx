@@ -32,6 +32,13 @@ const COURT_TOP = 20;
 const COURT_BOTTOM = 380;
 const NET_X = 300;
 
+const VB_X = -40;
+const VB_Y = -40;
+const VB_W = 680;
+const VB_H = 480;
+const VB_RIGHT = VB_X + VB_W;
+const VB_BOTTOM = VB_Y + VB_H;
+
 type ZoneType = 'left_court' | 'right_court' | 'outside_left' | 'outside_right' | 'net_left' | 'net_right' | 'back_left' | 'back_right' | 'none';
 
 // Back court = service zone (behind the attack line, near the baseline)
@@ -125,13 +132,13 @@ function getZoneHighlights(
       if (opponentSide === 'left') {
         return {
           allowed: [
-            { x: 0, y: 0, w: COURT_LEFT, h: 400 },
+            { x: VB_X, y: VB_Y, w: COURT_LEFT - VB_X, h: VB_H },
           ]
         };
       }
       return {
         allowed: [
-          { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
+          { x: COURT_RIGHT, y: VB_Y, w: VB_RIGHT - COURT_RIGHT, h: VB_H },
         ]
       };
     }
@@ -140,17 +147,17 @@ function getZoneHighlights(
       if (teamSide === 'left') {
         return {
           allowed: [
-            { x: 0, y: 0, w: COURT_LEFT, h: 400 },
-            { x: COURT_LEFT, y: 0, w: NET_X - COURT_LEFT, h: COURT_TOP },
-            { x: COURT_LEFT, y: COURT_BOTTOM, w: NET_X - COURT_LEFT, h: 400 - COURT_BOTTOM },
+            { x: VB_X, y: VB_Y, w: COURT_LEFT - VB_X, h: VB_H },
+            { x: COURT_LEFT, y: VB_Y, w: NET_X - COURT_LEFT, h: COURT_TOP - VB_Y },
+            { x: COURT_LEFT, y: COURT_BOTTOM, w: NET_X - COURT_LEFT, h: VB_BOTTOM - COURT_BOTTOM },
           ]
         };
       }
       return {
         allowed: [
-          { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
-          { x: NET_X, y: 0, w: COURT_RIGHT - NET_X, h: COURT_TOP },
-          { x: NET_X, y: COURT_BOTTOM, w: COURT_RIGHT - NET_X, h: 400 - COURT_BOTTOM },
+          { x: COURT_RIGHT, y: VB_Y, w: VB_RIGHT - COURT_RIGHT, h: VB_H },
+          { x: NET_X, y: VB_Y, w: COURT_RIGHT - NET_X, h: COURT_TOP - VB_Y },
+          { x: NET_X, y: COURT_BOTTOM, w: COURT_RIGHT - NET_X, h: VB_BOTTOM - COURT_BOTTOM },
         ]
       };
     }
@@ -165,15 +172,15 @@ function getZoneHighlights(
       // All outside zones (both sides)
       return {
         allowed: [
-          { x: 0, y: 0, w: COURT_LEFT, h: 400 },
-          { x: COURT_LEFT, y: 0, w: COURT_RIGHT - COURT_LEFT, h: COURT_TOP },
-          { x: COURT_LEFT, y: COURT_BOTTOM, w: COURT_RIGHT - COURT_LEFT, h: 400 - COURT_BOTTOM },
-          { x: COURT_RIGHT, y: 0, w: 600 - COURT_RIGHT, h: 400 },
+          { x: VB_X, y: VB_Y, w: COURT_LEFT - VB_X, h: VB_H },
+          { x: COURT_LEFT, y: VB_Y, w: COURT_RIGHT - COURT_LEFT, h: COURT_TOP - VB_Y },
+          { x: COURT_LEFT, y: COURT_BOTTOM, w: COURT_RIGHT - COURT_LEFT, h: VB_BOTTOM - COURT_BOTTOM },
+          { x: COURT_RIGHT, y: VB_Y, w: VB_RIGHT - COURT_RIGHT, h: VB_H },
         ]
       };
     }
     default:
-      return { allowed: [{ x: 0, y: 0, w: 600, h: 400 }] };
+      return { allowed: [{ x: VB_X, y: VB_Y, w: VB_W, h: VB_H }] };
   }
 }
 
@@ -192,7 +199,7 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
 
   const zoneHighlights = useMemo(() => {
     if (!hasSelection) return null;
-    if (isPerformanceMode) return { allowed: [{ x: 0, y: 0, w: 600, h: 400 }] };
+    if (isPerformanceMode) return { allowed: [{ x: VB_X, y: VB_Y, w: VB_W, h: VB_H }] };
     return getZoneHighlights(selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped);
   }, [hasSelection, selectedTeam, selectedAction, selectedPointType, sidesSwapped, isPerformanceMode]);
 
@@ -201,8 +208,15 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
       if (!courtRef.current) return;
 
       const rect = courtRef.current.getBoundingClientRect();
-      const rawX = (clientX - rect.left) / rect.width;
-      const y = (clientY - rect.top) / rect.height;
+      const clickRatioX = (clientX - rect.left) / rect.width;
+      const clickRatioY = (clientY - rect.top) / rect.height;
+
+      const svgX = VB_X + clickRatioX * VB_W;
+      const svgY = VB_Y + clickRatioY * VB_H;
+
+      // We store coordinates normalized to the original 600x400 space
+      const rawX = svgX / 600;
+      const y = svgY / 400;
 
       // Normalize X so stored coordinates are always from blue's perspective (left=blue)
       const normalizedX = sidesSwapped ? 1 - rawX : rawX;
@@ -221,9 +235,7 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
         return;
       }
 
-      // Zone check uses raw (physical) coordinates
-      const svgX = rawX * 600;
-      const svgY = y * 400;
+      // Zone check uses raw (physical) coordinates calculated via the ratio
       const zone = getClickZone(svgX, svgY);
 
       if (isPerformanceMode || isZoneAllowed(zone, selectedTeam!, selectedAction!, selectedPointType!, sidesSwapped)) {
@@ -268,19 +280,23 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
     <div ref={containerRef} id="court-container" className={`relative rounded-xl overflow-hidden transition-all ${hasSelection ? 'ring-2 ring-primary' : ''} ${isViewingMode ? 'ring-2 ring-accent' : ''}`}>
       <svg
         ref={courtRef}
-        viewBox="0 0 600 400"
+        viewBox={`${VB_X} ${VB_Y} ${VB_W} ${VB_H}`}
         className={`w-full h-auto ${hasSelection ? 'cursor-crosshair' : ''} ${isViewingMode ? 'cursor-default' : ''}`}
         onClick={isViewingMode ? undefined : handleClick}
         onTouchStart={isViewingMode ? undefined : handleTouch}
         data-court="true"
       >
-        {/* Court background */}
-        <rect x="0" y="0" width="600" height="400" rx="8" fill="hsl(142, 40%, 28%)" />
+        {/* Court layout elements */}
+        {/* Free zone background */}
+        <rect x={VB_X} y={VB_Y} width={VB_W} height={VB_H} fill="hsl(142, 40%, 20%)" />
+
+        {/* Actual playable court background (with a slight margin for rendering standard size) */}
+        <rect x="-10" y="-10" width="620" height="420" fill="hsl(142, 40%, 28%)" />
 
         {/* Dimming overlay when selection is active */}
         {hasSelection && (
           <>
-            <rect x="0" y="0" width="600" height="400" fill="black" opacity="0.5" />
+            <rect x={VB_X} y={VB_Y} width={VB_W} height={VB_H} fill="black" opacity="0.5" />
             <defs>
               <clipPath id="allowed-zones">
                 {zoneHighlights?.allowed.map((z, i) => (
@@ -289,8 +305,8 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
               </clipPath>
             </defs>
             <g clipPath="url(#allowed-zones)">
-              <rect x="0" y="0" width="600" height="400" rx="8" fill="hsl(142, 40%, 28%)" />
-              <rect x="0" y="0" width="600" height="400" fill={selectedTeam === 'blue' ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)'} opacity="0.15">
+              <rect x={VB_X} y={VB_Y} width={VB_W} height={VB_H} fill="hsl(142, 40%, 28%)" />
+              <rect x={VB_X} y={VB_Y} width={VB_W} height={VB_H} fill={selectedTeam === 'blue' ? 'hsl(217, 91%, 60%)' : 'hsl(0, 84%, 60%)'} opacity="0.15">
                 <animate attributeName="opacity" values="0.1;0.2;0.1" dur="1.5s" repeatCount="indefinite" />
               </rect>
             </g>
@@ -299,7 +315,7 @@ export function VolleyballCourt({ points, selectedTeam, selectedAction, selected
 
         {/* Visualization mode overlay */}
         {isViewingMode && (
-          <rect x="0" y="0" width="600" height="400" fill="black" opacity="0.15" />
+          <rect x={VB_X} y={VB_Y} width={VB_W} height={VB_H} fill="black" opacity="0.15" />
         )}
 
         {/* Court border */}

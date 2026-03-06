@@ -229,7 +229,11 @@ const Index = () => {
     const needsCourtPlacement = meta?.placeOnCourt !== false && metadata?.hasCourt !== false && !SERVICE_FAULT_ACTIONS.includes(selectedAction);
     const globalRatingsEnabled = metadata?.enableRatings !== false;
     const perActionRating = meta?.hasRating === true;
-    const needsRating = globalRatingsEnabled || perActionRating;
+
+    // Quality is asked if:
+    // 1. It's a custom action with hasRating=true
+    // 2. OR global ratings are enabled AND it's not a fault (we don't rate faults by default)
+    const needsRating = perActionRating || (globalRatingsEnabled && selectedPointType !== 'fault');
 
     // If action needs player AND court, show player selector first (performance mode)
     if (isPerformanceMode && needsAssignToPlayer && needsCourtPlacement && players.length > 0 && !preSelectedPlayerId) {
