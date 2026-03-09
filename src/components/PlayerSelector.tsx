@@ -3,7 +3,7 @@ import { Player } from '@/types/sports';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getPlayerNumber, getJerseyConfig } from '@/lib/savedPlayers';
-import type { SportType } from '@/types/sports';
+import type { SportType, Team } from '@/types/sports';
 
 interface PlayerSelectorProps {
   players: Player[];
