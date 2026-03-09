@@ -73,9 +73,9 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
           </DialogHeader>
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground text-center">{user.email}</p>
-            <button onClick={() => { setShowMenu(false); setTimeout(() => setShowFeedback(true), 150); }} className="w-full flex items-center gap-2.5 py-3 px-4 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground font-medium text-sm transition-all">
+            <a href="mailto:contact@my-volley.com" className="w-full flex items-center gap-2.5 py-3 px-4 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground font-medium text-sm transition-all">
               <MessageSquare size={16} className="text-primary" /> {t('userMenu.leaveFeedback')}
-            </button>
+            </a>
             <button onClick={() => { setShowMenu(false); navigate('/players'); }} className="w-full flex items-center gap-2.5 py-3 px-4 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground font-medium text-sm transition-all">
               <Users size={16} className="text-primary" /> {t('userMenu.savedPlayers')}
             </button>
