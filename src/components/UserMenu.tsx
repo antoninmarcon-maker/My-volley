@@ -17,9 +17,6 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [sendingFeedback, setSendingFeedback] = useState(false);
 
   const displayName = user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User';
 
