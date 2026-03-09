@@ -1,8 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, MessageSquare } from 'lucide-react';
-import { useState, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
 export default function Help() {

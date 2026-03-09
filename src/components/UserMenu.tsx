@@ -33,28 +33,6 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
     window.location.reload();
   };
 
-  const handleSendFeedback = async () => {
-    if (!feedbackMessage.trim()) return;
-    setSendingFeedback(true);
-    try {
-      const { error } = await supabase.from('feedback').insert({
-        user_id: user.id,
-        email: user.email || '',
-        message: feedbackMessage.trim(),
-      });
-      if (error) {
-        toast.error(t('userMenu.feedbackError', { message: error.message }));
-      } else {
-        toast.success(t('userMenu.feedbackSent'));
-        setFeedbackMessage('');
-        setShowFeedback(false);
-      }
-    } catch (err) {
-      toast.error(t('userMenu.feedbackUnexpected'));
-    } finally {
-      setSendingFeedback(false);
-    }
-  };
 
   return (
     <>
