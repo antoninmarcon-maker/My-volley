@@ -235,14 +235,46 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       ...(preSelectedRating && preSelectedRating !== 'none' ? { rating: preSelectedRating } : {}),
     };
 
-    setDirectionOrigin(null);
     setDirectionDest(null);
     setPendingDirectionAction(null);
 
-    // Process this rally action the same way as a regular one
-    processRallyAction(rallyAction, team, type);
+    if (isPerformanceMode) {
+      // Process this rally action the same way as a regular one
+      processRallyAction(rallyAction, team, type);
+    } else {
+      // Standard mode: create a full point directly instead of a rally action fragment
+      const point: Point = {
+        id: crypto.randomUUID(),
+        team,
+        type,
+        action,
+        x: directionOrigin.x,
+        y: directionOrigin.y,
+        timestamp: rallyAction.timestamp,
+        rallyActions: [rallyAction], // Include the trajectory as a rally action inside the point
+        ...(customLabel ? { customActionLabel: customLabel } : {}),
+        ...(sigil ? { sigil } : {}),
+        ...(showOnCourt ? { showOnCourt: true } : {}),
+        ...(preSelectedRating && preSelectedRating !== 'none' ? { rating: preSelectedRating } : {}),
+      };
+
+      if (preSelectedPlayerId) {
+        setPoints(prev => [...prev, { ...point, playerId: preSelectedPlayerId }]);
+        setPreSelectedRating(null);
+      } else {
+        const shouldAssignPlayer = players.length > 0 && (
+          point.type === 'neutral' || (point.team === 'blue' && point.type === 'scored') || (point.team === 'red' && point.type === 'fault')
+        );
+        if (shouldAssignPlayer) {
+          setPendingPoint(point);
+        } else {
+          setPoints(prev => [...prev, point]);
+          setPreSelectedRating(null);
+        }
+      }
+    }
     cancelSelection();
-  }, [pendingDirectionAction, directionOrigin, directionDest, processRallyAction, preSelectedPlayerId, preSelectedRating, cancelSelection]);
+  }, [pendingDirectionAction, directionOrigin, directionDest, isPerformanceMode, processRallyAction, preSelectedPlayerId, preSelectedRating, players.length, cancelSelection]);
 
   const addPoint = useCallback((x: number, y: number) => {
     // Priority: intercept direction clicks. If we are dragging, we update destination instead of finishing immediately.
@@ -271,8 +303,8 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     // Clear pendingActionMeta after consuming
     setPendingActionMeta(null);
 
-    // --- Performance Mode with direction: 1st click (origin) ---
-    if (isPerformanceMode && hasDirection && !directionOrigin) {
+    // --- Mode with direction: 1st click (origin) ---
+    if (hasDirection && !directionOrigin) {
       startDirectionMode(selectedTeam, selectedPointType, selectedAction, x, y, customLabel, customSigil, customShowOnCourt);
       // Do NOT clear selectedTeam here — keeps the "touch destination" banner visible
       return;

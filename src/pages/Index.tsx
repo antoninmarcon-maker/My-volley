@@ -232,8 +232,9 @@ const Index = () => {
 
     // Quality is asked if:
     // 1. It's a custom action with hasRating=true
-    // 2. OR global ratings are enabled AND it's not a fault (we don't rate faults by default)
-    const needsRating = perActionRating || (globalRatingsEnabled && selectedPointType !== 'fault');
+    // 2. OR global ratings are enabled AND it's not a fault and not a timeout
+    const nonRateableActions = ['timeout'];
+    const needsRating = perActionRating || (globalRatingsEnabled && selectedPointType !== 'fault' && !nonRateableActions.includes(selectedAction));
 
     // If action needs player AND court, show player selector first (performance mode)
     if (isPerformanceMode && needsAssignToPlayer && needsCourtPlacement && players.length > 0 && !preSelectedPlayerId) {
