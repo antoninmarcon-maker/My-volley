@@ -56,8 +56,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey!);
 
     // Import VAPID keys
     const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");

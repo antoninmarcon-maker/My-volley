@@ -17,9 +17,6 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [sendingFeedback, setSendingFeedback] = useState(false);
 
   const displayName = user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'User';
 
@@ -36,28 +33,6 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
     window.location.reload();
   };
 
-  const handleSendFeedback = async () => {
-    if (!feedbackMessage.trim()) return;
-    setSendingFeedback(true);
-    try {
-      const { error } = await supabase.from('feedback').insert({
-        user_id: user.id,
-        email: user.email || '',
-        message: feedbackMessage.trim(),
-      });
-      if (error) {
-        toast.error(t('userMenu.feedbackError', { message: error.message }));
-      } else {
-        toast.success(t('userMenu.feedbackSent'));
-        setFeedbackMessage('');
-        setShowFeedback(false);
-      }
-    } catch (err) {
-      toast.error(t('userMenu.feedbackUnexpected'));
-    } finally {
-      setSendingFeedback(false);
-    }
-  };
 
   return (
     <>
@@ -73,9 +48,9 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
           </DialogHeader>
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground text-center">{user.email}</p>
-            <button onClick={() => { setShowMenu(false); setTimeout(() => setShowFeedback(true), 150); }} className="w-full flex items-center gap-2.5 py-3 px-4 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground font-medium text-sm transition-all">
+            <a href="mailto:contact@my-volley.com" className="w-full flex items-center gap-2.5 py-3 px-4 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground font-medium text-sm transition-all">
               <MessageSquare size={16} className="text-primary" /> {t('userMenu.leaveFeedback')}
-            </button>
+            </a>
             <button onClick={() => { setShowMenu(false); navigate('/players'); }} className="w-full flex items-center gap-2.5 py-3 px-4 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground font-medium text-sm transition-all">
               <Users size={16} className="text-primary" /> {t('userMenu.savedPlayers')}
             </button>
@@ -92,24 +67,6 @@ export function UserMenu({ user, onOpenSavedPlayers }: UserMenuProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
-        <DialogContent className="max-w-sm rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-center text-lg font-bold">{t('userMenu.feedbackTitle')}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <textarea value={feedbackMessage} onChange={e => setFeedbackMessage(e.target.value)} placeholder={t('userMenu.feedbackPlaceholder')} className="w-full min-h-[120px] rounded-lg border border-border bg-background p-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30" maxLength={2000} />
-            <div className="flex gap-2">
-              <button onClick={() => setShowFeedback(false)} className="flex-1 py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-sm">
-                {t('common.cancel')}
-              </button>
-              <button onClick={handleSendFeedback} disabled={sendingFeedback || !feedbackMessage.trim()} className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50">
-                {sendingFeedback ? t('common.sending') : t('common.send')}
-              </button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
