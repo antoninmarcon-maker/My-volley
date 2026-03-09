@@ -78,26 +78,13 @@ export default function Help() {
           </div>
         </section>
 
-        <section className="pb-6" id="feedback" ref={feedbackRef}>
-          <button
-            onClick={() => {
-              setFeedbackOpen(prev => {
-                if (!prev) setTimeout(() => feedbackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
-                return !prev;
-              });
-            }}
+        <section className="pb-6">
+          <a
+            href="mailto:contact@my-volley.com"
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
           >
             <MessageSquare size={16} /> {t('help.leaveFeedback')}
-          </button>
-          {feedbackOpen && (
-            <div className="mt-3 bg-card rounded-xl p-4 border border-border space-y-3">
-              <textarea value={feedbackMsg} onChange={e => setFeedbackMsg(e.target.value)} placeholder={t('help.feedbackPlaceholder')} className="w-full rounded-lg border border-border bg-background text-foreground text-sm p-3 min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-primary/30" />
-              <button onClick={handleFeedback} disabled={sending || !feedbackMsg.trim()} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50">
-                {sending ? t('common.sending') : t('common.send')}
-              </button>
-            </div>
-          )}
+          </a>
         </section>
       </main>
     </div>
