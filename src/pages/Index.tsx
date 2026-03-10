@@ -27,7 +27,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('match');
   const [showHelp, setShowHelp] = useState(false);
-  const [showRatings, setShowRatings] = useState(true);
+  
   const [user, setUser] = useState<User | null>(null);
   const [showAuthForAi, setShowAuthForAi] = useState(false);
   const [loading, setLoading] = useState(true);
