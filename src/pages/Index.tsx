@@ -12,8 +12,6 @@ import { PlayerSelector } from '@/components/PlayerSelector';
 import { PlayByPlayNavigator } from '@/components/PlayByPlayNavigator';
 import { AiAnalysis } from '@/components/AiAnalysis';
 import { AuthDialog } from '@/components/AuthDialog';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { getMatch, saveMatch } from '@/lib/matchStorage';
 import { getCloudMatchById, saveCloudMatch } from '@/lib/cloudStorage';
 import { supabase } from '@/integrations/supabase/client';
