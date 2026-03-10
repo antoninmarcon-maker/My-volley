@@ -369,7 +369,7 @@ export default function Home() {
   };
 
   const getMatchScoreText = (match: MatchSummary) => {
-    const sc = match.completedSets.reduce((acc, s) => ({ blue: acc.blue + s.blueScore, red: acc.red + s.redScore }), { blue: 0, red: 0 });
+    const sc = match.completedSets.reduce((acc, s) => ({ blue: acc.blue + s.score.blue, red: acc.red + s.score.red }), { blue: 0, red: 0 });
     const pts = match.points || [];
     sc.blue += pts.filter(p => p.team === 'blue').length;
     sc.red += pts.filter(p => p.team === 'red').length;
