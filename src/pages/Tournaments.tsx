@@ -9,19 +9,6 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 
-const FORMAT_LABELS: Record<TournamentFormat, string> = {
-    pools: 'Poules',
-    elimination: 'Élimination directe',
-    championship: 'Championnat',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    draft: 'Brouillon',
-    open: 'Ouvert',
-    in_progress: 'En cours',
-    finished: 'Terminé',
-};
-
 const STATUS_COLORS: Record<string, string> = {
     draft: 'bg-muted text-muted-foreground',
     open: 'bg-emerald-500/15 text-emerald-500',
@@ -30,7 +17,26 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function Tournaments() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+
+    const getFormatLabel = (format: TournamentFormat) => {
+        switch (format) {
+            case 'elimination': return t('tournaments.formatElimination');
+            case 'championship': return t('tournaments.formatChampionship');
+            case 'pools':
+            default: return t('tournaments.formatPools');
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'open': return t('tournaments.statusOpen');
+            case 'in_progress': return t('tournaments.statusInProgress');
+            case 'finished': return t('tournaments.statusFinished');
+            case 'draft':
+            default: return t('tournaments.statusDraft');
+        }
+    };
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -82,17 +88,17 @@ export default function Tournaments() {
             setShowCreate(false);
             navigate(`/tournaments/${tournament.id}`);
         } else {
-            toast.error('Erreur lors de la création du tournoi');
+            toast.error(t('tournaments.creationError'));
         }
     };
 
     const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm('Supprimer ce tournoi ?')) return;
+        if (!confirm(t('tournaments.deleteConfirm'))) return;
         const ok = await deleteTournament(id);
         if (ok) {
             setTournaments(prev => prev.filter(t => t.id !== id));
-            toast.success('Tournoi supprimé');
+            toast.success(t('tournaments.deleted'));
         }
     };
 
@@ -100,13 +106,13 @@ export default function Tournaments() {
         return (
             <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6">
                 <Trophy size={48} className="text-primary" />
-                <h1 className="text-2xl font-black text-foreground">Tournois</h1>
-                <p className="text-muted-foreground text-sm text-center">Connecte-toi pour créer et gérer tes tournois.</p>
+                <h1 className="text-2xl font-black text-foreground">{t('tournaments.title')}</h1>
+                <p className="text-muted-foreground text-sm text-center">{t('tournaments.loginToManage')}</p>
                 <button
                     onClick={() => navigate('/')}
                     className="mt-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
                 >
-                    Se connecter
+                    {t('common.login')}
                 </button>
             </div>
         );
@@ -121,14 +127,14 @@ export default function Tournaments() {
                 </button>
                 <div className="flex items-center gap-2 flex-1">
                     <Trophy size={20} className="text-primary" />
-                    <h1 className="text-lg font-black text-foreground tracking-tight">Tournois</h1>
+                    <h1 className="text-lg font-black text-foreground tracking-tight">{t('tournaments.title')}</h1>
                 </div>
                 <button
                     onClick={() => setShowCreate(true)}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
                 >
                     <Plus size={16} />
-                    Créer
+                    {t('tournaments.create')}
                 </button>
             </header>
 
@@ -143,13 +149,13 @@ export default function Tournaments() {
                         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                             <Trophy size={28} className="text-primary" />
                         </div>
-                        <p className="text-base font-semibold text-foreground">Aucun tournoi pour l'instant</p>
-                        <p className="text-sm text-muted-foreground">Crée ton premier tournoi pour commencer !</p>
+                        <p className="text-base font-semibold text-foreground">{t('tournaments.noTournaments')}</p>
+                        <p className="text-sm text-muted-foreground">{t('tournaments.createFirst')}</p>
                         <button
                             onClick={() => setShowCreate(true)}
                             className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
                         >
-                            Créer un tournoi
+                            {t('tournaments.createButton')}
                         </button>
                     </div>
                 ) : (
@@ -163,9 +169,9 @@ export default function Tournaments() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className={`text-[10px] font-bold uppercase rounded-full px-2 py-0.5 ${STATUS_COLORS[t.status]}`}>
-                                            {STATUS_LABELS[t.status]}
+                                            {getStatusLabel(t.status)}
                                         </span>
-                                        <span className="text-[10px] text-muted-foreground">{FORMAT_LABELS[t.format]}</span>
+                                        <span className="text-[10px] text-muted-foreground">{getFormatLabel(t.format)}</span>
                                     </div>
                                     <p className="font-bold text-foreground truncate text-base">{t.name}</p>
                                     <div className="flex items-center gap-3 mt-1.5">
@@ -176,7 +182,7 @@ export default function Tournaments() {
                                         )}
                                         {t.date && (
                                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                <Calendar size={11} /> {new Date(t.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                <Calendar size={11} /> {new Date(t.date).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </span>
                                         )}
                                     </div>
@@ -201,33 +207,33 @@ export default function Tournaments() {
                 <DialogContent className="max-w-sm rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-center font-black flex items-center justify-center gap-2">
-                            <Trophy size={18} className="text-primary" /> Nouveau tournoi
+                            <Trophy size={18} className="text-primary" /> {t('tournaments.newTournament')}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 pt-2">
                         {/* Name */}
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nom *</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.nameLabel')}</label>
                             <input
                                 value={formName}
                                 onChange={e => setFormName(e.target.value)}
-                                placeholder="Ex: Tournoi de printemps"
+                                placeholder={t('tournaments.namePlaceholder')}
                                 className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
                         </div>
                         {/* Location */}
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lieu</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.locationLabel')}</label>
                             <input
                                 value={formLocation}
                                 onChange={e => setFormLocation(e.target.value)}
-                                placeholder="Ex: Gymnase Marcel Cerdan"
+                                placeholder={t('tournaments.locationPlaceholder')}
                                 className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
                         </div>
                         {/* Date */}
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.dateLabel')}</label>
                             <input
                                 type="date"
                                 value={formDate}
@@ -237,21 +243,21 @@ export default function Tournaments() {
                         </div>
                         {/* Format */}
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Format</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.formatLabel')}</label>
                             <select
                                 value={formFormat}
                                 onChange={e => setFormFormat(e.target.value as TournamentFormat)}
                                 className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             >
-                                <option value="pools">Poules</option>
-                                <option value="elimination">Élimination directe</option>
-                                <option value="championship">Championnat</option>
+                                <option value="pools">{t('tournaments.formatPools')}</option>
+                                <option value="elimination">{t('tournaments.formatElimination')}</option>
+                                <option value="championship">{t('tournaments.formatChampionship')}</option>
                             </select>
                         </div>
                         {/* Points per set */}
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Points par set</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.pointsPerSetLabel')}</label>
                                 <select
                                     value={formPointsPerSet}
                                     onChange={e => setFormPointsPerSet(Number(e.target.value))}
@@ -263,7 +269,7 @@ export default function Tournaments() {
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sets gagnants</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.setsToWinLabel')}</label>
                                 <select
                                     value={formSetsToWin}
                                     onChange={e => setFormSetsToWin(Number(e.target.value))}
@@ -278,9 +284,9 @@ export default function Tournaments() {
                         {/* Toggles */}
                         <div className="space-y-3 rounded-xl border border-border p-3">
                             {[
-                                { label: 'Inscriptions publiques', desc: 'Les joueurs peuvent s\'inscrire via un lien', val: formPublicReg, set: setFormPublicReg },
-                                { label: 'Saisie de score par les joueurs', desc: 'Les joueurs peuvent entrer les scores', val: formPlayerScoring, set: setFormPlayerScoring },
-                                { label: 'Validation stricte', desc: 'Seul l\'admin peut modifier après le début', val: formStrictValidation, set: setFormStrictValidation },
+                                { label: t('tournaments.publicReg'), desc: t('tournaments.publicRegDesc'), val: formPublicReg, set: setFormPublicReg },
+                                { label: t('tournaments.playerScoring'), desc: t('tournaments.playerScoringDesc'), val: formPlayerScoring, set: setFormPlayerScoring },
+                                { label: t('tournaments.strictValidation'), desc: t('tournaments.strictValidationDesc'), val: formStrictValidation, set: setFormStrictValidation },
                             ].map(item => (
                                 <div key={item.label} className="flex items-center justify-between gap-3">
                                     <div className="flex-1">
@@ -298,7 +304,7 @@ export default function Tournaments() {
                             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                         >
                             {creating ? <Loader2 size={16} className="animate-spin" /> : <Trophy size={16} />}
-                            Créer le tournoi
+                            {t('tournaments.createAction')}
                         </button>
                     </div>
                 </DialogContent>

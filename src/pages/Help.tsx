@@ -46,6 +46,34 @@ export default function Help() {
           </div>
         </section>
 
+        <section>
+          <h2 className="text-xl font-bold text-foreground mb-3">{t('help.playersTitle')}</h2>
+          <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground space-y-3">
+            <p>{t('help.playersDesc')}</p>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold text-foreground mb-3">{t('help.actionsTitle')}</h2>
+          <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground space-y-3">
+            <p>{t('help.actionsDesc')}</p>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold text-foreground mb-3">{t('help.perfModeTitle')}</h2>
+          <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground space-y-3">
+            <p>{t('help.perfModeDesc')}</p>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold text-foreground mb-3">{t('help.tournamentsTitle')}</h2>
+          <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground space-y-3">
+            <p>{t('help.tournamentsDesc')}</p>
+          </div>
+        </section>
+
         <section className="pb-6">
           <a
             href="mailto:contact@my-volley.com"

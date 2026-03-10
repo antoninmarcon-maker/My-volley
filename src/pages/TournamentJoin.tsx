@@ -8,8 +8,10 @@ import {
 } from '@/lib/tournamentStorage';
 import type { Tournament, TournamentTeam, TournamentMember } from '@/types/tournament';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export default function TournamentJoin() {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -52,10 +54,10 @@ export default function TournamentJoin() {
         if (!tournament || !user || !newTeamName.trim() || !playerName.trim()) return;
         setSaving(true);
         const team = await createTeam(tournament.id, newTeamName.trim());
-        if (!team) { toast.error('Erreur lors de la création de l\'équipe'); setSaving(false); return; }
+        if (!team) { toast.error(t('tournaments.creationError')); setSaving(false); return; }
         // Join as captain (already set as captain in createTeam)
         await joinTeam(team.id, tournament.id, playerName.trim());
-        toast.success(`Équipe "${team.name}" créée ! Tu en es capitaine.`);
+        toast.success(t('tournaments.teamCreated', { name: team.name }));
         navigate(`/tournaments/${tournament.id}`);
     };
 
@@ -63,15 +65,15 @@ export default function TournamentJoin() {
         if (!tournament || !user || !selectedTeamId || !playerName.trim()) return;
         setSaving(true);
         const membership = await joinTeam(selectedTeamId, tournament.id, playerName.trim());
-        if (!membership) { toast.error('Impossible de rejoindre l\'équipe'); setSaving(false); return; }
-        toast.success('Tu as rejoint l\'équipe !');
+        if (!membership) { toast.error(t('tournaments.joiningError')); setSaving(false); return; }
+        toast.success(t('tournaments.joinedSuccess'));
         navigate(`/tournaments/${tournament.id}`);
     };
 
     const handleRequestCaptaincy = async () => {
         if (!myMembership) return;
         const ok = await requestCaptaincy(myMembership.id);
-        if (ok) toast.success('Demande de capitanat envoyée !');
+        if (ok) toast.success(t('tournaments.captainRequestSent'));
     };
 
     if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>;
@@ -79,9 +81,9 @@ export default function TournamentJoin() {
     if (!tournament) return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
             <Trophy size={40} className="text-muted-foreground" />
-            <p className="font-bold text-foreground">Lien d'inscription invalide</p>
-            <p className="text-sm text-muted-foreground">Ce tournoi n'existe pas ou le lien a expiré.</p>
-            <button onClick={() => navigate('/')} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">Accueil</button>
+            <p className="font-bold text-foreground">{t('tournaments.invalidLink')}</p>
+            <p className="text-sm text-muted-foreground">{t('tournaments.linkExpired')}</p>
+            <button onClick={() => navigate('/')} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">{t('shared.home')}</button>
         </div>
     );
 
@@ -89,8 +91,8 @@ export default function TournamentJoin() {
         <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
             <Trophy size={40} className="text-primary" />
             <h1 className="text-xl font-black text-foreground">{tournament.name}</h1>
-            <p className="text-sm text-muted-foreground">Connecte-toi pour rejoindre ce tournoi.</p>
-            <button onClick={() => navigate('/')} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">Se connecter</button>
+            <p className="text-sm text-muted-foreground">{t('tournaments.loginToJoin')}</p>
+            <button onClick={() => navigate('/')} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm">{t('common.login')}</button>
         </div>
     );
 
@@ -102,7 +104,7 @@ export default function TournamentJoin() {
                 </button>
                 <div className="flex-1">
                     <h1 className="font-black text-foreground text-base truncate">{tournament.name}</h1>
-                    <p className="text-xs text-muted-foreground">Rejoindre le tournoi</p>
+                    <p className="text-xs text-muted-foreground">{t('tournaments.join')}</p>
                 </div>
             </header>
 
@@ -110,46 +112,46 @@ export default function TournamentJoin() {
                 {myMembership ? (
                     <div className="space-y-4">
                         <div className="p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10">
-                            <p className="text-sm font-bold text-emerald-500 mb-1">Tu es déjà inscrit !</p>
-                            <p className="text-sm text-foreground">Équipe : <span className="font-bold">{teams.find(t => t.id === myMembership.team_id)?.name}</span></p>
+                            <p className="text-sm font-bold text-emerald-500 mb-1">{t('tournaments.alreadyRegistered')}</p>
+                            <p className="text-sm text-foreground">{t('tournaments.team')} : <span className="font-bold">{teams.find(t => t.id === myMembership.team_id)?.name}</span></p>
                         </div>
                         {myMembership.role !== 'captain_request' && teams.find(t => t.id === myMembership.team_id)?.captain_id !== user.id && (
                             <button onClick={handleRequestCaptaincy} className="w-full py-3 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-secondary transition-colors">
-                                Demander le capitanat
+                                {t('tournaments.requestCaptaincy')}
                             </button>
                         )}
                         <button onClick={() => navigate(`/tournaments/${tournament.id}`)} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm">
-                            Voir le tournoi →
+                            {t('tournaments.viewTournament')}
                         </button>
                     </div>
                 ) : (
                     <>
                         {/* Player name */}
                         <div>
-                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Ton nom de joueur</label>
+                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.playerNameLabel')}</label>
                             <input
                                 value={playerName}
                                 onChange={e => setPlayerName(e.target.value)}
-                                placeholder="Ex: Jean Dupont"
+                                placeholder={t('tournaments.playerNamePlaceholder')}
                                 className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
                         </div>
 
                         {mode === 'choose' && (
                             <div className="space-y-3">
-                                <p className="text-sm font-semibold text-muted-foreground text-center">Comment veux-tu participer ?</p>
+                                <p className="text-sm font-semibold text-muted-foreground text-center">{t('tournaments.howToParticipate')}</p>
                                 <button onClick={() => setMode('create')} className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-primary/30 bg-primary/5 hover:border-primary/60 transition-colors text-left">
                                     <UserPlus size={20} className="text-primary shrink-0" />
                                     <div>
-                                        <p className="font-bold text-foreground text-sm">Créer une équipe</p>
-                                        <p className="text-xs text-muted-foreground">Tu seras le capitaine</p>
+                                        <p className="font-bold text-foreground text-sm">{t('tournaments.createTeam')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('tournaments.youWillBeCaptain')}</p>
                                     </div>
                                 </button>
                                 <button onClick={() => setMode('join')} disabled={teams.length === 0} className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-border hover:border-primary/30 transition-colors text-left disabled:opacity-40">
                                     <LogIn size={20} className="text-muted-foreground shrink-0" />
                                     <div>
-                                        <p className="font-bold text-foreground text-sm">Rejoindre une équipe</p>
-                                        <p className="text-xs text-muted-foreground">{teams.length} équipe{teams.length > 1 ? 's' : ''} disponible{teams.length > 1 ? 's' : ''}</p>
+                                        <p className="font-bold text-foreground text-sm">{t('tournaments.joinTeam')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('tournaments.teamsAvailable', { count: teams.length })}</p>
                                     </div>
                                 </button>
                             </div>
@@ -157,29 +159,29 @@ export default function TournamentJoin() {
 
                         {mode === 'create' && (
                             <div className="space-y-3">
-                                <button onClick={() => setMode('choose')} className="text-xs text-muted-foreground hover:text-foreground">← Retour</button>
+                                <button onClick={() => setMode('choose')} className="text-xs text-muted-foreground hover:text-foreground">← {t('common.back')}</button>
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nom de l'équipe</label>
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.teamNameLabel')}</label>
                                     <input
                                         value={newTeamName}
                                         onChange={e => setNewTeamName(e.target.value)}
-                                        placeholder="Ex: Les Tornades"
+                                        placeholder={t('tournaments.teamNamePlaceholder')}
                                         className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     />
                                 </div>
                                 <button onClick={handleCreateTeam} disabled={!newTeamName.trim() || !playerName.trim() || saving}
                                     className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
                                     {saving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-                                    Créer l'équipe
+                                    {t('tournaments.createTeamAction')}
                                 </button>
                             </div>
                         )}
 
                         {mode === 'join' && (
                             <div className="space-y-3">
-                                <button onClick={() => setMode('choose')} className="text-xs text-muted-foreground hover:text-foreground">← Retour</button>
+                                <button onClick={() => setMode('choose')} className="text-xs text-muted-foreground hover:text-foreground">← {t('common.back')}</button>
                                 <div>
-                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Choisir une équipe</label>
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('tournaments.chooseTeam')}</label>
                                     <div className="mt-2 space-y-2">
                                         {teams.map(team => {
                                             const count = members.filter(m => m.team_id === team.id).length;
@@ -193,7 +195,7 @@ export default function TournamentJoin() {
                                                         <Users size={15} className="text-muted-foreground" />
                                                         <span className="font-semibold text-sm text-foreground">{team.name}</span>
                                                     </div>
-                                                    <span className="text-xs text-muted-foreground">{count} joueur{count > 1 ? 's' : ''}</span>
+                                                    <span className="text-xs text-muted-foreground">{count} {count > 1 ? 'joueurs' : 'joueur'}</span>
                                                 </button>
                                             );
                                         })}
@@ -202,7 +204,7 @@ export default function TournamentJoin() {
                                 <button onClick={handleJoinTeam} disabled={!selectedTeamId || !playerName.trim() || saving}
                                     className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
                                     {saving ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
-                                    Rejoindre l'équipe
+                                    {t('tournaments.joinAction')}
                                 </button>
                             </div>
                         )}

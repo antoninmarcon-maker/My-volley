@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDemoMatch, DEMO_MATCH_ID } from '@/lib/demoMatch';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail, MoreVertical, FileSpreadsheet, BarChart2 } from 'lucide-react';
+import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail, MoreVertical, FileSpreadsheet, BarChart2, Users, Settings2, Activity, Trophy } from 'lucide-react';
 import logoCapbreton from '@/assets/logo-capbreton.jpeg';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -17,6 +17,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { SavedPlayersManager } from '@/components/SavedPlayersManager';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { exportMatchToExcel } from '@/lib/excelExport';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -390,6 +391,92 @@ export default function Home() {
 
       <main className="flex-1 overflow-auto p-4 max-w-lg mx-auto w-full space-y-6">
         <PwaInstallBanner />
+
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✨</span>
+            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('home.whatsNew', "Nouveautés")}</h2>
+          </div>
+          <Carousel className="w-full">
+            <CarouselContent className="-ml-3 pb-2 pt-1 pl-1 pr-1">
+              {/* Carte 1: Joueurs enregistrés */}
+              <CarouselItem className="pl-3 basis-[85%]">
+                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
+                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
+                    <Users size={32} className="text-muted-foreground/30 absolute" />
+                    <img src="/assets/placeholder-players.png" alt={t('whatsNewSavedPlayers')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
+                  </div>
+                  <div className="p-4 flex flex-col flex-1 gap-2">
+                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewSavedPlayers')}</h3>
+                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewSavedPlayersDesc')}</p>
+                    <button onClick={() => navigate('/players')} className="mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all">
+                      {t('whatsNewSavedPlayersBtn')}
+                    </button>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              {/* Carte 2: Actions personnalisées */}
+              <CarouselItem className="pl-3 basis-[85%]">
+                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
+                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
+                    <Settings2 size={32} className="text-muted-foreground/30 absolute" />
+                    <img src="/assets/placeholder-actions.png" alt={t('whatsNewCustomActions')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
+                  </div>
+                  <div className="p-4 flex flex-col flex-1 gap-2">
+                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewCustomActions')}</h3>
+                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewCustomActionsDesc')}</p>
+                    <button onClick={() => navigate('/actions')} className="mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all">
+                      {t('whatsNewCustomActionsBtn')}
+                    </button>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              {/* Carte 3: Mode Performance */}
+              <CarouselItem className="pl-3 basis-[85%]">
+                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
+                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
+                    <Activity size={32} className="text-muted-foreground/30 absolute" />
+                    <img src="/assets/placeholder-perf.png" alt={t('whatsNewPerfMode')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
+                  </div>
+                  <div className="p-4 flex flex-col flex-1 gap-2">
+                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewPerfMode')}</h3>
+                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewPerfModeDesc')}</p>
+                    <button
+                      onClick={() => {
+                        setHasCourt(true);
+                        setIsPerformanceMode(true);
+                        setShowNew(true);
+                      }}
+                      className="mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"
+                    >
+                      {t('whatsNewPerfModeBtn')}
+                    </button>
+                  </div>
+                </div>
+              </CarouselItem>
+
+              {/* Carte 4: Gestion de Tournois */}
+              <CarouselItem className="pl-3 basis-[85%]">
+                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
+                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
+                    <Trophy size={32} className="text-muted-foreground/30 absolute" />
+                    <img src="/assets/placeholder-tournaments.png" alt={t('whatsNewTournaments')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
+                  </div>
+                  <div className="p-4 flex flex-col flex-1 gap-2">
+                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewTournaments')}</h3>
+                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewTournamentsDesc')}</p>
+                    <button onClick={() => navigate('/tournaments')} className="group mt-2 w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" style={{ background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' }}>
+                      <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
+                      <span className="relative z-10">{t('whatsNewTournamentsBtn')}</span>
+                    </button>
+                  </div>
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
+        </section>
 
         {/* Share / Invite Dialog */}
         <Dialog open={showShareInvite} onOpenChange={setShowShareInvite}>

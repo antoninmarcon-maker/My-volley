@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Trophy, Eye } from 'lucide-react';
 import { getTournamentBySpectatorToken, getTeams, getMatches } from '@/lib/tournamentStorage';
 import type { Tournament, TournamentTeam, TournamentMatch } from '@/types/tournament';
+import { useTranslation } from 'react-i18next';
 
 export default function TournamentSpectator() {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token') ?? '';
@@ -42,8 +44,8 @@ export default function TournamentSpectator() {
     if (!tournament) return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
             <Trophy size={40} className="text-muted-foreground" />
-            <p className="font-bold text-foreground">Lien spectateur invalide</p>
-            <p className="text-sm text-muted-foreground">Ce tournoi n'existe pas ou le lien a expiré.</p>
+            <p className="font-bold text-foreground">{t('tournaments.invalidSpectatorLink')}</p>
+            <p className="text-sm text-muted-foreground">{t('tournaments.linkExpired')}</p>
         </div>
     );
 
@@ -100,7 +102,7 @@ export default function TournamentSpectator() {
                         <h1 className="font-black text-foreground text-base">{tournament.name}</h1>
                     </div>
                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                        <Eye size={10} /> Lecture seule
+                        <Eye size={10} /> {t('tournaments.readOnly')}
                     </span>
                 </div>
                 {tournament.location && <p className="text-xs text-muted-foreground">{tournament.location}</p>}
@@ -112,7 +114,7 @@ export default function TournamentSpectator() {
                     <section>
                         <div className="flex items-center gap-2 mb-3">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <h2 className="text-sm font-black text-foreground uppercase tracking-wide">En direct</h2>
+                            <h2 className="text-sm font-black text-foreground uppercase tracking-wide">{t('tournaments.live')}</h2>
                         </div>
                         <div className="space-y-2">
                             {liveMatches.map(m => <MatchCard key={m.id} match={m} />)}
@@ -123,14 +125,14 @@ export default function TournamentSpectator() {
                 {/* Standings */}
                 {results.length > 0 && (
                     <section>
-                        <h2 className="text-sm font-black text-foreground uppercase tracking-wide mb-3">Classement</h2>
+                        <h2 className="text-sm font-black text-foreground uppercase tracking-wide mb-3">{t('tournaments.standings')}</h2>
                         <div className="space-y-2">
                             {results.map(({ team, wins, losses, played }, i) => (
                                 <div key={team.id} className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">
                                     <span className="text-base font-black w-6 text-center">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
                                     <div className="flex-1">
                                         <p className="font-bold text-foreground text-sm">{team.name}</p>
-                                        <p className="text-xs text-muted-foreground">{played} matchs</p>
+                                        <p className="text-xs text-muted-foreground">{t('tournaments.matchesCount', { count: played })}</p>
                                     </div>
                                     <div className="flex gap-2 text-xs font-bold">
                                         <span className="text-emerald-500">{wins}V</span>
@@ -145,7 +147,7 @@ export default function TournamentSpectator() {
                 {/* Finished matches */}
                 {finishedMatches.length > 0 && (
                     <section>
-                        <h2 className="text-sm font-black text-foreground uppercase tracking-wide mb-3">Matchs terminés</h2>
+                        <h2 className="text-sm font-black text-foreground uppercase tracking-wide mb-3">{t('tournaments.finishedMatches')}</h2>
                         <div className="space-y-2">
                             {finishedMatches.map(m => <MatchCard key={m.id} match={m} />)}
                         </div>
@@ -155,7 +157,7 @@ export default function TournamentSpectator() {
                 {/* Pending matches */}
                 {pendingMatches.length > 0 && (
                     <section>
-                        <h2 className="text-sm font-black text-foreground uppercase tracking-wide mb-3">À venir</h2>
+                        <h2 className="text-sm font-black text-foreground uppercase tracking-wide mb-3">{t('tournaments.upcoming')}</h2>
                         <div className="space-y-2">
                             {pendingMatches.map(m => <MatchCard key={m.id} match={m} />)}
                         </div>
@@ -163,7 +165,7 @@ export default function TournamentSpectator() {
                 )}
 
                 {matches.length === 0 && (
-                    <div className="text-center py-16 text-muted-foreground text-sm">Aucun match planifié pour l'instant.</div>
+                    <div className="text-center py-16 text-muted-foreground text-sm">{t('tournaments.noUpcomingMatches')}</div>
                 )}
             </main>
         </div>
