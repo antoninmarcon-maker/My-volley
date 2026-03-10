@@ -83,6 +83,67 @@ export default function Home() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
 
+  const [dismissedWhatsNew, setDismissedWhatsNew] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dismissedWhatsNew') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const handleDismissWhatsNew = (id: string, action?: () => void) => {
+    const next = [...dismissedWhatsNew, id];
+    setDismissedWhatsNew(next);
+    localStorage.setItem('dismissedWhatsNew', JSON.stringify(next));
+    if (action) action();
+  };
+
+  const whatsNewCards = [
+    {
+      id: 'players',
+      icon: <Users size={32} className="text-muted-foreground/30 absolute" />,
+      image: "/assets/placeholder-players.png",
+      title: t('home.whatsNewSavedPlayers'),
+      desc: t('home.whatsNewSavedPlayersDesc'),
+      btnText: t('home.whatsNewSavedPlayersBtn'),
+      action: () => navigate('/players')
+    },
+    {
+      id: 'actions',
+      icon: <Settings2 size={32} className="text-muted-foreground/30 absolute" />,
+      image: "/assets/placeholder-actions.png",
+      title: t('home.whatsNewCustomActions'),
+      desc: t('home.whatsNewCustomActionsDesc'),
+      btnText: t('home.whatsNewCustomActionsBtn'),
+      action: () => navigate('/actions')
+    },
+    {
+      id: 'perf',
+      icon: <Activity size={32} className="text-muted-foreground/30 absolute" />,
+      image: "/assets/placeholder-perf.png",
+      title: t('home.whatsNewPerfMode'),
+      desc: t('home.whatsNewPerfModeDesc'),
+      btnText: t('home.whatsNewPerfModeBtn'),
+      action: () => {
+        setHasCourt(true);
+        setIsPerformanceMode(true);
+        setShowNew(true);
+      }
+    },
+    {
+      id: 'tournaments',
+      icon: <Trophy size={32} className="text-muted-foreground/30 absolute" />,
+      image: "/assets/placeholder-tournaments.png",
+      title: t('home.whatsNewTournaments'),
+      desc: t('home.whatsNewTournamentsDesc'),
+      btnText: t('home.whatsNewTournamentsBtn'),
+      action: () => navigate('/tournaments'),
+      gradientBtn: true
+    }
+  ];
+
+  const visibleWhatsNew = whatsNewCards.filter(c => !dismissedWhatsNew.includes(c.id));
+
   useEffect(() => {
     if (localStorage.getItem('welcomeSeen') !== 'true') {
       setShowWelcome(true);
@@ -392,91 +453,47 @@ export default function Home() {
       <main className="flex-1 overflow-auto p-4 max-w-lg mx-auto w-full space-y-6">
         <PwaInstallBanner />
 
-        <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">✨</span>
-            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('home.whatsNew', "Nouveautés")}</h2>
-          </div>
-          <Carousel className="w-full">
-            <CarouselContent className="-ml-3 pb-2 pt-1 pl-1 pr-1">
-              {/* Carte 1: Joueurs enregistrés */}
-              <CarouselItem className="pl-3 basis-[85%]">
-                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
-                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
-                    <Users size={32} className="text-muted-foreground/30 absolute" />
-                    <img src="/assets/placeholder-players.png" alt={t('whatsNewSavedPlayers')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1 gap-2">
-                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewSavedPlayers')}</h3>
-                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewSavedPlayersDesc')}</p>
-                    <button onClick={() => navigate('/players')} className="mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all">
-                      {t('whatsNewSavedPlayersBtn')}
-                    </button>
-                  </div>
-                </div>
-              </CarouselItem>
-
-              {/* Carte 2: Actions personnalisées */}
-              <CarouselItem className="pl-3 basis-[85%]">
-                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
-                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
-                    <Settings2 size={32} className="text-muted-foreground/30 absolute" />
-                    <img src="/assets/placeholder-actions.png" alt={t('whatsNewCustomActions')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1 gap-2">
-                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewCustomActions')}</h3>
-                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewCustomActionsDesc')}</p>
-                    <button onClick={() => navigate('/actions')} className="mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all">
-                      {t('whatsNewCustomActionsBtn')}
-                    </button>
-                  </div>
-                </div>
-              </CarouselItem>
-
-              {/* Carte 3: Mode Performance */}
-              <CarouselItem className="pl-3 basis-[85%]">
-                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
-                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
-                    <Activity size={32} className="text-muted-foreground/30 absolute" />
-                    <img src="/assets/placeholder-perf.png" alt={t('whatsNewPerfMode')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1 gap-2">
-                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewPerfMode')}</h3>
-                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewPerfModeDesc')}</p>
-                    <button
-                      onClick={() => {
-                        setHasCourt(true);
-                        setIsPerformanceMode(true);
-                        setShowNew(true);
-                      }}
-                      className="mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"
-                    >
-                      {t('whatsNewPerfModeBtn')}
-                    </button>
-                  </div>
-                </div>
-              </CarouselItem>
-
-              {/* Carte 4: Gestion de Tournois */}
-              <CarouselItem className="pl-3 basis-[85%]">
-                <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col">
-                  <div className="aspect-video bg-muted relative rounded-t-lg flex items-center justify-center">
-                    <Trophy size={32} className="text-muted-foreground/30 absolute" />
-                    <img src="/assets/placeholder-tournaments.png" alt={t('whatsNewTournaments')} className="w-full h-full object-cover rounded-t-lg absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
-                  </div>
-                  <div className="p-4 flex flex-col flex-1 gap-2">
-                    <h3 className="font-bold text-foreground leading-tight">{t('whatsNewTournaments')}</h3>
-                    <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{t('whatsNewTournamentsDesc')}</p>
-                    <button onClick={() => navigate('/tournaments')} className="group mt-2 w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" style={{ background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' }}>
-                      <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
-                      <span className="relative z-10">{t('whatsNewTournamentsBtn')}</span>
-                    </button>
-                  </div>
-                </div>
-              </CarouselItem>
-            </CarouselContent>
-          </Carousel>
-        </section>
+        {visibleWhatsNew.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✨</span>
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('home.whatsNew')}</h2>
+            </div>
+            <Carousel className="w-full">
+              <CarouselContent className="-ml-3 pb-2 pt-1 pl-1 pr-1">
+                {visibleWhatsNew.map((card) => (
+                  <CarouselItem key={card.id} className="pl-3 basis-[85%]">
+                    <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col relative">
+                      <button
+                        onClick={() => handleDismissWhatsNew(card.id)}
+                        className="absolute top-2 right-2 z-10 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors"
+                        title={t('common.close')}
+                      >
+                        <X size={14} />
+                      </button>
+                      <div className="aspect-video bg-muted relative flex items-center justify-center">
+                        {card.icon}
+                        <img src={card.image} alt={card.title} className="w-full h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
+                      </div>
+                      <div className="p-4 flex flex-col flex-1 gap-2">
+                        <h3 className="font-bold text-foreground leading-tight">{card.title}</h3>
+                        <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{card.desc}</p>
+                        <button
+                          onClick={() => handleDismissWhatsNew(card.id, card.action)}
+                          className={card.gradientBtn ? "group mt-2 w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" : "mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"}
+                          style={card.gradientBtn ? { background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' } : {}}
+                        >
+                          {card.gradientBtn && <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />}
+                          <span className="relative z-10">{card.btnText}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          </section>
+        )}
 
         {/* Share / Invite Dialog */}
         <Dialog open={showShareInvite} onOpenChange={setShowShareInvite}>
