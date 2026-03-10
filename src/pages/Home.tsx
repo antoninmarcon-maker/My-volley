@@ -407,7 +407,7 @@ export default function Home() {
     if (!user) { toast.error(t('heatmap.loginForLink')); return; }
     setGeneratingShareLink(true);
     try {
-      let token = match.shareToken;
+      let token = (match as any).shareToken;
       if (!token) {
         token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
         const { error } = await supabase.from('matches').update({ share_token: token }).eq('id', match.id);
