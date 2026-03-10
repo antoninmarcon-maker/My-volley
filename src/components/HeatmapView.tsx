@@ -123,6 +123,7 @@ interface TeamStats {
   outs: number; netFaults: number; serviceMisses: number; blockOuts: number;
   customStats: Record<string, number>;
   neutralBreakdown: Record<string, number>;
+  ratingsPositive: number; ratingsNeutral: number; ratingsNegative: number;
 }
 
 function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: number } {
@@ -144,23 +145,32 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
     let netFaults = 0;
     let serviceMisses = 0;
     let blockOuts = 0;
+    let ratingsPositive = 0;
+    let ratingsNeutral = 0;
+    let ratingsNegative = 0;
 
     pts.forEach(p => {
-      // If we have detailed rally actions, we process them individually
-      // Otherwise we fallback to the point's main action
       const actionsToProcess = (p.rallyActions && p.rallyActions.length > 0)
         ? p.rallyActions
         : [{
           team: p.team,
           type: p.type,
           action: p.action,
-          customActionLabel: p.customActionLabel
+          customActionLabel: p.customActionLabel,
+          rating: p.rating,
         }];
 
       actionsToProcess.forEach(a => {
         const isNeutral = a.type === 'neutral' && a.team === team;
         const isScoredByUs = a.type === 'scored' && a.team === team;
         const isFaultByOpponent = a.type === 'fault' && a.team === opponent;
+
+        const isOurAction = isNeutral || isScoredByUs || isFaultByOpponent;
+        if (isOurAction && 'rating' in a) {
+          if (a.rating === 'positive') ratingsPositive++;
+          else if (a.rating === 'neutral') ratingsNeutral++;
+          else if (a.rating === 'negative') ratingsNegative++;
+        }
 
         if (isNeutral) {
           neutralTotal++;
@@ -192,25 +202,17 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
       });
     });
 
-    const customNeutralCount = neutralTotal; // Simplified: count all as custom/noteworthy in details
+    const customNeutralCount = neutralTotal;
 
     return {
       scored: scoredTotal,
       neutral: neutralTotal,
       customNeutralCount,
       faults: faultTotal,
-      attacks,
-      aces,
-      blocks,
-      bidouilles,
-      secondeMains,
-      otherOffensive,
-      outs,
-      netFaults,
-      serviceMisses,
-      blockOuts,
-      customStats,
-      neutralBreakdown,
+      attacks, aces, blocks, bidouilles, secondeMains, otherOffensive,
+      outs, netFaults, serviceMisses, blockOuts,
+      customStats, neutralBreakdown,
+      ratingsPositive, ratingsNeutral, ratingsNegative,
     };
   };
 
@@ -608,6 +610,32 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="text-muted-foreground text-xs">{t('common.total')}</span>
                   <span className="font-bold text-foreground text-xs">{ds[team].scored + ds[team].faults + ds[team].neutral}</span>
                 </div>
+
+                {(ds[team].ratingsPositive > 0 || ds[team].ratingsNeutral > 0 || ds[team].ratingsNegative > 0) && (
+                  <div className="flex items-center justify-between border-t border-border pt-1 mt-1">
+                    <span className="text-muted-foreground font-semibold text-xs">Notations</span>
+                    <div className="flex items-center gap-2">
+                      {ds[team].ratingsPositive > 0 && (
+                        <span className="inline-flex items-center gap-0.5">
+                          <span className="w-2 h-2 rounded-full bg-green-500" />
+                          <span className="text-[11px] font-bold text-green-500">{ds[team].ratingsPositive}</span>
+                        </span>
+                      )}
+                      {ds[team].ratingsNeutral > 0 && (
+                        <span className="inline-flex items-center gap-0.5">
+                          <span className="w-2 h-2 rounded-full bg-orange-500" />
+                          <span className="text-[11px] font-bold text-orange-500">{ds[team].ratingsNeutral}</span>
+                        </span>
+                      )}
+                      {ds[team].ratingsNegative > 0 && (
+                        <span className="inline-flex items-center gap-0.5">
+                          <span className="w-2 h-2 rounded-full bg-destructive" />
+                          <span className="text-[11px] font-bold text-destructive">{ds[team].ratingsNegative}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
