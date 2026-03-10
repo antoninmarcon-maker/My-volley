@@ -822,16 +822,6 @@ export default function Home() {
             <Plus size={20} className="relative z-10 transition-transform duration-300 group-hover:rotate-90" />
             <span className="relative z-10">{t('home.newMatch')}</span>
           </button>
-
-          <button
-            onClick={() => navigate('/spots')}
-            className="group flex-1 relative flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-white overflow-hidden transition-all duration-300 active:scale-[0.97] hover:shadow-lg hover:shadow-primary/25"
-            style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))' }}
-          >
-            <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
-            <MapPin size={20} className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1" />
-            <span className="relative z-10">{t('home.whatsNewSpots')}</span>
-          </button>
         </div>
 
         {!user && (
@@ -1147,13 +1137,13 @@ export default function Home() {
       </Dialog>
 
       <footer className="sticky bottom-0 z-30 bg-background border-t border-border px-4 py-3 flex items-center justify-around gap-2">
-        <Link
-          to="/help#feedback"
+        <button
+          onClick={() => navigate('/spots')}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
         >
-          <MessageSquare size={16} />
-          {t('home.feedback')}
-        </Link>
+          <MapPin size={16} />
+          {t('home.whatsNewSpots')}
+        </button>
         <button
           onClick={() => setShowShareInvite(true)}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-all"
