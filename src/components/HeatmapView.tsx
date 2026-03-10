@@ -150,21 +150,27 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
     let ratingsNegative = 0;
 
     pts.forEach(p => {
-      // If we have detailed rally actions, we process them individually
-      // Otherwise we fallback to the point's main action
       const actionsToProcess = (p.rallyActions && p.rallyActions.length > 0)
         ? p.rallyActions
         : [{
           team: p.team,
           type: p.type,
           action: p.action,
-          customActionLabel: p.customActionLabel
+          customActionLabel: p.customActionLabel,
+          rating: p.rating,
         }];
 
       actionsToProcess.forEach(a => {
         const isNeutral = a.type === 'neutral' && a.team === team;
         const isScoredByUs = a.type === 'scored' && a.team === team;
         const isFaultByOpponent = a.type === 'fault' && a.team === opponent;
+
+        const isOurAction = isNeutral || isScoredByUs || isFaultByOpponent;
+        if (isOurAction && 'rating' in a) {
+          if (a.rating === 'positive') ratingsPositive++;
+          else if (a.rating === 'neutral') ratingsNeutral++;
+          else if (a.rating === 'negative') ratingsNegative++;
+        }
 
         if (isNeutral) {
           neutralTotal++;
@@ -196,25 +202,17 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
       });
     });
 
-    const customNeutralCount = neutralTotal; // Simplified: count all as custom/noteworthy in details
+    const customNeutralCount = neutralTotal;
 
     return {
       scored: scoredTotal,
       neutral: neutralTotal,
       customNeutralCount,
       faults: faultTotal,
-      attacks,
-      aces,
-      blocks,
-      bidouilles,
-      secondeMains,
-      otherOffensive,
-      outs,
-      netFaults,
-      serviceMisses,
-      blockOuts,
-      customStats,
-      neutralBreakdown,
+      attacks, aces, blocks, bidouilles, secondeMains, otherOffensive,
+      outs, netFaults, serviceMisses, blockOuts,
+      customStats, neutralBreakdown,
+      ratingsPositive, ratingsNeutral, ratingsNegative,
     };
   };
 
