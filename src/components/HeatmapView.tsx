@@ -644,63 +644,6 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="font-bold text-foreground text-xs">{ds[team].scored + ds[team].faults + ds[team].neutral}</span>
                 </div>
 
-                {(ds[team].ratingsPositive > 0 || ds[team].ratingsNeutral > 0 || ds[team].ratingsNegative > 0) && (
-                  <div className="border-t border-border pt-1 mt-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-semibold text-xs">Notations</span>
-                      <div className="flex items-center gap-2">
-                        {ds[team].ratingsPositive > 0 && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <span className="w-2 h-2 rounded-full bg-green-500" />
-                            <span className="text-[11px] font-bold text-green-500">{ds[team].ratingsPositive}</span>
-                          </span>
-                        )}
-                        {ds[team].ratingsNeutral > 0 && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <span className="w-2 h-2 rounded-full bg-orange-500" />
-                            <span className="text-[11px] font-bold text-orange-500">{ds[team].ratingsNeutral}</span>
-                          </span>
-                        )}
-                        {ds[team].ratingsNegative > 0 && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <span className="w-2 h-2 rounded-full bg-destructive" />
-                            <span className="text-[11px] font-bold text-destructive">{ds[team].ratingsNegative}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {showRatings && Object.keys(ds[team].actionRatings).length > 0 && (
-                      <div className="space-y-0.5 pl-1">
-                        {Object.entries(ds[team].actionRatings).map(([action, r]) => (
-                          <div key={action} className="flex items-center justify-between text-[10px]">
-                            <span className="text-muted-foreground truncate flex-1">{action}</span>
-                            <div className="flex items-center gap-1.5 ml-2">
-                              <span className="text-muted-foreground font-mono w-4 text-right">{r.total}</span>
-                              {r.positive > 0 && (
-                                <span className="inline-flex items-center gap-0.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                  <span className="font-semibold text-green-500">{r.positive}</span>
-                                </span>
-                              )}
-                              {r.neutral > 0 && (
-                                <span className="inline-flex items-center gap-0.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                  <span className="font-semibold text-orange-500">{r.neutral}</span>
-                                </span>
-                              )}
-                              {r.negative > 0 && (
-                                <span className="inline-flex items-center gap-0.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-                                  <span className="font-semibold text-destructive">{r.negative}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           ))}
