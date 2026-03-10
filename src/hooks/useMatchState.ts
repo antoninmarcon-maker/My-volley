@@ -11,8 +11,9 @@ import { getMatch, saveMatch, saveLastRoster } from '@/lib/matchStorage';
  */
 export function needsPlayerAssignment(hasPlayers: boolean, team: Team, type: PointType, assignToPlayer: boolean | undefined): boolean {
   if (!hasPlayers) return false;
-  if (assignToPlayer !== undefined) return assignToPlayer;
-  return type === 'neutral' || (team === 'blue' && type === 'scored') || (team === 'red' && type === 'fault');
+  if (assignToPlayer === false) return false;
+  // As per specs: input (player/rating) is ONLY requested for the followed team (Blue)
+  return team === 'blue';
 }
 
 export function useMatchState(matchId: string, ready: boolean = true) {
@@ -189,37 +190,49 @@ export function useMatchState(matchId: string, ready: boolean = true) {
 
   // Process a rally action: accumulate neutrals, conclude on scored/fault
   const processRallyAction = useCallback((rallyAction: RallyAction, team: Team, type: PointType) => {
-    // Both neutral and concluding actions consume the pre-selected variables
+    const conclusionPlayerId = preSelectedPlayerId;
+    const conclusionRating = preSelectedRating;
+
     setPreSelectedPlayerId(null);
     setPreSelectedRating(null);
 
     if (type === 'neutral') {
       // Neutral: accumulate, don't conclude
-      setCurrentRallyActions(prev => [...prev, rallyAction]);
+      setCurrentRallyActions(prev => [...prev, {
+        ...rallyAction,
+        ...(conclusionPlayerId ? { playerId: conclusionPlayerId } : {}),
+        ...(conclusionRating && conclusionRating !== 'none' ? { rating: conclusionRating } : {}),
+      }]);
     } else {
       // Scored or fault: conclude the point
-      const allRallyActions = [...currentRallyActions, rallyAction];
+      const finalRallyAction: RallyAction = {
+        ...rallyAction,
+        ...(conclusionPlayerId ? { playerId: conclusionPlayerId } : {}),
+        ...(conclusionRating && conclusionRating !== 'none' ? { rating: conclusionRating } : {}),
+      };
+      const allRallyActions = [...currentRallyActions, finalRallyAction];
       const point: Point = {
         id: crypto.randomUUID(),
         team,
         type,
-        action: rallyAction.action,
-        x: rallyAction.x,
-        y: rallyAction.y,
+        action: finalRallyAction.action,
+        x: finalRallyAction.endX ?? finalRallyAction.x,
+        y: finalRallyAction.endY ?? finalRallyAction.y,
         timestamp: Date.now(),
         rallyActions: allRallyActions,
-        ...(rallyAction.customActionLabel ? { customActionLabel: rallyAction.customActionLabel } : {}),
-        ...(rallyAction.sigil ? { sigil: rallyAction.sigil } : {}),
-        ...(rallyAction.showOnCourt ? { showOnCourt: true } : {}),
-        // Attach pre-selected player if available
-        ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
+        ...(finalRallyAction.customActionLabel ? { customActionLabel: finalRallyAction.customActionLabel } : {}),
+        ...(finalRallyAction.sigil ? { sigil: finalRallyAction.sigil } : {}),
+        ...(finalRallyAction.showOnCourt ? { showOnCourt: true } : {}),
+        // Final point also gets the player/rating of the concluding action for direct access
+        ...(finalRallyAction.playerId ? { playerId: finalRallyAction.playerId } : {}),
+        ...(finalRallyAction.rating ? { rating: finalRallyAction.rating } : {}),
       };
 
-      // If player was pre-selected, save directly; otherwise check if assignment needed
-      if (rallyAction.playerId) {
+      // If player was pre-selected on this specific action or neutrally before, save directly; otherwise check if assignment needed
+      if (finalRallyAction.playerId) {
         setPoints(prev => [...prev, point]);
       } else {
-        if (needsPlayerAssignment(players.length > 0, team, type, rallyAction.assignToPlayer)) {
+        if (needsPlayerAssignment(players.length > 0, team, type, finalRallyAction.assignToPlayer)) {
           setPendingPoint(point);
         } else {
           setPoints(prev => [...prev, point]);
@@ -227,11 +240,19 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       }
       setCurrentRallyActions([]);
     }
-  }, [currentRallyActions, players.length, preSelectedPlayerId]);
+  }, [currentRallyActions, players.length, preSelectedPlayerId, preSelectedRating]);
 
   const confirmDirectionAction = useCallback(() => {
     if (!pendingDirectionAction || !directionOrigin || !directionDest) return;
     const { team, type, action, customLabel, sigil, showOnCourt, assignToPlayer } = pendingDirectionAction;
+    const conclusionPlayerId = preSelectedPlayerId;
+    const conclusionRating = preSelectedRating;
+
+    setDirectionDest(null);
+    setPendingDirectionAction(null);
+    setPreSelectedPlayerId(null);
+    setPreSelectedRating(null);
+
     const rallyAction: RallyAction = {
       id: crypto.randomUUID(),
       team, type, action,
@@ -243,12 +264,9 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       ...(sigil ? { sigil } : {}),
       ...(showOnCourt ? { showOnCourt: true } : {}),
       ...(assignToPlayer !== undefined ? { assignToPlayer } : {}),
-      ...(preSelectedPlayerId ? { playerId: preSelectedPlayerId } : {}),
-      ...(preSelectedRating && preSelectedRating !== 'none' ? { rating: preSelectedRating } : {}),
+      ...(conclusionPlayerId ? { playerId: conclusionPlayerId } : {}),
+      ...(conclusionRating && conclusionRating !== 'none' ? { rating: conclusionRating } : {}),
     };
-
-    setDirectionDest(null);
-    setPendingDirectionAction(null);
 
     if (isPerformanceMode) {
       // Process this rally action the same way as a regular one
@@ -267,18 +285,16 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         ...(customLabel ? { customActionLabel: customLabel } : {}),
         ...(sigil ? { sigil } : {}),
         ...(showOnCourt ? { showOnCourt: true } : {}),
-        ...(preSelectedRating && preSelectedRating !== 'none' ? { rating: preSelectedRating } : {}),
+        ...(conclusionRating && conclusionRating !== 'none' ? { rating: conclusionRating } : {}),
       };
 
-      if (preSelectedPlayerId) {
-        setPoints(prev => [...prev, { ...point, playerId: preSelectedPlayerId }]);
-        setPreSelectedRating(null);
+      if (conclusionPlayerId) {
+        setPoints(prev => [...prev, { ...point, playerId: conclusionPlayerId }]);
       } else {
         if (needsPlayerAssignment(players.length > 0, team, type, assignToPlayer)) {
           setPendingPoint(point);
         } else {
           setPoints(prev => [...prev, point]);
-          setPreSelectedRating(null);
         }
       }
     }
@@ -307,7 +323,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     const customLabel = meta?.customLabel;
     const customSigil = meta?.sigil;
     const customShowOnCourt = meta?.showOnCourt;
-    const hasDirection = meta?.hasDirection ?? false;
+    const hasDirection = isPerformanceMode || (meta?.hasDirection ?? false);
 
     // Clear pendingActionMeta after consuming
     setPendingActionMeta(null);

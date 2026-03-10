@@ -21,9 +21,9 @@ describe("needsPlayerAssignment", () => {
                 expect(needsPlayerAssignment(true, "blue", "scored", undefined)).toBe(true);
             });
 
-            it("does NOT show popup when Red scores (defaults to no player assignment)", () => {
-                expect(needsPlayerAssignment(true, "red", "scored", true)).toBe(false);
-                expect(needsPlayerAssignment(true, "red", "scored", undefined)).toBe(false);
+            it("shows popup when Red scores", () => {
+                expect(needsPlayerAssignment(true, "red", "scored", true)).toBe(true);
+                expect(needsPlayerAssignment(true, "red", "scored", undefined)).toBe(true);
             });
         });
 
@@ -33,8 +33,8 @@ describe("needsPlayerAssignment", () => {
                 expect(needsPlayerAssignment(true, "red", "fault", true)).toBe(true);
             });
 
-            it("does NOT show popup when Blue faults (Red scored)", () => {
-                expect(needsPlayerAssignment(true, "blue", "fault", true)).toBe(false);
+            it("shows popup when Blue faults (Red scored)", () => {
+                expect(needsPlayerAssignment(true, "blue", "fault", true)).toBe(true);
             });
         });
 

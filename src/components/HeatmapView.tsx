@@ -131,43 +131,95 @@ interface TeamStats {
 function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: number } {
   const byTeam = (team: 'blue' | 'red'): TeamStats => {
     const opponent = team === 'blue' ? 'red' : 'blue';
-    const scored = pts.filter(p => p.team === team && p.type === 'scored');
-    const opponentFaults = pts.filter(p => p.team === opponent && p.type === 'fault');
-    const neutralPts = pts.filter(p => p.team === team && p.type === 'neutral');
 
     const customStats: Record<string, number> = {};
-    pts.forEach(p => {
-      // For neutral, it implies p.team === team
-      // For scored, p.team === team
-      // For faults, it's counted when opponent faults, so p.team === opponent
-      const isRelevant = (p.type === 'neutral' && p.team === team) ||
-        (p.type === 'scored' && p.team === team) ||
-        (p.type === 'fault' && p.team === opponent);
+    let scoredTotal = 0;
+    let faultTotal = 0;
+    let neutralTotal = 0;
+    let attacks = 0;
+    let aces = 0;
+    let blocks = 0;
+    let bidouilles = 0;
+    let secondeMains = 0;
+    let otherOffensive = 0;
+    let outs = 0;
+    let netFaults = 0;
+    let serviceMisses = 0;
+    let blockOuts = 0;
 
-      if (isRelevant && p.customActionLabel) {
-        customStats[p.customActionLabel] = (customStats[p.customActionLabel] || 0) + 1;
-      }
+    pts.forEach(p => {
+      // If we have detailed rally actions, we process them individually
+      // Otherwise we fallback to the point's main action
+      const actionsToProcess = (p.rallyActions && p.rallyActions.length > 0)
+        ? p.rallyActions
+        : [{
+          team: p.team,
+          type: p.type,
+          action: p.action,
+          customActionLabel: p.customActionLabel
+        }];
+
+      actionsToProcess.forEach(a => {
+        const isNeutral = a.type === 'neutral' && a.team === team;
+        const isScoredByUs = a.type === 'scored' && a.team === team;
+        const isFaultByOpponent = a.type === 'fault' && a.team === opponent;
+
+        if (isNeutral) {
+          neutralTotal++;
+          if (a.customActionLabel) {
+            customStats[a.customActionLabel] = (customStats[a.customActionLabel] || 0) + 1;
+          }
+        } else if (isScoredByUs) {
+          scoredTotal++;
+          if (a.action === 'attack') attacks++;
+          else if (a.action === 'ace') aces++;
+          else if (a.action === 'block') blocks++;
+          else if (a.action === 'bidouille') bidouilles++;
+          else if (a.action === 'seconde_main') secondeMains++;
+          else if (a.action === 'other_offensive') otherOffensive++;
+
+          if (a.customActionLabel) {
+            customStats[a.customActionLabel] = (customStats[a.customActionLabel] || 0) + 1;
+          }
+        } else if (isFaultByOpponent) {
+          faultTotal++;
+          if (a.action === 'out') outs++;
+          else if (a.action === 'net_fault') netFaults++;
+          else if (a.action === 'service_miss') serviceMisses++;
+          else if (a.action === 'block_out') blockOuts++;
+
+          if (a.customActionLabel) {
+            customStats[a.customActionLabel] = (customStats[a.customActionLabel] || 0) + 1;
+          }
+        }
+      });
     });
-    const customNeutralCount = neutralPts.filter(p => !['timeout', 'sub_in', 'sub_out', 'yellow_card', 'red_card'].includes(p.action)).length;
+
+    const customNeutralCount = neutralTotal; // Simplified: count all as custom/noteworthy in details
+
     return {
-      scored: scored.length,
-      neutral: neutralPts.length,
+      scored: scoredTotal,
+      neutral: neutralTotal,
       customNeutralCount,
-      faults: opponentFaults.length,
-      attacks: scored.filter(p => p.action === 'attack').length,
-      aces: scored.filter(p => p.action === 'ace').length,
-      blocks: scored.filter(p => p.action === 'block').length,
-      bidouilles: scored.filter(p => p.action === 'bidouille').length,
-      secondeMains: scored.filter(p => p.action === 'seconde_main').length,
-      otherOffensive: scored.filter(p => p.action === 'other_offensive').length,
-      outs: opponentFaults.filter(p => p.action === 'out').length,
-      netFaults: opponentFaults.filter(p => p.action === 'net_fault').length,
-      serviceMisses: opponentFaults.filter(p => p.action === 'service_miss').length,
-      blockOuts: opponentFaults.filter(p => p.action === 'block_out').length,
+      faults: faultTotal,
+      attacks,
+      aces,
+      blocks,
+      bidouilles,
+      secondeMains,
+      otherOffensive,
+      outs,
+      netFaults,
+      serviceMisses,
+      blockOuts,
       customStats,
     };
   };
-  return { blue: byTeam('blue'), red: byTeam('red'), total: pts.length };
+
+  // Total display on bottom card (points scored in match)
+  const scoreTotal = pts.filter(p => p.type !== 'neutral').length;
+
+  return { blue: byTeam('blue'), red: byTeam('red'), total: scoreTotal };
 }
 
 export function HeatmapView({ points, completedSets, currentSetPoints, currentSetNumber, stats, teamNames, players = [], sport = 'volleyball', matchId, isLoggedIn, hasCourt = true, onSelectPoint, viewingPointIndex }: HeatmapViewProps) {
@@ -379,13 +431,26 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
   }, [matchId, isLoggedIn, t]);
 
   const heatmapPoints = useMemo(() => {
-    const scoredOnly = filteredPoints.filter(p => p.type === 'scored');
-    return scoredOnly.map(p => {
-      const isBlue = p.team === 'blue';
+    // 1. Inclure les points gagnés ET les fautes
+    const validPoints = filteredPoints.filter(p => p.type === 'scored' || p.type === 'fault');
+
+    return validPoints.map(p => {
       let nx = p.x;
+      let ny = p.y;
+
+      // 2. Si Mode Perf : forcer l'utilisation de la destination de la DERNIÈRE action
+      if (p.rallyActions && p.rallyActions.length > 0) {
+        const lastAction = p.rallyActions[p.rallyActions.length - 1];
+        nx = lastAction.endX !== undefined ? lastAction.endX : lastAction.x;
+        ny = lastAction.endY !== undefined ? lastAction.endY : lastAction.y;
+      }
+
+      // Normalisation de la position en fonction du côté du terrain
+      const isBlue = p.team === 'blue';
       if (isBlue && nx < 0.5) nx = 1 - nx;
       if (!isBlue && nx > 0.5) nx = 1 - nx;
-      return { ...p, x: nx };
+
+      return { ...p, x: nx, y: ny };
     });
   }, [filteredPoints]);
 

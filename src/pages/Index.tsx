@@ -224,25 +224,26 @@ const Index = () => {
     }
 
     const meta = pendingActionMeta;
-    // Utilize the centralized logic from useMatchState:
-    const needsAssignToPlayer = needsPlayerAssignment(players.length > 0, selectedTeam, selectedPointType, meta?.assignToPlayer);
+    // Déterminer si l'action émane de notre équipe (Bleue) - Selon règles spec 2
+    const isEligibleForInput = selectedTeam === 'blue';
+
+    const needsAssignToPlayer = isEligibleForInput && needsPlayerAssignment(players.length > 0, selectedTeam, selectedPointType, meta?.assignToPlayer);
     const needsCourtPlacement = meta?.placeOnCourt !== false && metadata?.hasCourt !== false && !SERVICE_FAULT_ACTIONS.includes(selectedAction);
+
     const globalRatingsEnabled = metadata?.enableRatings !== false;
     const perActionRating = meta?.hasRating === true;
-
-    // Quality is asked if:
-    // 1. It's a custom action with hasRating=true
-    // 2. OR global ratings are enabled AND it's not a fault and not a timeout
     const nonRateableActions = ['timeout'];
-    const needsRating = perActionRating || (globalRatingsEnabled && selectedPointType !== 'fault' && !nonRateableActions.includes(selectedAction));
 
-    // If action needs player AND court, show player selector first (performance mode)
+    // La notation ne s'affiche QUE si on est dans un cas éligible (Point Bleu ou Faute Bleue)
+    const needsRating = isEligibleForInput && (perActionRating || (globalRatingsEnabled && !nonRateableActions.includes(selectedAction)));
+
+    // Si l'action nécessite un joueur ET le terrain (Mode Perf)
     if (isPerformanceMode && needsAssignToPlayer && needsCourtPlacement && players.length > 0 && !preSelectedPlayerId) {
       setAwaitingPlayerBeforeCourt(true);
       return;
     }
 
-    // If action needs rating, show rating selector (both modes)
+    // Si l'action nécessite une notation
     if (needsRating && !preSelectedRating) {
       setAwaitingRating(true);
       return;
@@ -499,11 +500,13 @@ const Index = () => {
               <PlayerSelector players={players} prompt={t('playerSelector.whoDidAction')} onSelect={assignPlayer} onSkip={skipPlayerAssignment} sport={sport} team={pendingPoint.team} teamName={teamNames[pendingPoint.team]} />
             );
           }
-          // useMatchState already filtered out invalid combinations (e.g. red scored, blue fault)
-          // So we only need to ask: 'Who scored?' (blue scored) or 'Who faulted?' (red fault)
-          const isFaultByRed = pendingPoint.team === 'red' && pendingPoint.type === 'fault';
-          const popupTeam = isFaultByRed ? 'red' : pendingPoint.team;
-          const prompt = isFaultByRed ? t('playerSelector.whoFaulted') : t('playerSelector.whoScored');
+
+          // Logic: 
+          // If Blue scores (type=scored), ask who scored for Blue.
+          // If Red faults (type=fault), point goes to Blue, but we ask who faulted for Red.
+          // In pendingPoint, 'team' is always the team that "owns" the action.
+          const prompt = pendingPoint.type === 'fault' ? t('playerSelector.whoFaulted') : t('playerSelector.whoScored');
+          const popupTeam = pendingPoint.team;
 
           return (
             <PlayerSelector players={players} prompt={prompt} onSelect={assignPlayer} onSkip={skipPlayerAssignment} sport={sport} team={popupTeam} teamName={teamNames[popupTeam]} />

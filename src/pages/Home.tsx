@@ -17,7 +17,8 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { SavedPlayersManager } from '@/components/SavedPlayersManager';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
 import { exportMatchToExcel } from '@/lib/excelExport';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -82,6 +83,10 @@ export default function Home() {
   const [showShareInvite, setShowShareInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
+  const [selectedWhatsNew, setSelectedWhatsNew] = useState<any | null>(null);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const [dismissedWhatsNew, setDismissedWhatsNew] = useState<string[]>(() => {
     try {
@@ -100,30 +105,22 @@ export default function Home() {
 
   const whatsNewCards = [
     {
-      id: 'players',
-      icon: <Users size={32} className="text-muted-foreground/30 absolute" />,
-      image: "/assets/placeholder-players.png",
-      title: t('whatsNewSavedPlayers'),
-      desc: t('whatsNewSavedPlayersDesc'),
-      btnText: t('whatsNewSavedPlayersBtn'),
-      action: () => navigate('/players')
-    },
-    {
-      id: 'actions',
-      icon: <Settings2 size={32} className="text-muted-foreground/30 absolute" />,
-      image: "/assets/placeholder-actions.png",
-      title: t('whatsNewCustomActions'),
-      desc: t('whatsNewCustomActionsDesc'),
-      btnText: t('whatsNewCustomActionsBtn'),
-      action: () => navigate('/actions')
+      id: 'tournaments',
+      icon: <Trophy size={32} className="text-muted-foreground/30 absolute" />,
+      image: "/assets/placeholder-tournaments.png",
+      title: t('home.whatsNewTournaments'),
+      desc: t('home.whatsNewTournamentsDesc'),
+      btnText: t('home.whatsNewTournamentsBtn'),
+      action: () => navigate('/tournaments'),
+      gradientBtn: true
     },
     {
       id: 'perf',
       icon: <Activity size={32} className="text-muted-foreground/30 absolute" />,
       image: "/assets/placeholder-perf.png",
-      title: t('whatsNewPerfMode'),
-      desc: t('whatsNewPerfModeDesc'),
-      btnText: t('whatsNewPerfModeBtn'),
+      title: t('home.whatsNewPerfMode'),
+      desc: t('home.whatsNewPerfModeDesc'),
+      btnText: t('home.whatsNewPerfModeBtn'),
       action: () => {
         setHasCourt(true);
         setIsPerformanceMode(true);
@@ -131,18 +128,44 @@ export default function Home() {
       }
     },
     {
-      id: 'tournaments',
-      icon: <Trophy size={32} className="text-muted-foreground/30 absolute" />,
-      image: "/assets/placeholder-tournaments.png",
-      title: t('whatsNewTournaments'),
-      desc: t('whatsNewTournamentsDesc'),
-      btnText: t('whatsNewTournamentsBtn'),
-      action: () => navigate('/tournaments'),
-      gradientBtn: true
+      id: 'actions',
+      icon: <Settings2 size={32} className="text-muted-foreground/30 absolute" />,
+      image: "/assets/placeholder-actions.png",
+      title: t('home.whatsNewCustomActions'),
+      desc: t('home.whatsNewCustomActionsDesc'),
+      btnText: t('home.whatsNewCustomActionsBtn'),
+      action: () => navigate('/actions')
+    },
+    {
+      id: 'players',
+      icon: <Users size={32} className="text-muted-foreground/30 absolute" />,
+      image: "/assets/placeholder-players.png",
+      title: t('home.whatsNewSavedPlayers'),
+      desc: t('home.whatsNewSavedPlayersDesc'),
+      btnText: t('home.whatsNewSavedPlayersBtn'),
+      action: () => navigate('/players')
     }
   ];
 
   const visibleWhatsNew = whatsNewCards.filter(c => !dismissedWhatsNew.includes(c.id));
+
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const onScroll = () => {
+      const progress = Math.max(0, Math.min(1, carouselApi.scrollProgress()));
+      setScrollProgress(progress * 100);
+    };
+
+    carouselApi.on("scroll", onScroll);
+    carouselApi.on("reInit", onScroll);
+    onScroll();
+
+    return () => {
+      carouselApi.off("scroll", onScroll);
+      carouselApi.off("reInit", onScroll);
+    };
+  }, [carouselApi]);
 
   useEffect(() => {
     if (localStorage.getItem('welcomeSeen') !== 'true') {
@@ -450,19 +473,28 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      <main className="flex-1 overflow-auto p-4 max-w-lg mx-auto w-full space-y-6">
+      <main className="flex-1 overflow-auto p-4 max-w-xl mx-auto w-full space-y-6">
         <PwaInstallBanner />
 
         {visibleWhatsNew.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-xl">✨</span>
-              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('whatsNew', "Nouveautés")}</h2>
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('home.whatsNew')}</h2>
             </div>
-            <Carousel className="w-full">
+
+            <Carousel
+              setApi={setCarouselApi}
+              plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
+              opts={{
+                align: "start",
+                loop: true
+              }}
+              className="w-full"
+            >
               <CarouselContent className="-ml-3 pb-2 pt-1 pl-1 pr-1">
                 {visibleWhatsNew.map((card) => (
-                  <CarouselItem key={card.id} className="pl-3 basis-[85%]">
+                  <CarouselItem key={card.id} className="pl-3 basis-[85%] md:basis-[48%] lg:basis-[48%]">
                     <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col relative">
                       <button
                         onClick={() => handleDismissWhatsNew(card.id)}
@@ -471,16 +503,21 @@ export default function Home() {
                       >
                         <X size={14} />
                       </button>
-                      <div className="aspect-video bg-muted relative flex items-center justify-center">
+                      <div
+                        className="aspect-video bg-muted relative flex items-center justify-center cursor-pointer"
+                        onClick={() => setSelectedWhatsNew(card)}
+                      >
                         {card.icon}
                         <img src={card.image} alt={card.title} className="w-full h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
                       </div>
-                      <div className="p-4 flex flex-col flex-1 gap-2">
+                      <div className="p-4 flex flex-col flex-1 gap-2 cursor-pointer" onClick={() => setSelectedWhatsNew(card)}>
                         <h3 className="font-bold text-foreground leading-tight">{card.title}</h3>
                         <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{card.desc}</p>
+                      </div>
+                      <div className="px-4 pb-4">
                         <button
                           onClick={() => handleDismissWhatsNew(card.id, card.action)}
-                          className={card.gradientBtn ? "group mt-2 w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" : "mt-2 w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"}
+                          className={card.gradientBtn ? "group w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" : "w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"}
                           style={card.gradientBtn ? { background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' } : {}}
                         >
                           {card.gradientBtn && <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />}
@@ -492,7 +529,109 @@ export default function Home() {
                 ))}
               </CarouselContent>
             </Carousel>
+
+            {/* Design Progress Bar (Desktop focused) */}
+            <div className="mt-8 px-1 flex flex-col items-center gap-4">
+              <div
+                className="w-full h-1.5 bg-secondary/50 rounded-full overflow-hidden relative cursor-pointer group backdrop-blur-sm"
+                onClick={(e) => {
+                  if (!carouselApi) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const percent = x / rect.width;
+                  carouselApi.scrollTo(Math.floor(percent * visibleWhatsNew.length));
+                }}
+              >
+                <div
+                  className="absolute top-0 left-0 h-full bg-primary transition-all duration-300 ease-out shadow-[0_0_12px_rgba(var(--primary),0.8)]"
+                  style={{ width: `${scrollProgress}%` }}
+                />
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors" />
+              </div>
+
+              <div className="flex gap-2">
+                {visibleWhatsNew.map((_, i) => {
+                  const isActive = carouselApi ? carouselApi.selectedScrollSnap() === i : i === 0;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => carouselApi?.scrollTo(i)}
+                      className={`h-2 transition-all duration-500 rounded-full ${isActive ? 'w-8 bg-primary shadow-[0_0_8px_rgba(var(--primary),0.4)]' : 'w-2 bg-muted hover:bg-muted-foreground/40'}`}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
           </section>
+        )}
+
+        {/* Modal "En grand" pour une nouveauté */}
+        <Dialog open={!!selectedWhatsNew} onOpenChange={(open) => !open && setSelectedWhatsNew(null)}>
+          <DialogContent className="max-w-md w-[90vw] p-0 rounded-2xl overflow-hidden bg-background border border-border shadow-xl">
+            {selectedWhatsNew && (
+              <div className="flex flex-col max-h-[85vh]">
+                <div className="relative group cursor-zoom-in" onClick={() => setIsImageZoomed(true)}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedWhatsNew(null);
+                    }}
+                    className="absolute top-3 right-3 p-1.5 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors z-10"
+                  >
+                    <X size={18} />
+                  </button>
+                  <img
+                    src={selectedWhatsNew.image}
+                    alt={selectedWhatsNew.title}
+                    className="w-full h-auto object-cover max-h-[60vh] md:max-h-[65vh] transition-transform duration-500 group-hover:scale-[1.02]"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100">
+                    <div className="p-2 bg-black/40 rounded-full text-white backdrop-blur-md">
+                      <Plus size={24} />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 flex flex-col gap-3 overflow-y-auto">
+                  <div>
+                    <h2 className="text-xl font-black text-foreground">{selectedWhatsNew.title}</h2>
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{selectedWhatsNew.desc}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedWhatsNew(null);
+                      handleDismissWhatsNew(selectedWhatsNew.id, selectedWhatsNew.action);
+                    }}
+                    className={selectedWhatsNew.gradientBtn ? "group mt-2 w-full py-3.5 rounded-xl font-bold text-sm text-white overflow-hidden relative shadow-lg" : "mt-2 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-all shadow-lg"}
+                    style={selectedWhatsNew.gradientBtn ? { background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' } : {}}
+                  >
+                    {selectedWhatsNew.gradientBtn && <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />}
+                    <span className="relative z-10">{selectedWhatsNew.btnText}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Full Screen Image Zoom Overlay */}
+        {isImageZoomed && selectedWhatsNew && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-in fade-in zoom-in duration-300 cursor-zoom-out p-4"
+            onClick={() => setIsImageZoomed(false)}
+          >
+            <button
+              className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]"
+              onClick={() => setIsImageZoomed(false)}
+            >
+              <X size={24} />
+            </button>
+            <img
+              src={selectedWhatsNew.image}
+              alt={selectedWhatsNew.title}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            />
+          </div>
         )}
 
         {/* Share / Invite Dialog */}
