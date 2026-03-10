@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDemoMatch, DEMO_MATCH_ID } from '@/lib/demoMatch';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail, MoreVertical, FileSpreadsheet, BarChart2, Users, Settings2, Activity, Trophy } from 'lucide-react';
+import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail, MoreVertical, FileSpreadsheet, BarChart2, Users, Settings2, Activity, Trophy, MapPin } from 'lucide-react';
 import logoCapbreton from '@/assets/logo-capbreton.jpeg';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -103,6 +103,15 @@ export default function Home() {
   };
 
   const whatsNewCards = [
+    {
+      id: 'spot-explorer',
+      icon: <MapPin size={32} className="text-primary mb-2" />,
+      images: [],
+      title: "Où jouer ? (Nouveau)",
+      desc: "Trouvez des terrains de volley partout près de chez vous, ajoutez vos spots préférés et voyez les photos et commentaires d'autres joueurs.",
+      btnText: "Ouvrir la Carte",
+      action: () => navigate('/spots'),
+    },
     {
       id: 'tournaments',
       icon: <Trophy size={32} className="text-primary mb-2" />,
@@ -754,15 +763,27 @@ export default function Home() {
             </div>
           </DialogContent>
         </Dialog>
-        <button
-          onClick={() => setShowNew(true)}
-          className="group w-full relative flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-lg text-white overflow-hidden transition-all duration-300 active:scale-[0.97] hover:shadow-lg hover:shadow-action-scored/25"
-          style={{ background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' }}
-        >
-          <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
-          <Plus size={22} className="relative z-10 transition-transform duration-300 group-hover:rotate-90" />
-          <span className="relative z-10">{t('home.newMatch')}</span>
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowNew(true)}
+            className="group flex-1 relative flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-white overflow-hidden transition-all duration-300 active:scale-[0.97] hover:shadow-lg hover:shadow-action-scored/25"
+            style={{ background: 'linear-gradient(135deg, hsl(var(--action-scored)), hsl(var(--action-scored-end, 142 71% 35%)))' }}
+          >
+            <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
+            <Plus size={20} className="relative z-10 transition-transform duration-300 group-hover:rotate-90" />
+            <span className="relative z-10">{t('home.newMatch')}</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/spots')}
+            className="group flex-1 relative flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-white overflow-hidden transition-all duration-300 active:scale-[0.97] hover:shadow-lg hover:shadow-primary/25"
+            style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))' }}
+          >
+            <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
+            <MapPin size={20} className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1" />
+            <span className="relative z-10">Où jouer ?</span>
+          </button>
+        </div>
 
         {!user && (
           <button

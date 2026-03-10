@@ -22,6 +22,7 @@ const Tournaments = lazy(() => import("./pages/Tournaments"));
 const TournamentDashboard = lazy(() => import("./pages/TournamentDashboard"));
 const TournamentJoin = lazy(() => import("./pages/TournamentJoin"));
 const TournamentSpectator = lazy(() => import("./pages/TournamentSpectator"));
+const Spots = lazy(() => import("./pages/Spots"));
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const AppInner = () => {
             <Route path="/tournaments/:id" element={<TournamentDashboard />} />
             <Route path="/tournaments/:id/join" element={<TournamentJoin />} />
             <Route path="/tournaments/:id/spectate" element={<TournamentSpectator />} />
+            <Route path="/spots" element={<Spots />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
