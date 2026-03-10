@@ -107,9 +107,9 @@ export default function Home() {
       id: 'spot-explorer',
       icon: <MapPin size={32} className="text-primary mb-2" />,
       images: [],
-      title: "Où jouer ? (Nouveau)",
-      desc: "Trouvez des terrains de volley partout près de chez vous, ajoutez vos spots préférés et voyez les photos et commentaires d'autres joueurs.",
-      btnText: "Ouvrir la Carte",
+      title: t('home.whatsNewSpots'),
+      desc: t('home.whatsNewSpotsDesc'),
+      btnText: t('home.whatsNewSpotsBtn'),
       action: () => navigate('/spots'),
     },
     {
@@ -781,7 +781,7 @@ export default function Home() {
           >
             <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
             <MapPin size={20} className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1" />
-            <span className="relative z-10">Où jouer ?</span>
+            <span className="relative z-10">{t('home.whatsNewSpots')}</span>
           </button>
         </div>
 
