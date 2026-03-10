@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, ExternalLink, Dribbble, Circle, Activity } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Heart, ExternalLink, Dribbble, Circle, Activity, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
