@@ -83,7 +83,7 @@ export default function Home() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
   const [selectedWhatsNew, setSelectedWhatsNew] = useState<any | null>(null);
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
+  
 
   const [scrollProgress, setScrollProgress] = useState(0);
 
