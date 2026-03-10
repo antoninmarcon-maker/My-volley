@@ -94,7 +94,11 @@
     "whatsNewPerfModeBtn": "Start in Perf Mode",
     "whatsNewTournaments": "Tournament Management",
     "whatsNewTournamentsDesc": "Organize, register teams, and share live scores with players and spectators.",
-    "whatsNewTournamentsBtn": "Discover tournaments"
+    "whatsNewTournamentsBtn": "Discover tournaments",
+    "whatsNewSpots": "Where to Play?",
+    "whatsNewSpotsDesc": "Find volleyball courts near you, add your favorite spots and check out photos and comments from other players.",
+    "whatsNewSpotsBtn": "Open the Map",
+    "learnMore": "Learn more"
   },
   "credits": {
     "title": "Project Story",
