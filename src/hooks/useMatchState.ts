@@ -1,20 +1,7 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Team, Point, PointType, ActionType, SetData, Player, SportType, MatchMetadata, RallyAction } from '@/types/sports';
 import { getMatch, saveMatch, saveLastRoster } from '@/lib/matchStorage';
-
-/**
- * Returns true if this point/action should trigger the player assignment popup.
- * Three conditions must ALL be met:
- *   1. Players are configured in the match
- *   2. The action has assignToPlayer enabled (defaults to true)
- *   3. The category is eligible: scored by blue, fault by red, or any neutral
- */
-export function needsPlayerAssignment(hasPlayers: boolean, team: Team, type: PointType, assignToPlayer: boolean | undefined): boolean {
-  if (!hasPlayers) return false;
-  if (assignToPlayer === false) return false;
-  // As per specs: input (player/rating) is ONLY requested for the followed team (Blue)
-  return team === 'blue';
-}
+import { getActionRequirements } from '@/lib/matchRules';
 
 export function useMatchState(matchId: string, ready: boolean = true) {
   const loadedRef = useRef<ReturnType<typeof getMatch>>(null);
@@ -103,7 +90,10 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     );
     setPlayerAliases({ ...hydratedAliases, ...rosterAliases });
     setChronoSeconds(match.chronoSeconds ?? 0);
+    setMetadata(match.metadata ?? null); // Initialize metadata here
   }, [ready, matchId]);
+
+  const [metadata, setMetadata] = useState<MatchMetadata | null>(null);
 
   useEffect(() => {
     setPlayerAliases((prev) => {
@@ -228,11 +218,21 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         ...(finalRallyAction.rating ? { rating: finalRallyAction.rating } : {}),
       };
 
-      // If player was pre-selected on this specific action or neutrally before, save directly; otherwise check if assignment needed
-      if (finalRallyAction.playerId) {
+      // If player was pre-selected, save directly; otherwise check if assignment needed
+      if (rallyAction.playerId) {
         setPoints(prev => [...prev, point]);
       } else {
-        if (needsPlayerAssignment(players.length > 0, team, type, finalRallyAction.assignToPlayer)) {
+        const reqs = getActionRequirements(
+          players.length > 0,
+          team,
+          type,
+          rallyAction.action,
+          { assignToPlayer: rallyAction.assignToPlayer },
+          metadata,
+          isPerformanceMode
+        );
+
+        if (reqs.needsAssignToPlayer) {
           setPendingPoint(point);
         } else {
           setPoints(prev => [...prev, point]);
@@ -288,13 +288,25 @@ export function useMatchState(matchId: string, ready: boolean = true) {
         ...(conclusionRating && conclusionRating !== 'none' ? { rating: conclusionRating } : {}),
       };
 
-      if (conclusionPlayerId) {
-        setPoints(prev => [...prev, { ...point, playerId: conclusionPlayerId }]);
+      if (preSelectedPlayerId) {
+        setPoints(prev => [...prev, { ...point, playerId: preSelectedPlayerId }]);
+        setPreSelectedRating(null);
       } else {
-        if (needsPlayerAssignment(players.length > 0, team, type, assignToPlayer)) {
+        const reqs = getActionRequirements(
+          players.length > 0,
+          team,
+          type,
+          action,
+          { assignToPlayer },
+          metadata,
+          isPerformanceMode
+        );
+
+        if (reqs.needsAssignToPlayer) {
           setPendingPoint(point);
         } else {
           setPoints(prev => [...prev, point]);
+          setPreSelectedRating(null);
         }
       }
     }
@@ -376,8 +388,18 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       ...(customShowOnCourt ? { showOnCourt: true } : {}),
       ...(preSelectedRating && preSelectedRating !== 'none' ? { rating: preSelectedRating } : {}),
     };
+    const reqs = getActionRequirements(
+      players.length > 0,
+      point.team,
+      point.type,
+      point.action,
+      meta || {},
+      metadata,
+      isPerformanceMode
+    );
+
     // Trigger player assignment popup if required
-    if (players.length > 0 && needsPlayerAssignment(players.length > 0, point.team, point.type, assignToPlayer)) {
+    if (reqs.needsAssignToPlayer) {
       setPendingPoint(point);
     } else {
       setPoints(prev => [...prev, point]);
@@ -386,7 +408,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
     setSelectedPointType(null);
     setSelectedAction(null);
     // Clean up rating now unless we're entering player assignment (it will clean up on confirm/skip)
-    if (!needsPlayerAssignment(players.length > 0, point.team, point.type, assignToPlayer)) {
+    if (!reqs.needsAssignToPlayer) {
       setPreSelectedRating(null);
     }
   }, [selectedTeam, selectedPointType, selectedAction, chronoRunning, players.length, isPerformanceMode, directionOrigin, pendingDirectionAction, confirmDirectionAction, updateDirectionDest, cancelSelection, startDirectionMode, processRallyAction, preSelectedPlayerId, preSelectedRating, pendingActionMeta]);

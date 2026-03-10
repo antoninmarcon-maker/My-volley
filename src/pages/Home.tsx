@@ -17,8 +17,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { UserMenu } from '@/components/UserMenu';
 import { SavedPlayersManager } from '@/components/SavedPlayersManager';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
-import Autoplay from 'embla-carousel-autoplay';
+
 import { exportMatchToExcel } from '@/lib/excelExport';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
@@ -85,7 +84,7 @@ export default function Home() {
   const [inviteSending, setInviteSending] = useState(false);
   const [selectedWhatsNew, setSelectedWhatsNew] = useState<any | null>(null);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
-  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+
   const [scrollProgress, setScrollProgress] = useState(0);
 
   const [dismissedWhatsNew, setDismissedWhatsNew] = useState<string[]>(() => {
@@ -149,23 +148,46 @@ export default function Home() {
 
   const visibleWhatsNew = whatsNewCards.filter(c => !dismissedWhatsNew.includes(c.id));
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
   useEffect(() => {
-    if (!carouselApi) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
 
     const onScroll = () => {
-      const progress = Math.max(0, Math.min(1, carouselApi.scrollProgress()));
-      setScrollProgress(progress * 100);
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      const progress = maxScroll > 0 ? (el.scrollLeft / maxScroll) * 100 : 0;
+      setScrollProgress(progress);
     };
 
-    carouselApi.on("scroll", onScroll);
-    carouselApi.on("reInit", onScroll);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    // Initial call
     onScroll();
 
-    return () => {
-      carouselApi.off("scroll", onScroll);
-      carouselApi.off("reInit", onScroll);
-    };
-  }, [carouselApi]);
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [visibleWhatsNew.length]);
+
+  useEffect(() => {
+    if (isHovered || visibleWhatsNew.length <= 1) return;
+
+    const interval = setInterval(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      // If we are at the end, jump back to start
+      if (el.scrollLeft >= maxScroll - 10) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        // Scroll exactly one item width approx
+        const itemWidth = el.scrollWidth / visibleWhatsNew.length;
+        el.scrollBy({ left: itemWidth, behavior: 'smooth' });
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isHovered, visibleWhatsNew.length]);
 
   useEffect(() => {
     if (localStorage.getItem('welcomeSeen') !== 'true') {
@@ -483,63 +505,62 @@ export default function Home() {
               <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">{t('home.whatsNew')}</h2>
             </div>
 
-            <Carousel
-              setApi={setCarouselApi}
-              plugins={[Autoplay({ delay: 5000, stopOnInteraction: true })]}
-              opts={{
-                align: "start",
-                loop: true
-              }}
-              className="w-full"
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar px-1 cursor-grab active:cursor-grabbing"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              onTouchStart={() => setIsHovered(true)}
+              onTouchEnd={() => setIsHovered(false)}
             >
-              <CarouselContent className="-ml-3 pb-2 pt-1 pl-1 pr-1">
-                {visibleWhatsNew.map((card) => (
-                  <CarouselItem key={card.id} className="pl-3 basis-[85%] md:basis-[48%] lg:basis-[48%]">
-                    <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col relative">
-                      <button
-                        onClick={() => handleDismissWhatsNew(card.id)}
-                        className="absolute top-2 right-2 z-10 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors"
-                        title={t('common.close')}
-                      >
-                        <X size={14} />
-                      </button>
-                      <div
-                        className="aspect-video bg-muted relative flex items-center justify-center cursor-pointer"
-                        onClick={() => setSelectedWhatsNew(card)}
-                      >
-                        {card.icon}
-                        <img src={card.image} alt={card.title} className="w-full h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
-                      </div>
-                      <div className="p-4 flex flex-col flex-1 gap-2 cursor-pointer" onClick={() => setSelectedWhatsNew(card)}>
-                        <h3 className="font-bold text-foreground leading-tight">{card.title}</h3>
-                        <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{card.desc}</p>
-                      </div>
-                      <div className="px-4 pb-4">
-                        <button
-                          onClick={() => handleDismissWhatsNew(card.id, card.action)}
-                          className={card.gradientBtn ? "group w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" : "w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"}
-                          style={card.gradientBtn ? { background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' } : {}}
-                        >
-                          {card.gradientBtn && <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />}
-                          <span className="relative z-10">{card.btnText}</span>
-                        </button>
-                      </div>
+              {visibleWhatsNew.map((card) => (
+                <div key={card.id} className="min-w-[85%] md:min-w-[300px] snap-center shrink-0">
+                  <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col relative w-full">
+                    <button
+                      onClick={() => handleDismissWhatsNew(card.id)}
+                      className="absolute top-2 right-2 z-10 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors"
+                      title={t('common.close')}
+                    >
+                      <X size={14} />
+                    </button>
+                    <div
+                      className="aspect-video bg-muted relative flex items-center justify-center cursor-pointer"
+                      onClick={() => setSelectedWhatsNew(card)}
+                    >
+                      {card.icon}
+                      <img src={card.image} alt={card.title} className="w-full h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
                     </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
+                    <div className="p-4 flex flex-col flex-1 gap-2 cursor-pointer" onClick={() => setSelectedWhatsNew(card)}>
+                      <h3 className="font-bold text-foreground leading-tight">{card.title}</h3>
+                      <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{card.desc}</p>
+                    </div>
+                    <div className="px-4 pb-4">
+                      <button
+                        onClick={() => handleDismissWhatsNew(card.id, card.action)}
+                        className={card.gradientBtn ? "group w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" : "w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"}
+                        style={card.gradientBtn ? { background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' } : {}}
+                      >
+                        {card.gradientBtn && <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />}
+                        <span className="relative z-10">{card.btnText}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {/* Design Progress Bar (Desktop focused) */}
-            <div className="mt-8 px-1 flex flex-col items-center gap-4">
+            <div className="mt-4 px-1 flex flex-col items-center gap-4">
               <div
                 className="w-full h-1.5 bg-secondary/50 rounded-full overflow-hidden relative cursor-pointer group backdrop-blur-sm"
                 onClick={(e) => {
-                  if (!carouselApi) return;
+                  const el = scrollContainerRef.current;
+                  if (!el) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
                   const percent = x / rect.width;
-                  carouselApi.scrollTo(Math.floor(percent * visibleWhatsNew.length));
+                  const maxScroll = el.scrollWidth - el.clientWidth;
+                  el.scrollTo({ left: percent * maxScroll, behavior: 'smooth' });
                 }}
               >
                 <div
@@ -551,11 +572,17 @@ export default function Home() {
 
               <div className="flex gap-2">
                 {visibleWhatsNew.map((_, i) => {
-                  const isActive = carouselApi ? carouselApi.selectedScrollSnap() === i : i === 0;
+                  const itemPercent = (i / Math.max(1, visibleWhatsNew.length - 1)) * 100;
+                  const isActive = Math.abs(scrollProgress - itemPercent) < (100 / visibleWhatsNew.length / 2);
                   return (
                     <button
                       key={i}
-                      onClick={() => carouselApi?.scrollTo(i)}
+                      onClick={() => {
+                        const el = scrollContainerRef.current;
+                        if (!el) return;
+                        const itemWidth = el.scrollWidth / visibleWhatsNew.length;
+                        el.scrollTo({ left: i * itemWidth, behavior: 'smooth' });
+                      }}
                       className={`h-2 transition-all duration-500 rounded-full ${isActive ? 'w-8 bg-primary shadow-[0_0_8px_rgba(var(--primary),0.4)]' : 'w-2 bg-muted hover:bg-muted-foreground/40'}`}
                       aria-label={`Go to slide ${i + 1}`}
                     />

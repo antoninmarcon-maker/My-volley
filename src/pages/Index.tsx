@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { Activity, BarChart3, HelpCircle, X, ArrowLeft, Check } from 'lucide-react';
-import { useMatchState, needsPlayerAssignment } from '@/hooks/useMatchState';
+import { MatchState, useMatchState } from '@/hooks/useMatchState';
+import { getActionRequirements } from '@/lib/matchRules';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { VolleyballCourt } from '@/components/VolleyballCourt';
 import { HeatmapView } from '@/components/HeatmapView';
@@ -214,8 +215,6 @@ const Index = () => {
     return points;
   }, [isFinished, replaySetAllPoints, points]);
 
-  // Auto-point for service faults or when court is disabled or placeOnCourt=false
-  const SERVICE_FAULT_ACTIONS = ['service_miss', 'gameplay_fault', 'timeout'];
   useEffect(() => {
     if (!selectedTeam || !selectedAction) {
       setAwaitingPlayerBeforeCourt(false);
@@ -223,28 +222,24 @@ const Index = () => {
       return;
     }
 
-    const meta = pendingActionMeta;
-    // Déterminer si l'action émane de notre équipe (Bleue) - Selon règles spec 2
-    const isEligibleForInput = selectedTeam === 'blue';
+    const reqs = getActionRequirements(
+      players.length > 0,
+      selectedTeam,
+      selectedPointType!,
+      selectedAction,
+      pendingActionMeta,
+      metadata,
+      isPerformanceMode
+    );
 
-    const needsAssignToPlayer = isEligibleForInput && needsPlayerAssignment(players.length > 0, selectedTeam, selectedPointType, meta?.assignToPlayer);
-    const needsCourtPlacement = meta?.placeOnCourt !== false && metadata?.hasCourt !== false && !SERVICE_FAULT_ACTIONS.includes(selectedAction);
-
-    const globalRatingsEnabled = metadata?.enableRatings !== false;
-    const perActionRating = meta?.hasRating === true;
-    const nonRateableActions = ['timeout'];
-
-    // La notation ne s'affiche QUE si on est dans un cas éligible (Point Bleu ou Faute Bleue)
-    const needsRating = isEligibleForInput && (perActionRating || (globalRatingsEnabled && !nonRateableActions.includes(selectedAction)));
-
-    // Si l'action nécessite un joueur ET le terrain (Mode Perf)
-    if (isPerformanceMode && needsAssignToPlayer && needsCourtPlacement && players.length > 0 && !preSelectedPlayerId) {
+    // If action needs player AND court, show player selector first (performance mode)
+    if (isPerformanceMode && reqs.needsAssignToPlayer && reqs.needsCourtPlacement && !preSelectedPlayerId) {
       setAwaitingPlayerBeforeCourt(true);
       return;
     }
 
-    // Si l'action nécessite une notation
-    if (needsRating && !preSelectedRating) {
+    // If action needs rating, show rating selector (both modes)
+    if (reqs.needsRating && !preSelectedRating) {
       setAwaitingRating(true);
       return;
     }
@@ -252,14 +247,10 @@ const Index = () => {
     setAwaitingRating(false);
     setAwaitingPlayerBeforeCourt(false);
 
-    const isAutoPoint =
-      metadata?.hasCourt === false ||
-      SERVICE_FAULT_ACTIONS.includes(selectedAction) ||
-      meta?.placeOnCourt === false;
-    if (isAutoPoint) {
+    if (reqs.isAutoPoint) {
       addPoint(0.5, 0.5);
     }
-  }, [matchState.selectedPointType, selectedTeam, selectedAction, addPoint, isPerformanceMode, players.length, preSelectedPlayerId, preSelectedRating, pendingActionMeta]);
+  }, [matchState.selectedPointType, selectedTeam, selectedAction, addPoint, isPerformanceMode, players.length, preSelectedPlayerId, preSelectedRating, pendingActionMeta, metadata]);
 
   // Player assignment logic: The decision to show the popup is now fully handled in useMatchState
   // If pendingPoint is set, it means the popup SHOULD be shown. We just need a failsafe to skip

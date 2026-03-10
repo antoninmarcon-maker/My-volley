@@ -22,6 +22,8 @@ function mergeGhostPlayers(pts: Point[], players: Player[], storedPlayers: Playe
 
 function playerSetStats(pts: Point[], players: Player[]) {
   const allPlayers = mergeGhostPlayers(pts, players);
+  const neutralLabels = Array.from(new Set(pts.filter(p => p.type === 'neutral').map(p => p.customActionLabel || p.action)));
+
   return allPlayers.map(player => {
     const pp = pts.filter(p => p.playerId === player.id);
     const scored = pp.filter(p => p.team === 'blue' && p.type === 'scored');
@@ -31,7 +33,8 @@ function playerSetStats(pts: Point[], players: Player[]) {
     const totalPositive = scored.length + faultWins.length;
     const totalNegative = faults.length;
     const total = totalPositive + totalNegative + neutrals.length;
-    return {
+
+    const baseStats: Record<string, string | number> = {
       'Joueur': player.name || '—',
       'Attaques': scored.filter(p => p.action === 'attack').length,
       'Aces': scored.filter(p => p.action === 'ace').length,
@@ -43,9 +46,16 @@ function playerSetStats(pts: Point[], players: Player[]) {
       'Total pts gagnés': totalPositive,
       'Fautes commises': totalNegative,
       'Faits de jeu (Total)': neutrals.length,
-      'Total actions': total,
-      'Efficacité (%)': total > 0 ? Math.round(totalPositive / total * 100) : 0,
     };
+
+    neutralLabels.forEach(label => {
+      baseStats[`  ↳ ${label}`] = neutrals.filter(p => (p.customActionLabel || p.action) === label).length;
+    });
+
+    baseStats['Total actions'] = total;
+    baseStats['Efficacité (%)'] = total > 0 ? Math.round(totalPositive / total * 100) : 0;
+
+    return baseStats;
   });
 }
 
@@ -54,12 +64,17 @@ function teamSetStats(pts: Point[], team: 'blue' | 'red') {
   const scored = pts.filter(p => p.team === team && p.type === 'scored');
   const opponentFaults = pts.filter(p => p.team === opponent && p.type === 'fault');
   const neutrals = pts.filter(p => p.team === team && p.type === 'neutral');
+
+  const neutralLabels = Array.from(new Set(neutrals.map(p => p.customActionLabel || p.action)));
+  const neutralDetails = neutralLabels.map(label => [label, neutrals.filter(p => (p.customActionLabel || p.action) === label).length] as [string, number]);
+
   return {
     scored: scored.length,
     faults: opponentFaults.length,
     neutrals: neutrals.length,
     details: OFFENSIVE_ACTIONS.map(a => [a.label, scored.filter(p => p.action === a.key).length] as [string, number]),
     faultDetails: FAULT_ACTIONS.map(a => [a.label, opponentFaults.filter(p => p.action === a.key).length] as [string, number]),
+    neutralDetails,
   };
 }
 
@@ -101,6 +116,7 @@ export function exportMatchToExcel(
       ts.faultDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
       if (ts.neutrals > 0) {
         rows.push({ '#': '', 'Joueur': 'Faits de jeu', 'Col3': ts.neutrals });
+        ts.neutralDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
       }
       rows.push({ '#': '', 'Joueur': 'Total', 'Col3': ts.scored + ts.faults + ts.neutrals });
       rows.push({});

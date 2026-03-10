@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { needsPlayerAssignment } from "@/hooks/useMatchState";
+import { needsPlayerAssignment } from "@/lib/matchRules";
 
 describe("needsPlayerAssignment", () => {
     it("never shows the popup if no players are configured", () => {
@@ -21,9 +21,9 @@ describe("needsPlayerAssignment", () => {
                 expect(needsPlayerAssignment(true, "blue", "scored", undefined)).toBe(true);
             });
 
-            it("shows popup when Red scores", () => {
-                expect(needsPlayerAssignment(true, "red", "scored", true)).toBe(true);
-                expect(needsPlayerAssignment(true, "red", "scored", undefined)).toBe(true);
+            it("does NOT show popup when Red scores", () => {
+                expect(needsPlayerAssignment(true, "red", "scored", true)).toBe(false);
+                expect(needsPlayerAssignment(true, "red", "scored", undefined)).toBe(false);
             });
         });
 
@@ -33,8 +33,8 @@ describe("needsPlayerAssignment", () => {
                 expect(needsPlayerAssignment(true, "red", "fault", true)).toBe(true);
             });
 
-            it("shows popup when Blue faults (Red scored)", () => {
-                expect(needsPlayerAssignment(true, "blue", "fault", true)).toBe(true);
+            it("does NOT show popup when Blue faults (Red scored)", () => {
+                expect(needsPlayerAssignment(true, "blue", "fault", true)).toBe(false);
             });
         });
 
