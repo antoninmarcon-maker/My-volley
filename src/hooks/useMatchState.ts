@@ -180,6 +180,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
 
   const updateDirectionDest = useCallback((x: number, y: number) => {
     setDirectionDest({ x, y });
+    setDirectionDestSet(true); // user explicitly set a destination
   }, []);
 
   // Process a rally action: accumulate neutrals, conclude on scored/fault
