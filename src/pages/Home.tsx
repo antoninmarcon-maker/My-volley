@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDemoMatch, DEMO_MATCH_ID } from '@/lib/demoMatch';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail, MoreVertical, FileSpreadsheet, BarChart2, Users, Settings2, Activity, Trophy, MapPin } from 'lucide-react';
+import { Plus, History, Trash2, Eye, Play, Info, CheckCircle2, LogIn, HelpCircle, Loader2, X, MessageSquare, ImagePlus, Share2, Copy, Mail, MoreVertical, FileSpreadsheet, BarChart2, Users, Settings2, Activity, Trophy, MapPin, Download, LinkIcon } from 'lucide-react';
 import logoCapbreton from '@/assets/logo-capbreton.jpeg';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -83,7 +83,10 @@ export default function Home() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
   const [selectedWhatsNew, setSelectedWhatsNew] = useState<any | null>(null);
-  
+  const [sharingMatch, setSharingMatch] = useState<MatchSummary | null>(null);
+  const [generatingShareLink, setGeneratingShareLink] = useState(false);
+  const [shareLinkUrl, setShareLinkUrl] = useState('');
+  const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
 
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -365,22 +368,68 @@ export default function Home() {
     await loadMatches(user);
   };
 
-  const handleShareMatch = async (match: MatchSummary) => {
-    const url = `${window.location.origin}/match/${match.id}`;
+  const getMatchScoreText = (match: MatchSummary) => {
+    const sc = match.completedSets.reduce((acc, s) => ({ blue: acc.blue + s.score.blue, red: acc.red + s.score.red }), { blue: 0, red: 0 });
+    const pts = match.points || [];
+    sc.blue += pts.filter(p => p.team === 'blue').length;
+    sc.red += pts.filter(p => p.team === 'red').length;
+    return `${match.teamNames.blue} ${sc.blue} - ${sc.red} ${match.teamNames.red}`;
+  };
+
+  const handleShareNative = async (match: MatchSummary) => {
+    const text = getMatchScoreText(match);
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Match: ${match.teamNames.blue} vs ${match.teamNames.red}`,
-          text: t('home.shareMatchText', 'Regarde les statistiques de ce match !'),
-          url,
-        });
-      } catch {
-        // ignore cancellation
-      }
+      try { await navigator.share({ title: `Match: ${match.teamNames.blue} vs ${match.teamNames.red}`, text }); } catch {}
     } else {
-      navigator.clipboard.writeText(url)
-        .then(() => toast.success(t('heatmap.linkCopied', 'Lien copié')))
-        .catch(() => toast.error(t('heatmap.linkCopyError', 'Erreur de copie')));
+      navigator.clipboard.writeText(text).then(() => toast.success(t('heatmap.linkCopied'))).catch(() => {});
+    }
+  };
+
+  const handleCopyScore = (match: MatchSummary) => {
+    navigator.clipboard.writeText(getMatchScoreText(match))
+      .then(() => toast.success(t('heatmap.linkCopied')))
+      .catch(() => toast.error(t('heatmap.linkCopyError')));
+  };
+
+  const handleShareWhatsApp = (match: MatchSummary) => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(getMatchScoreText(match))}`, '_blank');
+  };
+
+  const handleShareTelegram = (match: MatchSummary) => {
+    window.open(`https://t.me/share/url?text=${encodeURIComponent(getMatchScoreText(match))}`, '_blank');
+  };
+
+  const handleShareX = (match: MatchSummary) => {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(getMatchScoreText(match))}`, '_blank');
+  };
+
+  const handleGenerateShareLink = async (match: MatchSummary) => {
+    if (!user) { toast.error(t('heatmap.loginForLink')); return; }
+    setGeneratingShareLink(true);
+    try {
+      let token = (match as any).shareToken;
+      if (!token) {
+        token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+        const { error } = await supabase.from('matches').update({ share_token: token }).eq('id', match.id);
+        if (error) throw error;
+      }
+      const url = `https://www.my-volley.com/shared/${token}`;
+      setShareLinkUrl(url);
+      setSharingMatch(null);
+      setShareLinkDialogOpen(true);
+    } catch {
+      toast.error(t('heatmap.linkError'));
+    } finally {
+      setGeneratingShareLink(false);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareLinkUrl);
+      toast.success(t('heatmap.linkCopied'));
+    } catch {
+      toast.error(t('heatmap.linkCopyError'));
     }
   };
 
@@ -925,17 +974,13 @@ export default function Home() {
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-56 rounded-xl border-border bg-card shadow-lg">
-                                <DropdownMenuItem onClick={() => handleShareMatch(match)} className="cursor-pointer py-2.5">
-                                  <Share2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium text-xs">{t('home.shareMatch', 'Partager le match')}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => exportMatchToExcel(match.completedSets, match.points, match.currentSetNumber, match.teamNames, match.players || [])} className="cursor-pointer py-2.5">
-                                  <FileSpreadsheet className="mr-2 h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium text-xs">{t('home.exportExcel', 'Export Excel')}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleResume(match.id)} className="cursor-pointer py-2.5">
+                                <DropdownMenuItem onClick={() => { setActiveMatchId(match.id); navigate(`/match/${match.id}?tab=stats`); }} className="cursor-pointer py-2.5">
                                   <BarChart2 className="mr-2 h-4 w-4 text-muted-foreground" />
                                   <span className="font-medium text-xs">{t('home.viewStats', 'Statistiques détaillées')}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSharingMatch(match)} className="cursor-pointer py-2.5">
+                                  <Share2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-xs">{t('home.shareMatch', 'Partager le match')}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-border/50" />
                                 <DropdownMenuItem onClick={() => setDeletingId(match.id)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive py-2.5">
@@ -1031,6 +1076,71 @@ export default function Home() {
           userId={user.id}
         />
       )}
+
+      {/* Share Match Dialog */}
+      <Dialog open={!!sharingMatch} onOpenChange={(open) => !open && setSharingMatch(null)}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 size={18} /> {t('home.shareMatch', 'Partager le match')}
+            </DialogTitle>
+            {sharingMatch && (
+              <DialogDescription>
+                {sharingMatch.teamNames.blue} vs {sharingMatch.teamNames.red}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {sharingMatch && (
+            <div className="space-y-2">
+              <button onClick={() => { handleShareNative(sharingMatch); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <Share2 size={16} className="text-muted-foreground" /> {t('heatmap.shareDots', 'Partager…')}
+              </button>
+              <button onClick={() => handleShareWhatsApp(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <span className="text-base">💬</span> WhatsApp
+              </button>
+              <button onClick={() => handleShareTelegram(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <span className="text-base">✈️</span> Telegram
+              </button>
+              <button onClick={() => handleShareX(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <span className="text-base">𝕏</span> X (Twitter)
+              </button>
+              <div className="h-px bg-border my-1" />
+              <button onClick={() => handleCopyScore(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <Copy size={16} className="text-muted-foreground" /> {t('heatmap.copyScore', 'Copier le score')}
+              </button>
+              <button onClick={() => exportMatchToExcel(sharingMatch.completedSets, sharingMatch.points, sharingMatch.currentSetNumber, sharingMatch.teamNames, sharingMatch.players || [])} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <FileSpreadsheet size={16} className="text-muted-foreground" /> {t('heatmap.excelXlsx', 'Excel (.xlsx)')}
+              </button>
+              {user && (
+                <button onClick={() => handleGenerateShareLink(sharingMatch)} disabled={generatingShareLink} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold transition-all">
+                  <LinkIcon size={16} /> {generatingShareLink ? t('heatmap.generatingLink', 'Génération...') : t('heatmap.shareLink', '🔗 Lien de partage')}
+                </button>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Link Ready Dialog */}
+      <Dialog open={shareLinkDialogOpen} onOpenChange={setShareLinkDialogOpen}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('heatmap.linkReadyTitle')}</DialogTitle>
+            <DialogDescription>{t('heatmap.linkReadyDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <input readOnly value={shareLinkUrl} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground" />
+            <div className="flex gap-2">
+              <button onClick={handleCopyShareLink} className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all">
+                {t('heatmap.copyLink')}
+              </button>
+              <button onClick={() => window.open(shareLinkUrl, '_blank', 'noopener,noreferrer')} className="flex-1 py-2.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-semibold hover:bg-secondary/80 transition-all">
+                {t('heatmap.openSharedPage')}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <footer className="sticky bottom-0 z-30 bg-background border-t border-border px-4 py-3 flex items-center justify-around gap-2">
         <Link
