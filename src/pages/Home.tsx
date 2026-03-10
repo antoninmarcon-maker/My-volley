@@ -781,7 +781,7 @@ export default function Home() {
           >
             <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />
             <MapPin size={20} className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1" />
-            <span className="relative z-10">Où jouer ?</span>
+            <span className="relative z-10">{t('home.whatsNewSpots')}</span>
           </button>
         </div>
 

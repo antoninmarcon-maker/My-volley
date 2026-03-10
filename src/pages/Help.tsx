@@ -74,6 +74,13 @@ export default function Help() {
           </div>
         </section>
 
+        <section>
+          <h2 className="text-xl font-bold text-foreground mb-3">{t('help.spotsTitle')}</h2>
+          <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground space-y-3">
+            <p>{t('help.spotsDesc')}</p>
+          </div>
+        </section>
+
         <section className="pb-6">
           <a
             href="mailto:contact@my-volley.com"
