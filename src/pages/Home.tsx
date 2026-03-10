@@ -517,7 +517,7 @@ export default function Home() {
               onTouchEnd={() => setIsHovered(false)}
             >
               {visibleWhatsNew.map((card) => (
-                <div key={card.id} className="min-w-[85%] md:min-w-[300px] snap-center shrink-0">
+              <div key={card.id} className="min-w-full snap-center shrink-0">
                   <div className="bg-card rounded-xl border border-border overflow-hidden h-full flex flex-col relative w-full">
                     <button
                       onClick={() => handleDismissWhatsNew(card.id)}
@@ -536,15 +536,13 @@ export default function Home() {
                         onClick={() => setSelectedWhatsNew(card)}
                         className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all flex items-center justify-center gap-2"
                       >
-                        <ImagePlus size={16} /> {t('home.learnMore', 'En savoir plus')}
+                        <Eye size={16} /> {t('home.learnMore', 'En savoir plus')}
                       </button>
                       <button
                         onClick={() => handleDismissWhatsNew(card.id, card.action)}
-                        className={card.gradientBtn ? "group w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" : "w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"}
-                        style={card.gradientBtn ? { background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' } : {}}
+                        className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"
                       >
-                        {card.gradientBtn && <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />}
-                        <span className="relative z-10">{card.btnText}</span>
+                        {card.btnText}
                       </button>
                     </div>
                   </div>
