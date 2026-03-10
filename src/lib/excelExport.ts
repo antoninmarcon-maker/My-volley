@@ -34,6 +34,12 @@ function playerSetStats(pts: Point[], players: Player[]) {
     const totalNegative = faults.length;
     const total = totalPositive + totalNegative + neutrals.length;
 
+    // Collect all rated actions for this player
+    const allActions = [...scored, ...faultWins, ...faults, ...neutrals];
+    const rPos = allActions.filter(p => p.rating === 'positive').length;
+    const rNeu = allActions.filter(p => p.rating === 'neutral').length;
+    const rNeg = allActions.filter(p => p.rating === 'negative').length;
+
     const baseStats: Record<string, string | number> = {
       'Joueur': player.name || '—',
       'Attaques': scored.filter(p => p.action === 'attack').length,
@@ -54,6 +60,11 @@ function playerSetStats(pts: Point[], players: Player[]) {
 
     baseStats['Total actions'] = total;
     baseStats['Efficacité (%)'] = total > 0 ? Math.round(totalPositive / total * 100) : 0;
+    if (rPos || rNeu || rNeg) {
+      baseStats['Note (+)'] = rPos;
+      baseStats['Note (!)'] = rNeu;
+      baseStats['Note (-)'] = rNeg;
+    }
 
     return baseStats;
   });
