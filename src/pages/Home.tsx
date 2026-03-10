@@ -188,6 +188,23 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [isHovered, visibleWhatsNew.length]);
 
+  // Auto-scroll carousel in the "En savoir plus" modal
+  useEffect(() => {
+    if (!selectedWhatsNew || selectedWhatsNew.images.length <= 1) return;
+    const el = document.getElementById('whats-new-modal-carousel');
+    if (!el) return;
+    const interval = setInterval(() => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (el.scrollLeft >= maxScroll - 10) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        const itemWidth = el.scrollWidth / selectedWhatsNew.images.length;
+        el.scrollBy({ left: itemWidth, behavior: 'smooth' });
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [selectedWhatsNew]);
+
   useEffect(() => {
     if (localStorage.getItem('welcomeSeen') !== 'true') {
       setShowWelcome(true);
