@@ -39,6 +39,8 @@ export function useMatchState(matchId: string, ready: boolean = true) {
   // Direction mode: dragging arrow
   const [directionOrigin, setDirectionOrigin] = useState<{ x: number; y: number } | null>(null);
   const [directionDest, setDirectionDest] = useState<{ x: number; y: number } | null>(null);
+  // Whether the user has explicitly set a destination (2nd click/drag) — blocks premature confirm
+  const [directionDestSet, setDirectionDestSet] = useState(false);
   const [pendingDirectionAction, setPendingDirectionAction] = useState<{
     team: Team; type: PointType; action: ActionType;
     customLabel?: string; sigil?: string; showOnCourt?: boolean; assignToPlayer?: boolean;
