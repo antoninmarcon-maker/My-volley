@@ -974,17 +974,13 @@ export default function Home() {
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-56 rounded-xl border-border bg-card shadow-lg">
-                                <DropdownMenuItem onClick={() => handleShareMatch(match)} className="cursor-pointer py-2.5">
-                                  <Share2 className="mr-2 h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium text-xs">{t('home.shareMatch', 'Partager le match')}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => exportMatchToExcel(match.completedSets, match.points, match.currentSetNumber, match.teamNames, match.players || [])} className="cursor-pointer py-2.5">
-                                  <FileSpreadsheet className="mr-2 h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium text-xs">{t('home.exportExcel', 'Export Excel')}</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleResume(match.id)} className="cursor-pointer py-2.5">
+                                <DropdownMenuItem onClick={() => { setActiveMatchId(match.id); navigate(`/match/${match.id}?tab=stats`); }} className="cursor-pointer py-2.5">
                                   <BarChart2 className="mr-2 h-4 w-4 text-muted-foreground" />
                                   <span className="font-medium text-xs">{t('home.viewStats', 'Statistiques détaillées')}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSharingMatch(match)} className="cursor-pointer py-2.5">
+                                  <Share2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-xs">{t('home.shareMatch', 'Partager le match')}</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-border/50" />
                                 <DropdownMenuItem onClick={() => setDeletingId(match.id)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive py-2.5">
