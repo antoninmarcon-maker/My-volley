@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Point, Player, SportType, OFFENSIVE_ACTIONS, FAULT_ACTIONS, RallyAction } from '@/types/sports';
 import { useTranslation } from 'react-i18next';
+import { RatingDots } from '@/components/RatingDot';
 import { getMatch } from '@/lib/matchStorage';
 import { getPlayerNumber } from '@/lib/savedPlayers';
 
@@ -89,22 +90,20 @@ export function PlayerStats({ points, players, teamName, matchId, showRatings = 
       const scoredCount = playerScoredActions.length + playerFaultWins.length;
       const negativeCount = playerNegatives.length;
 
-      const faultBreakdown: { label: string; count: number }[] = [];
+      const faultBreakdown: { label: string; count: number; ratingItems: { rating?: string }[] }[] = [];
       const negScoredActions = OFFENSIVE_ACTIONS;
       const negFaultActions = FAULT_ACTIONS;
 
       for (const a of negScoredActions) {
         const actionPoints = playerNegatives.filter(p => p.type === 'scored' && p.action === a.key);
         if (actionPoints.length > 0) {
-          const suffix = formatRatingSuffix(actionPoints);
-          faultBreakdown.push({ label: a.label + suffix, count: actionPoints.length });
+          faultBreakdown.push({ label: a.label, count: actionPoints.length, ratingItems: actionPoints });
         }
       }
       for (const a of negFaultActions) {
         const actionPoints = playerNegatives.filter(p => p.type === 'fault' && p.action === a.key);
         if (actionPoints.length > 0) {
-          const suffix = formatRatingSuffix(actionPoints);
-          faultBreakdown.push({ label: a.label + suffix, count: actionPoints.length });
+          faultBreakdown.push({ label: a.label, count: actionPoints.length, ratingItems: actionPoints });
         }
       }
 
@@ -114,22 +113,20 @@ export function PlayerStats({ points, players, teamName, matchId, showRatings = 
       const scoredBreakdown = OFFENSIVE_ACTIONS.map(a => {
         const actionPoints = playerScoredActions.filter(p => p.action === a.key);
         if (actionPoints.length === 0) return null;
-        const suffix = formatRatingSuffix(actionPoints);
-        return { label: a.label + suffix, count: actionPoints.length };
-      }).filter((b): b is { label: string; count: number } => b !== null);
+        return { label: a.label, count: actionPoints.length, ratingItems: actionPoints as { rating?: string }[] };
+      }).filter((b): b is { label: string; count: number; ratingItems: { rating?: string }[] } => b !== null);
 
       if (playerFaultWins.length > 0) {
-        scoredBreakdown.push({ label: t('playerStats.faultsLabel'), count: playerFaultWins.length });
+        scoredBreakdown.push({ label: t('playerStats.faultsLabel'), count: playerFaultWins.length, ratingItems: [] });
       }
 
-      const neutralBreakdown: { label: string; count: number }[] = [];
+      const neutralBreakdown: { label: string; count: number; ratingItems: { rating?: string }[] }[] = [];
       const neutralLabels = new Set<string>();
       playerNeutrals.forEach(p => neutralLabels.add(p.customActionLabel || p.action));
 
       neutralLabels.forEach(label => {
         const matchingPoints = playerNeutrals.filter(p => (p.customActionLabel || p.action) === label);
-        const suffix = formatRatingSuffix(matchingPoints);
-        neutralBreakdown.push({ label: label + suffix, count: matchingPoints.length });
+        neutralBreakdown.push({ label, count: matchingPoints.length, ratingItems: matchingPoints });
       });
 
       return {
@@ -139,13 +136,7 @@ export function PlayerStats({ points, players, teamName, matchId, showRatings = 
     }).filter(s => s.total > 0).sort((a, b) => b.scored - a.scored);
   }, [points, allPlayers, t, showRatings]);
 
-  function formatRatingSuffix(items: { rating?: string }[]) {
-    if (!showRatings) return '';
-    const pos = items.filter(p => p.rating === 'positive').length;
-    const neu = items.filter(p => p.rating === 'neutral').length;
-    const neg = items.filter(p => p.rating === 'negative').length;
-    return (pos || neu || neg) ? ` (${[pos && `${pos}+`, neu && `${neu}!`, neg && `${neg}-`].filter(Boolean).join(', ')})` : '';
-  }
+  
 
   const togglePlayer = (playerId: string) => { setExpandedPlayers(prev => ({ ...prev, [playerId]: !prev[playerId] })); };
   const toggleSection = (playerId: string, section: 'scored' | 'faults' | 'neutral') => {
@@ -185,9 +176,9 @@ export function PlayerStats({ points, players, teamName, matchId, showRatings = 
                       {s.faults > 0 && (<button onClick={() => toggleSection(s.player.id, 'faults')} className={`flex-1 flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sections.faults ? 'bg-destructive/15 text-destructive' : 'bg-destructive/5 text-destructive hover:bg-destructive/10'}`}><span>❌ {s.faults} {t('playerStats.fts')}</span>{sections.faults ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</button>)}
                       {s.neutralCount > 0 && (<button onClick={() => toggleSection(s.player.id, 'neutral')} className={`flex-1 flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all ${sections.neutral ? 'bg-muted/50 text-foreground' : 'bg-muted/20 text-muted-foreground hover:bg-muted/30'}`}><span>📊 {s.neutralCount}</span>{sections.neutral ? <ChevronUp size={12} /> : <ChevronDown size={12} />}</button>)}
                     </div>
-                    {sections.scored && s.scoredBreakdown.length > 0 && (<div className="pl-2 space-y-0.5">{s.scoredBreakdown.map(b => (<div key={b.label} className="flex justify-between text-[11px]"><span className="text-muted-foreground">{b.label}</span><span className="font-bold text-foreground">{b.count}</span></div>))}</div>)}
-                    {sections.neutral && s.neutralBreakdown.length > 0 && (<div className="pl-2 space-y-0.5">{s.neutralBreakdown.map(b => (<div key={b.label} className="flex justify-between text-[11px]"><span className="text-muted-foreground">{b.label}</span><span className="font-bold text-foreground">{b.count}</span></div>))}</div>)}
-                    {sections.faults && s.faultBreakdown.length > 0 && (<div className="pl-2 space-y-0.5">{s.faultBreakdown.map(b => (<div key={b.label} className="flex justify-between text-[11px]"><span className="text-muted-foreground">{b.label}</span><span className="font-bold text-destructive">{b.count}</span></div>))}</div>)}
+                    {sections.scored && s.scoredBreakdown.length > 0 && (<div className="pl-2 space-y-0.5">{s.scoredBreakdown.map(b => (<div key={b.label} className="flex items-center justify-between text-[11px]"><span className="text-muted-foreground flex items-center gap-1">{b.label}<RatingDots items={b.ratingItems} showRatings={showRatings} /></span><span className="font-bold text-foreground">{b.count}</span></div>))}</div>)}
+                    {sections.neutral && s.neutralBreakdown.length > 0 && (<div className="pl-2 space-y-0.5">{s.neutralBreakdown.map(b => (<div key={b.label} className="flex items-center justify-between text-[11px]"><span className="text-muted-foreground flex items-center gap-1">{b.label}<RatingDots items={b.ratingItems} showRatings={showRatings} /></span><span className="font-bold text-foreground">{b.count}</span></div>))}</div>)}
+                    {sections.faults && s.faultBreakdown.length > 0 && (<div className="pl-2 space-y-0.5">{s.faultBreakdown.map(b => (<div key={b.label} className="flex items-center justify-between text-[11px]"><span className="text-muted-foreground flex items-center gap-1">{b.label}<RatingDots items={b.ratingItems} showRatings={showRatings} /></span><span className="font-bold text-destructive">{b.count}</span></div>))}</div>)}
                   </div>
                 )}
               </div>

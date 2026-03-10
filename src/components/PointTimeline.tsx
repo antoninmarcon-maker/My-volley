@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import { Eye } from 'lucide-react';
+import { RatingDot } from '@/components/RatingDot';
 
 const ACTION_LABELS: Partial<Record<ActionType, { abbr: string; full: string }>> = {
   attack: { abbr: 'ATK', full: 'Attaque' },
@@ -138,9 +139,7 @@ export function PointTimeline({ points, teamNames, onSelectPoint, viewingPointIn
                 </span>
                 <span className="flex-1 truncate text-foreground">
                   {p.customActionLabel || (ACTION_LABELS[p.action]?.full ?? p.action)}
-                  {p.rating === 'positive' && <span className="ml-1 text-green-500 font-bold">(+)</span>}
-                  {p.rating === 'neutral' && <span className="ml-1 text-orange-500 font-bold">(!)</span>}
-                  {p.rating === 'negative' && <span className="ml-1 text-destructive font-bold">(-)</span>}
+                  {p.rating && <RatingDot rating={p.rating} size={7} className="ml-1" />}
                 </span>
                 {hasRally && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground font-semibold">
@@ -197,9 +196,7 @@ function CustomTooltip({ active, payload, teamNames, onSelectPoint }: any) {
       <p className="text-muted-foreground">{d.type === 'scored' ? 'Point ✓' : 'Fault ✗'}</p>
       <p className="text-foreground">
         <span className="font-bold">{actionInfo?.abbr}</span> — {actionInfo?.full}
-        {d.rating === 'positive' && <span className="ml-1 text-green-500 font-bold">(+)</span>}
-        {d.rating === 'neutral' && <span className="ml-1 text-orange-500 font-bold">(!)</span>}
-        {d.rating === 'negative' && <span className="ml-1 text-destructive font-bold">(-)</span>}
+        {d.rating && <RatingDot rating={d.rating} size={7} className="ml-1" />}
       </p>
       <p className="text-muted-foreground">{teamNames.blue} {d.blue} - {d.red} {teamNames.red}</p>
       {d.hasRally && <p className="text-primary font-semibold">⚡ {d.rallyCount} actions</p>}
