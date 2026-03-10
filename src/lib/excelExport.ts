@@ -34,6 +34,12 @@ function playerSetStats(pts: Point[], players: Player[]) {
     const totalNegative = faults.length;
     const total = totalPositive + totalNegative + neutrals.length;
 
+    // Collect all rated actions for this player
+    const allActions = [...scored, ...faultWins, ...faults, ...neutrals];
+    const rPos = allActions.filter(p => p.rating === 'positive').length;
+    const rNeu = allActions.filter(p => p.rating === 'neutral').length;
+    const rNeg = allActions.filter(p => p.rating === 'negative').length;
+
     const baseStats: Record<string, string | number> = {
       'Joueur': player.name || '—',
       'Attaques': scored.filter(p => p.action === 'attack').length,
@@ -54,6 +60,11 @@ function playerSetStats(pts: Point[], players: Player[]) {
 
     baseStats['Total actions'] = total;
     baseStats['Efficacité (%)'] = total > 0 ? Math.round(totalPositive / total * 100) : 0;
+    if (rPos || rNeu || rNeg) {
+      baseStats['Note (+)'] = rPos;
+      baseStats['Note (!)'] = rNeu;
+      baseStats['Note (-)'] = rNeg;
+    }
 
     return baseStats;
   });
@@ -68,13 +79,33 @@ function teamSetStats(pts: Point[], team: 'blue' | 'red') {
   const neutralLabels = Array.from(new Set(neutrals.map(p => p.customActionLabel || p.action)));
   const neutralDetails = neutralLabels.map(label => [label, neutrals.filter(p => (p.customActionLabel || p.action) === label).length] as [string, number]);
 
+  // Ratings per action
+  const allActions = [...scored, ...opponentFaults, ...neutrals];
+  const ratingsByAction: Record<string, { pos: number; neu: number; neg: number }> = {};
+  allActions.forEach(p => {
+    if (!p.rating) return;
+    const key = p.customActionLabel || p.action;
+    if (!ratingsByAction[key]) ratingsByAction[key] = { pos: 0, neu: 0, neg: 0 };
+    if (p.rating === 'positive') ratingsByAction[key].pos++;
+    else if (p.rating === 'neutral') ratingsByAction[key].neu++;
+    else if (p.rating === 'negative') ratingsByAction[key].neg++;
+  });
+
+  const totalRatings = {
+    pos: allActions.filter(p => p.rating === 'positive').length,
+    neu: allActions.filter(p => p.rating === 'neutral').length,
+    neg: allActions.filter(p => p.rating === 'negative').length,
+  };
+
   return {
     scored: scored.length,
     faults: opponentFaults.length,
     neutrals: neutrals.length,
-    details: OFFENSIVE_ACTIONS.map(a => [a.label, scored.filter(p => p.action === a.key).length] as [string, number]),
-    faultDetails: FAULT_ACTIONS.map(a => [a.label, opponentFaults.filter(p => p.action === a.key).length] as [string, number]),
+    details: OFFENSIVE_ACTIONS.map(a => [a.label, scored.filter(p => p.action === a.key).length, a.key] as [string, number, string]),
+    faultDetails: FAULT_ACTIONS.map(a => [a.label, opponentFaults.filter(p => p.action === a.key).length, a.key] as [string, number, string]),
     neutralDetails,
+    ratingsByAction,
+    totalRatings,
   };
 }
 
@@ -109,16 +140,21 @@ export function exportMatchToExcel(
     rows.push({ '#': '— Stats Équipe —' });
     (['blue', 'red'] as const).forEach(team => {
       const ts = teamSetStats(set.pts, team);
+      const rFmt = (key: string) => {
+        const r = ts.ratingsByAction[key];
+        if (!r) return {};
+        return { 'Note(+)': r.pos || '', 'Note(!)': r.neu || '', 'Note(-)': r.neg || '' };
+      };
       rows.push({ '#': teamNames[team] });
       rows.push({ '#': '', 'Joueur': 'Pts gagnés', 'Col3': ts.scored });
-      ts.details.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
+      ts.details.forEach(([l, v, key]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v, ...rFmt(key) }));
       rows.push({ '#': '', 'Joueur': 'Fautes adv', 'Col3': ts.faults });
-      ts.faultDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
+      ts.faultDetails.forEach(([l, v, key]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v, ...rFmt(key) }));
       if (ts.neutrals > 0) {
         rows.push({ '#': '', 'Joueur': 'Faits de jeu', 'Col3': ts.neutrals });
-        ts.neutralDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
+        ts.neutralDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v, ...rFmt(l) }));
       }
-      rows.push({ '#': '', 'Joueur': 'Total', 'Col3': ts.scored + ts.faults + ts.neutrals });
+      rows.push({ '#': '', 'Joueur': 'Total', 'Col3': ts.scored + ts.faults + ts.neutrals, 'Note(+)': ts.totalRatings.pos || '', 'Note(!)': ts.totalRatings.neu || '', 'Note(-)': ts.totalRatings.neg || '' });
       rows.push({});
     });
     const ws = XLSX.utils.json_to_sheet(rows);
