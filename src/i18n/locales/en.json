@@ -225,7 +225,9 @@
     "perfModeTitle": "What is Performance Mode?",
     "perfModeDesc": "Enable Performance Mode when creating a match to unlock the interactive court. You can click on the court to log the origin and destination of every ball, and generate heatmaps.",
     "tournamentsTitle": "How to manage a tournament?",
-    "tournamentsDesc": "Create a tournament from the main menu. Share the link or QR code with players so they can register and log scores for their games. A Spectator link allows everyone to follow the tournament bracket live."
+    "tournamentsDesc": "Create a tournament from the main menu. Share the link or QR code with players so they can register and log scores for their games. A Spectator link allows everyone to follow the tournament bracket live.",
+    "spotsTitle": "📍 Where to Play?",
+    "spotsDesc": "Discover the community map of volleyball courts. Search for a court near you, suggest a new one with photos and description, and leave comments to help the community."
   },
   "userMenu": {
     "myAccount": "My account",
