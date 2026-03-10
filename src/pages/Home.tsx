@@ -1077,6 +1077,71 @@ export default function Home() {
         />
       )}
 
+      {/* Share Match Dialog */}
+      <Dialog open={!!sharingMatch} onOpenChange={(open) => !open && setSharingMatch(null)}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 size={18} /> {t('home.shareMatch', 'Partager le match')}
+            </DialogTitle>
+            {sharingMatch && (
+              <DialogDescription>
+                {sharingMatch.teamNames.blue} vs {sharingMatch.teamNames.red}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {sharingMatch && (
+            <div className="space-y-2">
+              <button onClick={() => { handleShareNative(sharingMatch); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <Share2 size={16} className="text-muted-foreground" /> {t('heatmap.shareDots', 'Partager…')}
+              </button>
+              <button onClick={() => handleShareWhatsApp(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <span className="text-base">💬</span> WhatsApp
+              </button>
+              <button onClick={() => handleShareTelegram(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <span className="text-base">✈️</span> Telegram
+              </button>
+              <button onClick={() => handleShareX(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <span className="text-base">𝕏</span> X (Twitter)
+              </button>
+              <div className="h-px bg-border my-1" />
+              <button onClick={() => handleCopyScore(sharingMatch)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <Copy size={16} className="text-muted-foreground" /> {t('heatmap.copyScore', 'Copier le score')}
+              </button>
+              <button onClick={() => exportMatchToExcel(sharingMatch.completedSets, sharingMatch.points, sharingMatch.currentSetNumber, sharingMatch.teamNames, sharingMatch.players || [])} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium transition-all">
+                <FileSpreadsheet size={16} className="text-muted-foreground" /> {t('heatmap.excelXlsx', 'Excel (.xlsx)')}
+              </button>
+              {user && (
+                <button onClick={() => handleGenerateShareLink(sharingMatch)} disabled={generatingShareLink} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold transition-all">
+                  <LinkIcon size={16} /> {generatingShareLink ? t('heatmap.generatingLink', 'Génération...') : t('heatmap.shareLink', '🔗 Lien de partage')}
+                </button>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Link Ready Dialog */}
+      <Dialog open={shareLinkDialogOpen} onOpenChange={setShareLinkDialogOpen}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('heatmap.linkReadyTitle')}</DialogTitle>
+            <DialogDescription>{t('heatmap.linkReadyDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <input readOnly value={shareLinkUrl} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground" />
+            <div className="flex gap-2">
+              <button onClick={handleCopyShareLink} className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-all">
+                {t('heatmap.copyLink')}
+              </button>
+              <button onClick={() => window.open(shareLinkUrl, '_blank', 'noopener,noreferrer')} className="flex-1 py-2.5 rounded-lg bg-secondary text-secondary-foreground text-sm font-semibold hover:bg-secondary/80 transition-all">
+                {t('heatmap.openSharedPage')}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <footer className="sticky bottom-0 z-30 bg-background border-t border-border px-4 py-3 flex items-center justify-around gap-2">
         <Link
           to="/help#feedback"
