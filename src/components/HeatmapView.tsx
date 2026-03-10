@@ -598,13 +598,16 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="font-bold text-destructive text-xs">{ds[team].faults}</span>
                 </div>
                 {[
-                  [t('heatmap.outs'), ds[team].outs],
-                  [t('heatmap.netFaults'), ds[team].netFaults],
-                  [t('heatmap.serviceMisses'), ds[team].serviceMisses],
-                  [t('heatmap.blockOuts'), ds[team].blockOuts],
-                ].map(([label, val]) => (
-                  <div key={label as string} className="flex justify-between pl-2">
-                    <span className="text-muted-foreground text-[11px]">{label}</span>
+                  [t('heatmap.outs'), ds[team].outs, 'out'],
+                  [t('heatmap.netFaults'), ds[team].netFaults, 'net_fault'],
+                  [t('heatmap.serviceMisses'), ds[team].serviceMisses, 'service_miss'],
+                  [t('heatmap.blockOuts'), ds[team].blockOuts, 'block_out'],
+                ].map(([label, val, key]) => (
+                  <div key={label as string} className="flex items-center justify-between pl-2">
+                    <span className="text-muted-foreground text-[11px] flex items-center gap-1">
+                      {label}
+                      {showRatings && ds[team].actionRatings[key as string] && <InlineRatingDots r={ds[team].actionRatings[key as string]} />}
+                    </span>
                     <span className="font-bold text-foreground text-[11px]">{val as number}</span>
                   </div>
                 ))}
