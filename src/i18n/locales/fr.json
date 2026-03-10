@@ -225,7 +225,9 @@
     "perfModeTitle": "Qu'est-ce que le Mode Performance ?",
     "perfModeDesc": "Active le Mode Performance lors de la création d'un match pour débloquer le terrain interactif. Tu pourras cliquer sur le terrain pour renseigner la position de départ et d'arrivée de chaque ballon, et générer des heatmaps.",
     "tournamentsTitle": "Comment gérer un tournoi ?",
-    "tournamentsDesc": "Crée un tournoi depuis le menu principal. Partage le lien ou le QR code aux joueurs pour qu'ils s'inscrivent et saisissent les scores de leurs matchs. Un lien Spectateur permet à tous de suivre l'évolution de l'arbre du tournoi en direct."
+    "tournamentsDesc": "Crée un tournoi depuis le menu principal. Partage le lien ou le QR code aux joueurs pour qu'ils s'inscrivent et saisissent les scores de leurs matchs. Un lien Spectateur permet à tous de suivre l'évolution de l'arbre du tournoi en direct.",
+    "spotsTitle": "📍 Où jouer ?",
+    "spotsDesc": "Découvrez la carte communautaire des terrains de volley. Vous pouvez rechercher un terrain près de chez vous, en proposer un nouveau avec photos et description, et laisser des commentaires pour aider la communauté."
   },
   "userMenu": {
     "myAccount": "Mon compte",
