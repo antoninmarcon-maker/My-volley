@@ -648,30 +648,6 @@ export default function Home() {
           </DialogContent>
         </Dialog>
 
-        {/* Full Screen Image Zoom Overlay */}
-        {isImageZoomed && selectedWhatsNew && (
-          <div
-            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-in fade-in zoom-in duration-300 cursor-zoom-out p-4"
-            onClick={() => setIsImageZoomed(false)}
-          >
-            <button
-              className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]"
-              onClick={() => setIsImageZoomed(false)}
-            >
-              <X size={24} />
-            </button>
-            <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full h-full items-center gap-8 px-4" onClick={(e) => e.stopPropagation()}>
-              {selectedWhatsNew.images.map((img: string, idx: number) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`${selectedWhatsNew.title} ${idx + 1}`}
-                  className="min-w-full max-h-full object-contain rounded-lg shadow-2xl snap-center"
-                />
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Share / Invite Dialog */}
         <Dialog open={showShareInvite} onOpenChange={setShowShareInvite}>
