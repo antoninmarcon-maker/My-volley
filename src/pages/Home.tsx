@@ -105,43 +105,44 @@ export default function Home() {
   const whatsNewCards = [
     {
       id: 'tournaments',
-      icon: <Trophy size={32} className="text-muted-foreground/30 absolute" />,
-      image: "/assets/placeholder-tournaments.png",
+      icon: <Trophy size={32} className="text-primary mb-2" />,
+      images: ["/assets/whatsnew/tournoi1.PNG", "/assets/whatsnew/tournoi2.PNG", "/assets/whatsnew/tournoi3.PNG"],
       title: t('home.whatsNewTournaments'),
       desc: t('home.whatsNewTournamentsDesc'),
-      btnText: t('home.whatsNewTournamentsBtn'),
-      action: () => navigate('/tournaments'),
+      btnText: t('home.newMatch'),
+      action: () => setShowNew(true),
       gradientBtn: true
     },
     {
       id: 'perf',
-      icon: <Activity size={32} className="text-muted-foreground/30 absolute" />,
-      image: "/assets/placeholder-perf.png",
+      icon: <Activity size={32} className="text-primary mb-2" />,
+      images: ["/assets/whatsnew/Mode perf.jpeg"],
       title: t('home.whatsNewPerfMode'),
       desc: t('home.whatsNewPerfModeDesc'),
-      btnText: t('home.whatsNewPerfModeBtn'),
+      btnText: t('home.newMatch'),
       action: () => {
         setHasCourt(true);
         setIsPerformanceMode(true);
         setShowNew(true);
-      }
+      },
+      gradientBtn: true
     },
     {
       id: 'actions',
-      icon: <Settings2 size={32} className="text-muted-foreground/30 absolute" />,
-      image: "/assets/placeholder-actions.png",
+      icon: <Settings2 size={32} className="text-primary mb-2" />,
+      images: ["/assets/whatsnew/actions persos.jpeg"],
       title: t('home.whatsNewCustomActions'),
       desc: t('home.whatsNewCustomActionsDesc'),
-      btnText: t('home.whatsNewCustomActionsBtn'),
+      btnText: t('common.settings', 'Paramètres'),
       action: () => navigate('/actions')
     },
     {
       id: 'players',
-      icon: <Users size={32} className="text-muted-foreground/30 absolute" />,
-      image: "/assets/placeholder-players.png",
+      icon: <Users size={32} className="text-primary mb-2" />,
+      images: ["/assets/whatsnew/joueurs1.jpeg", "/assets/whatsnew/joueurs2.jpeg"],
       title: t('home.whatsNewSavedPlayers'),
       desc: t('home.whatsNewSavedPlayersDesc'),
-      btnText: t('home.whatsNewSavedPlayersBtn'),
+      btnText: t('common.settings', 'Paramètres'),
       action: () => navigate('/players')
     }
   ];
@@ -527,18 +528,18 @@ export default function Home() {
                     >
                       <X size={14} />
                     </button>
-                    <div
-                      className="aspect-video bg-muted relative flex items-center justify-center cursor-pointer"
-                      onClick={() => setSelectedWhatsNew(card)}
-                    >
+                    <div className="p-5 flex flex-col flex-1 gap-2">
                       {card.icon}
-                      <img src={card.image} alt={card.title} className="w-full h-full object-cover absolute inset-0 opacity-0 transition-opacity duration-300" onLoad={(e) => e.currentTarget.style.opacity = '1'} />
-                    </div>
-                    <div className="p-4 flex flex-col flex-1 gap-2 cursor-pointer" onClick={() => setSelectedWhatsNew(card)}>
-                      <h3 className="font-bold text-foreground leading-tight">{card.title}</h3>
+                      <h3 className="font-bold text-foreground leading-tight text-lg">{card.title}</h3>
                       <p className="text-[13px] text-muted-foreground flex-1 leading-snug">{card.desc}</p>
                     </div>
-                    <div className="px-4 pb-4">
+                    <div className="px-4 pb-4 space-y-2">
+                      <button
+                        onClick={() => setSelectedWhatsNew(card)}
+                        className="w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all flex items-center justify-center gap-2"
+                      >
+                        <ImagePlus size={16} /> {t('home.learnMore', 'En savoir plus')}
+                      </button>
                       <button
                         onClick={() => handleDismissWhatsNew(card.id, card.action)}
                         className={card.gradientBtn ? "group w-full py-2.5 rounded-lg font-semibold text-xs text-white overflow-hidden relative" : "w-full py-2.5 rounded-lg bg-secondary text-secondary-foreground font-semibold text-xs hover:bg-secondary/80 transition-all"}
@@ -602,26 +603,39 @@ export default function Home() {
           <DialogContent className="max-w-md w-[90vw] p-0 rounded-2xl overflow-hidden bg-background border border-border shadow-xl">
             {selectedWhatsNew && (
               <div className="flex flex-col max-h-[85vh]">
-                <div className="relative group cursor-zoom-in" onClick={() => setIsImageZoomed(true)}>
+                <div className="relative p-0 flex flex-col bg-muted/20">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedWhatsNew(null);
                     }}
-                    className="absolute top-3 right-3 p-1.5 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors z-10"
+                    className="absolute top-3 right-3 p-1.5 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors z-20"
                   >
                     <X size={18} />
                   </button>
-                  <img
-                    src={selectedWhatsNew.image}
-                    alt={selectedWhatsNew.title}
-                    className="w-full h-auto object-cover max-h-[60vh] md:max-h-[65vh] transition-transform duration-500 group-hover:scale-[1.02]"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100">
-                    <div className="p-2 bg-black/40 rounded-full text-white backdrop-blur-md">
-                      <Plus size={24} />
-                    </div>
+                  <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar max-h-[65vh]">
+                    {selectedWhatsNew.images.map((img: string, idx: number) => (
+                      <div key={idx} className="min-w-full snap-center relative group cursor-zoom-in flex-shrink-0 flex items-center justify-center bg-black/5" onClick={() => setIsImageZoomed(true)}>
+                        <img
+                          src={img}
+                          alt={`${selectedWhatsNew.title} ${idx + 1}`}
+                          className="w-full h-auto object-contain max-h-[65vh] transition-transform duration-500 group-hover:scale-[1.02]"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100">
+                          <div className="p-2 bg-black/40 rounded-full text-white backdrop-blur-md">
+                            <Plus size={24} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                  {selectedWhatsNew.images.length > 1 && (
+                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+                      {selectedWhatsNew.images.map((_: any, i: number) => (
+                        <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/50" />
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="p-5 flex flex-col gap-3 overflow-y-auto">
                   <div>
@@ -657,11 +671,16 @@ export default function Home() {
             >
               <X size={24} />
             </button>
-            <img
-              src={selectedWhatsNew.image}
-              alt={selectedWhatsNew.title}
-              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-            />
+            <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar w-full h-full items-center gap-8 px-4" onClick={(e) => e.stopPropagation()}>
+              {selectedWhatsNew.images.map((img: string, idx: number) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`${selectedWhatsNew.title} ${idx + 1}`}
+                  className="min-w-full max-h-full object-contain rounded-lg shadow-2xl snap-center"
+                />
+              ))}
+            </div>
           </div>
         )}
 
