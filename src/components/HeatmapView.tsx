@@ -180,10 +180,10 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
           else if (a.rating === 'neutral') ratingsNeutral++;
           else if (a.rating === 'negative') ratingsNegative++;
 
-          const actionLabel = a.customActionLabel || a.action;
-          if (!actionRatings[actionLabel]) actionRatings[actionLabel] = { positive: 0, neutral: 0, negative: 0, total: 0 };
-          actionRatings[actionLabel][a.rating]++;
-          actionRatings[actionLabel].total++;
+          const actionKey = a.action;
+          if (!actionRatings[actionKey]) actionRatings[actionKey] = { positive: 0, neutral: 0, negative: 0, total: 0 };
+          actionRatings[actionKey][a.rating]++;
+          actionRatings[actionKey].total++;
         }
 
         if (isNeutral) {
@@ -234,6 +234,16 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
   const scoreTotal = pts.filter(p => p.type !== 'neutral').length;
 
   return { blue: byTeam('blue'), red: byTeam('red'), total: scoreTotal };
+}
+
+function InlineRatingDots({ r }: { r: ActionRating }) {
+  return (
+    <span className="inline-flex items-center gap-1 ml-1">
+      {r.positive > 0 && <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500" /><span className="text-[10px] font-semibold text-green-500">{r.positive}</span></span>}
+      {r.neutral > 0 && <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-orange-500" /><span className="text-[10px] font-semibold text-orange-500">{r.neutral}</span></span>}
+      {r.negative > 0 && <span className="inline-flex items-center gap-0.5"><span className="w-1.5 h-1.5 rounded-full bg-destructive" /><span className="text-[10px] font-semibold text-destructive">{r.negative}</span></span>}
+    </span>
+  );
 }
 
 export function HeatmapView({ points, completedSets, currentSetPoints, currentSetNumber, stats, teamNames, players = [], sport = 'volleyball', matchId, isLoggedIn, hasCourt = true, onSelectPoint, viewingPointIndex, showRatings = true }: HeatmapViewProps) {
@@ -567,15 +577,18 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="font-bold text-foreground text-xs">{ds[team].scored}</span>
                 </div>
                 {[
-                  [t('heatmap.attacks'), ds[team].attacks],
-                  [t('heatmap.aces'), ds[team].aces],
-                  [t('heatmap.blocks'), ds[team].blocks],
-                  [t('heatmap.bidouilles'), ds[team].bidouilles],
-                  [t('heatmap.secondeMains'), ds[team].secondeMains],
-                  [t('heatmap.others'), ds[team].otherOffensive],
-                ].map(([label, val]) => (
-                  <div key={label as string} className="flex justify-between pl-2">
-                    <span className="text-muted-foreground text-[11px]">{label}</span>
+                  [t('heatmap.attacks'), ds[team].attacks, 'attack'],
+                  [t('heatmap.aces'), ds[team].aces, 'ace'],
+                  [t('heatmap.blocks'), ds[team].blocks, 'block'],
+                  [t('heatmap.bidouilles'), ds[team].bidouilles, 'bidouille'],
+                  [t('heatmap.secondeMains'), ds[team].secondeMains, 'seconde_main'],
+                  [t('heatmap.others'), ds[team].otherOffensive, 'other_offensive'],
+                ].map(([label, val, key]) => (
+                  <div key={label as string} className="flex items-center justify-between pl-2">
+                    <span className="text-muted-foreground text-[11px] flex items-center gap-1">
+                      {label}
+                      {showRatings && ds[team].actionRatings[key as string] && <InlineRatingDots r={ds[team].actionRatings[key as string]} />}
+                    </span>
                     <span className="font-bold text-foreground text-[11px]">{val as number}</span>
                   </div>
                 ))}
@@ -585,13 +598,16 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="font-bold text-destructive text-xs">{ds[team].faults}</span>
                 </div>
                 {[
-                  [t('heatmap.outs'), ds[team].outs],
-                  [t('heatmap.netFaults'), ds[team].netFaults],
-                  [t('heatmap.serviceMisses'), ds[team].serviceMisses],
-                  [t('heatmap.blockOuts'), ds[team].blockOuts],
-                ].map(([label, val]) => (
-                  <div key={label as string} className="flex justify-between pl-2">
-                    <span className="text-muted-foreground text-[11px]">{label}</span>
+                  [t('heatmap.outs'), ds[team].outs, 'out'],
+                  [t('heatmap.netFaults'), ds[team].netFaults, 'net_fault'],
+                  [t('heatmap.serviceMisses'), ds[team].serviceMisses, 'service_miss'],
+                  [t('heatmap.blockOuts'), ds[team].blockOuts, 'block_out'],
+                ].map(([label, val, key]) => (
+                  <div key={label as string} className="flex items-center justify-between pl-2">
+                    <span className="text-muted-foreground text-[11px] flex items-center gap-1">
+                      {label}
+                      {showRatings && ds[team].actionRatings[key as string] && <InlineRatingDots r={ds[team].actionRatings[key as string]} />}
+                    </span>
                     <span className="font-bold text-foreground text-[11px]">{val as number}</span>
                   </div>
                 ))}
@@ -601,8 +617,11 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="font-bold text-foreground text-xs">{ds[team].neutral}</span>
                 </div>
                 {Object.entries(ds[team].neutralBreakdown).map(([label, val]) => (
-                  <div key={label} className="flex justify-between pl-2">
-                    <span className="text-muted-foreground text-[11px]">{t(`actionsDesc.${label}`, label)}</span>
+                  <div key={label} className="flex items-center justify-between pl-2">
+                    <span className="text-muted-foreground text-[11px] flex items-center gap-1">
+                      {t(`actionsDesc.${label}`, label)}
+                      {showRatings && ds[team].actionRatings[label] && <InlineRatingDots r={ds[team].actionRatings[label]} />}
+                    </span>
                     <span className="font-bold text-foreground text-[11px]">{val}</span>
                   </div>
                 ))}
@@ -625,63 +644,6 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="font-bold text-foreground text-xs">{ds[team].scored + ds[team].faults + ds[team].neutral}</span>
                 </div>
 
-                {(ds[team].ratingsPositive > 0 || ds[team].ratingsNeutral > 0 || ds[team].ratingsNegative > 0) && (
-                  <div className="border-t border-border pt-1 mt-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground font-semibold text-xs">Notations</span>
-                      <div className="flex items-center gap-2">
-                        {ds[team].ratingsPositive > 0 && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <span className="w-2 h-2 rounded-full bg-green-500" />
-                            <span className="text-[11px] font-bold text-green-500">{ds[team].ratingsPositive}</span>
-                          </span>
-                        )}
-                        {ds[team].ratingsNeutral > 0 && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <span className="w-2 h-2 rounded-full bg-orange-500" />
-                            <span className="text-[11px] font-bold text-orange-500">{ds[team].ratingsNeutral}</span>
-                          </span>
-                        )}
-                        {ds[team].ratingsNegative > 0 && (
-                          <span className="inline-flex items-center gap-0.5">
-                            <span className="w-2 h-2 rounded-full bg-destructive" />
-                            <span className="text-[11px] font-bold text-destructive">{ds[team].ratingsNegative}</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {showRatings && Object.keys(ds[team].actionRatings).length > 0 && (
-                      <div className="space-y-0.5 pl-1">
-                        {Object.entries(ds[team].actionRatings).map(([action, r]) => (
-                          <div key={action} className="flex items-center justify-between text-[10px]">
-                            <span className="text-muted-foreground truncate flex-1">{action}</span>
-                            <div className="flex items-center gap-1.5 ml-2">
-                              <span className="text-muted-foreground font-mono w-4 text-right">{r.total}</span>
-                              {r.positive > 0 && (
-                                <span className="inline-flex items-center gap-0.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                  <span className="font-semibold text-green-500">{r.positive}</span>
-                                </span>
-                              )}
-                              {r.neutral > 0 && (
-                                <span className="inline-flex items-center gap-0.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                                  <span className="font-semibold text-orange-500">{r.neutral}</span>
-                                </span>
-                              )}
-                              {r.negative > 0 && (
-                                <span className="inline-flex items-center gap-0.5">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-                                  <span className="font-semibold text-destructive">{r.negative}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           ))}
