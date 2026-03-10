@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { Activity, BarChart3, HelpCircle, X, ArrowLeft, Check } from 'lucide-react';
-import { MatchState, useMatchState } from '@/hooks/useMatchState';
+import { useMatchState } from '@/hooks/useMatchState';
 import { getActionRequirements } from '@/lib/matchRules';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { VolleyballCourt } from '@/components/VolleyballCourt';

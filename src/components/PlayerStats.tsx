@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Point, Player, SportType, OFFENSIVE_ACTIONS, FAULT_ACTIONS } from '@/types/sports';
+import { Point, Player, SportType, OFFENSIVE_ACTIONS, FAULT_ACTIONS, RallyAction } from '@/types/sports';
 import { useTranslation } from 'react-i18next';
 import { getMatch } from '@/lib/matchStorage';
 import { getPlayerNumber } from '@/lib/savedPlayers';
