@@ -1147,13 +1147,13 @@ export default function Home() {
       </Dialog>
 
       <footer className="sticky bottom-0 z-30 bg-background border-t border-border px-4 py-3 flex items-center justify-around gap-2">
-        <Link
-          to="/help#feedback"
+        <button
+          onClick={() => navigate('/spots')}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
         >
-          <MessageSquare size={16} />
-          {t('home.feedback')}
-        </Link>
+          <MapPin size={16} />
+          {t('home.whatsNewSpots')}
+        </button>
         <button
           onClick={() => setShowShareInvite(true)}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-all"
