@@ -140,16 +140,21 @@ export function exportMatchToExcel(
     rows.push({ '#': '— Stats Équipe —' });
     (['blue', 'red'] as const).forEach(team => {
       const ts = teamSetStats(set.pts, team);
+      const rFmt = (key: string) => {
+        const r = ts.ratingsByAction[key];
+        if (!r) return {};
+        return { 'Note(+)': r.pos || '', 'Note(!)': r.neu || '', 'Note(-)': r.neg || '' };
+      };
       rows.push({ '#': teamNames[team] });
       rows.push({ '#': '', 'Joueur': 'Pts gagnés', 'Col3': ts.scored });
-      ts.details.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
+      ts.details.forEach(([l, v, key]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v, ...rFmt(key) }));
       rows.push({ '#': '', 'Joueur': 'Fautes adv', 'Col3': ts.faults });
-      ts.faultDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
+      ts.faultDetails.forEach(([l, v, key]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v, ...rFmt(key) }));
       if (ts.neutrals > 0) {
         rows.push({ '#': '', 'Joueur': 'Faits de jeu', 'Col3': ts.neutrals });
-        ts.neutralDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v }));
+        ts.neutralDetails.forEach(([l, v]) => rows.push({ '#': '', 'Joueur': `  ${l}`, 'Col3': v, ...rFmt(l) }));
       }
-      rows.push({ '#': '', 'Joueur': 'Total', 'Col3': ts.scored + ts.faults + ts.neutrals });
+      rows.push({ '#': '', 'Joueur': 'Total', 'Col3': ts.scored + ts.faults + ts.neutrals, 'Note(+)': ts.totalRatings.pos || '', 'Note(!)': ts.totalRatings.neu || '', 'Note(-)': ts.totalRatings.neg || '' });
       rows.push({});
     });
     const ws = XLSX.utils.json_to_sheet(rows);
