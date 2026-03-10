@@ -134,7 +134,7 @@ export default function ActionsConfig() {
                             <Switch checked={editHasDirection} onCheckedChange={setEditHasDirection} />
                           </div>
                           <div className="flex items-center justify-between">
-                            <Label className="text-xs font-medium text-foreground flex items-center gap-2">Évaluer la qualité (+ / -)</Label>
+                            <Label className="text-xs font-medium text-foreground flex items-center gap-2">Évaluer la qualité (🔴 🟠 🟢)</Label>
                             <Switch checked={editHasRating} onCheckedChange={setEditHasRating} />
                           </div>
                         </div>
@@ -218,7 +218,7 @@ export default function ActionsConfig() {
                           <Switch checked={editHasDirection} onCheckedChange={v => { setEditHasDirection(v); if (v) setEditShowOnCourt(true); }} />
                         </div>
                         <div className="flex items-center justify-between">
-                          <Label className="text-xs font-medium text-foreground flex items-center gap-2">Évaluer la qualité (+ / -)</Label>
+                          <Label className="text-xs font-medium text-foreground flex items-center gap-2">Évaluer la qualité (🔴 🟠 🟢)</Label>
                           <Switch checked={editHasRating} onCheckedChange={setEditHasRating} />
                         </div>
                       </div>
@@ -271,7 +271,7 @@ export default function ActionsConfig() {
                     <Switch checked={newHasDirection} onCheckedChange={v => { setNewHasDirection(v); if (v) setNewShowOnCourt(true); }} />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-medium text-foreground flex items-center gap-2">Évaluer la qualité (+ / -)</Label>
+                    <Label className="text-xs font-medium text-foreground flex items-center gap-2">Évaluer la qualité (🔴 🟠 🟢)</Label>
                     <Switch checked={newHasRating} onCheckedChange={setNewHasRating} />
                   </div>
                 </div>

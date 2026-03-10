@@ -35,7 +35,51 @@ function getConfig(): ActionsConfig {
 }
 
 function getDefaultConfig(): ActionsConfig {
-  return { hiddenActions: ['other_offensive', 'other_volley_fault', 'other_volley_neutral'], customActions: [], defaultActionsConfig: {} };
+  return {
+    hiddenActions: ['other_offensive', 'other_volley_fault', 'other_volley_neutral'],
+    customActions: [
+      {
+        id: 'default-reception',
+        label: 'Réception',
+        sport: 'volleyball',
+        category: 'neutral',
+        sigil: 'RÉ',
+        showOnCourt: true,
+        assignToPlayer: true,
+        hasDirection: true,
+        hasRating: true,
+      },
+      {
+        id: 'default-passe',
+        label: 'Passe',
+        sport: 'volleyball',
+        category: 'neutral',
+        sigil: 'PA',
+        showOnCourt: true,
+        assignToPlayer: true,
+        hasDirection: true,
+        hasRating: true,
+      },
+      {
+        id: 'default-defense',
+        label: 'Défense',
+        sport: 'volleyball',
+        category: 'neutral',
+        sigil: 'DÉ',
+        showOnCourt: true,
+        assignToPlayer: true,
+        hasDirection: true,
+        hasRating: true,
+      }
+    ],
+    defaultActionsConfig: {
+      'attack': { assignToPlayer: true, hasDirection: true, hasRating: true },
+      'ace': { assignToPlayer: true, hasDirection: true, hasRating: true },
+      'block': { assignToPlayer: true, hasDirection: true, hasRating: true },
+      'bidouille': { assignToPlayer: true, hasDirection: true, hasRating: true },
+      'seconde_main': { assignToPlayer: true, hasDirection: true, hasRating: true }
+    }
+  };
 }
 
 function saveConfig(config: ActionsConfig) {

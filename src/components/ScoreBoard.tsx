@@ -431,7 +431,7 @@ export function ScoreBoard({
             <div className="text-sm text-muted-foreground space-y-3">
               <p>Vous pouvez maintenant tracker chaque échange de A à Z.</p>
               <p>Les limites de placement sur le terrain sont <strong>désactivées</strong> pour vous offrir une liberté totale !</p>
-              <p>Enfin, dans le menu <strong>'Actions Personnalisées'</strong>, vous pouvez activer les <em>trajectoires</em> pour n'importe quelle action et activer l'<em>évaluation de la qualité (+, !, -)</em>.</p>
+              <p>Enfin, dans le menu <strong>'Actions Personnalisées'</strong>, vous pouvez activer les <em>trajectoires</em> pour n'importe quelle action et activer l'<em>évaluation de la qualité (🔴 🟠 🟢)</em>.</p>
             </div>
             <button onClick={handleClosePerfOnboarding} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:opacity-90 mt-2">
               J'ai compris
