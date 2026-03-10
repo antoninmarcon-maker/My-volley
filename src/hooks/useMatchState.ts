@@ -317,7 +317,7 @@ export function useMatchState(matchId: string, ready: boolean = true) {
       }
     }
     cancelSelection();
-  }, [pendingDirectionAction, directionOrigin, directionDest, isPerformanceMode, processRallyAction, preSelectedPlayerId, preSelectedRating, players.length, cancelSelection]);
+  }, [pendingDirectionAction, directionOrigin, directionDest, directionDestSet, isPerformanceMode, processRallyAction, preSelectedPlayerId, preSelectedRating, players.length, cancelSelection]);
 
   const addPoint = useCallback((x: number, y: number) => {
     // Priority: intercept direction clicks. If we are dragging, we update destination instead of finishing immediately.
