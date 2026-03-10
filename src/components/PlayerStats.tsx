@@ -137,7 +137,7 @@ export function PlayerStats({ points, players, teamName, matchId, showRatings = 
         total: total, efficiency, scoredBreakdown, faultBreakdown, neutralBreakdown,
       };
     }).filter(s => s.total > 0).sort((a, b) => b.scored - a.scored);
-  }, [points, allPlayers, t]);
+  }, [points, allPlayers, t, showRatings]);
 
   function formatRatingSuffix(items: { rating?: string }[]) {
     if (!showRatings) return '';
