@@ -609,19 +609,14 @@ export default function Home() {
                   >
                     <X size={18} />
                   </button>
-                  <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar max-h-[65vh]">
+                  <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar max-h-[65vh]" id="whats-new-modal-carousel">
                     {selectedWhatsNew.images.map((img: string, idx: number) => (
-                      <div key={idx} className="min-w-full snap-center relative group cursor-zoom-in flex-shrink-0 flex items-center justify-center bg-black/5" onClick={() => setIsImageZoomed(true)}>
+                      <div key={idx} className="min-w-full snap-center relative flex-shrink-0 flex items-center justify-center bg-black/5">
                         <img
                           src={img}
                           alt={`${selectedWhatsNew.title} ${idx + 1}`}
-                          className="w-full h-auto object-contain max-h-[65vh] transition-transform duration-500 group-hover:scale-[1.02]"
+                          className="w-full h-auto object-contain max-h-[65vh]"
                         />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100">
-                          <div className="p-2 bg-black/40 rounded-full text-white backdrop-blur-md">
-                            <Plus size={24} />
-                          </div>
-                        </div>
                       </div>
                     ))}
                   </div>
@@ -643,11 +638,9 @@ export default function Home() {
                       setSelectedWhatsNew(null);
                       handleDismissWhatsNew(selectedWhatsNew.id, selectedWhatsNew.action);
                     }}
-                    className={selectedWhatsNew.gradientBtn ? "group mt-2 w-full py-3.5 rounded-xl font-bold text-sm text-white overflow-hidden relative shadow-lg" : "mt-2 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-all shadow-lg"}
-                    style={selectedWhatsNew.gradientBtn ? { background: 'linear-gradient(135deg, hsl(var(--action-cta)), hsl(var(--action-cta-end)))' } : {}}
+                    className="mt-2 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-all shadow-lg"
                   >
-                    {selectedWhatsNew.gradientBtn && <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-all duration-300" />}
-                    <span className="relative z-10">{selectedWhatsNew.btnText}</span>
+                    {selectedWhatsNew.btnText}
                   </button>
                 </div>
               </div>
