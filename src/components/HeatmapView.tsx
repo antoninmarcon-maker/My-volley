@@ -39,6 +39,7 @@ interface HeatmapViewProps {
   hasCourt?: boolean;
   onSelectPoint?: (index: number) => void;
   viewingPointIndex?: number | null;
+  showRatings?: boolean;
 }
 
 type SetFilter = 'all' | number;
@@ -112,11 +113,6 @@ function buildExportContainer(teamNames: { blue: string; red: string }, label: s
   }
   container.appendChild(grid);
 
-  const totalCard = createStyledEl('div', { textAlign: 'center', background: 'hsl(var(--card))', borderRadius: '12px', padding: '12px', border: '1px solid hsl(var(--border))' });
-  totalCard.appendChild(createStyledEl('p', { fontSize: '24px', fontWeight: '900', color: 'hsl(var(--foreground))' }, String(ds.total)));
-  totalCard.appendChild(createStyledEl('p', { fontSize: '10px', color: 'hsl(var(--muted-foreground))', textTransform: 'uppercase', letterSpacing: '0.1em' }, 'Actions totales'));
-  container.appendChild(totalCard);
-
   container.appendChild(createStyledEl('p', { fontSize: '8px', textAlign: 'center', color: 'hsl(var(--muted-foreground))', opacity: '0.5' }, 'My Volley · my-volley.com'));
   return container;
 }
@@ -126,6 +122,7 @@ interface TeamStats {
   attacks: number; aces: number; blocks: number; bidouilles: number; secondeMains: number; otherOffensive: number;
   outs: number; netFaults: number; serviceMisses: number; blockOuts: number;
   customStats: Record<string, number>;
+  neutralBreakdown: Record<string, number>;
 }
 
 function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: number } {
@@ -133,6 +130,7 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
     const opponent = team === 'blue' ? 'red' : 'blue';
 
     const customStats: Record<string, number> = {};
+    const neutralBreakdown: Record<string, number> = {};
     let scoredTotal = 0;
     let faultTotal = 0;
     let neutralTotal = 0;
@@ -166,9 +164,8 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
 
         if (isNeutral) {
           neutralTotal++;
-          if (a.customActionLabel) {
-            customStats[a.customActionLabel] = (customStats[a.customActionLabel] || 0) + 1;
-          }
+          const label = a.customActionLabel || a.action;
+          neutralBreakdown[label] = (neutralBreakdown[label] || 0) + 1;
         } else if (isScoredByUs) {
           scoredTotal++;
           if (a.action === 'attack') attacks++;
@@ -213,6 +210,7 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
       serviceMisses,
       blockOuts,
       customStats,
+      neutralBreakdown,
     };
   };
 
@@ -222,7 +220,7 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
   return { blue: byTeam('blue'), red: byTeam('red'), total: scoreTotal };
 }
 
-export function HeatmapView({ points, completedSets, currentSetPoints, currentSetNumber, stats, teamNames, players = [], sport = 'volleyball', matchId, isLoggedIn, hasCourt = true, onSelectPoint, viewingPointIndex }: HeatmapViewProps) {
+export function HeatmapView({ points, completedSets, currentSetPoints, currentSetNumber, stats, teamNames, players = [], sport = 'volleyball', matchId, isLoggedIn, hasCourt = true, onSelectPoint, viewingPointIndex, showRatings = true }: HeatmapViewProps) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [setFilter_, setSetFilter] = useState<SetFilter>('all');
@@ -586,12 +584,12 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="text-muted-foreground font-semibold text-xs text-primary/80">Faits de jeu</span>
                   <span className="font-bold text-foreground text-xs">{ds[team].neutral}</span>
                 </div>
-                {ds[team].customNeutralCount > 0 && (
-                  <div className="flex justify-between pl-2">
-                    <span className="text-muted-foreground text-[11px]">Faits personnalisés</span>
-                    <span className="font-bold text-foreground text-[11px]">{ds[team].customNeutralCount}</span>
+                {Object.entries(ds[team].neutralBreakdown).map(([label, val]) => (
+                  <div key={label} className="flex justify-between pl-2">
+                    <span className="text-muted-foreground text-[11px]">{t(`actionsDesc.${label}`, label)}</span>
+                    <span className="font-bold text-foreground text-[11px]">{val}</span>
                   </div>
-                )}
+                ))}
                 {Object.keys(ds[team].customStats).length > 0 && (
                   <>
                     <div className="flex justify-between border-t border-border/50 pt-1 mt-1">
@@ -615,13 +613,8 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
           ))}
         </div>
 
-        <div className="bg-card rounded-xl p-3 border border-border text-center">
-          <p className="text-2xl font-black text-foreground">{ds.total}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('heatmap.totalActions')}</p>
-        </div>
-
         {players.length > 0 && (
-          <PlayerStats points={filteredPoints} players={players} teamName={teamNames.blue} sport={sport} matchId={matchId} />
+          <PlayerStats points={filteredPoints} players={players} teamName={teamNames.blue} sport={sport} matchId={matchId} showRatings={showRatings} />
         )}
 
         {hasCourt && showHeatmap && (

@@ -11,9 +11,10 @@ interface PlayerStatsProps {
   teamName: string;
   sport?: SportType;
   matchId?: string;
+  showRatings?: boolean;
 }
 
-export function PlayerStats({ points, players, teamName, matchId }: PlayerStatsProps) {
+export function PlayerStats({ points, players, teamName, matchId, showRatings = true }: PlayerStatsProps) {
   const { t } = useTranslation();
   const [expandedPlayers, setExpandedPlayers] = useState<Record<string, boolean>>({});
   const [expandedSections, setExpandedSections] = useState<Record<string, { scored?: boolean; faults?: boolean; neutral?: boolean }>>({});
@@ -139,6 +140,7 @@ export function PlayerStats({ points, players, teamName, matchId }: PlayerStatsP
   }, [points, allPlayers, t]);
 
   function formatRatingSuffix(items: { rating?: string }[]) {
+    if (!showRatings) return '';
     const pos = items.filter(p => p.rating === 'positive').length;
     const neu = items.filter(p => p.rating === 'neutral').length;
     const neg = items.filter(p => p.rating === 'negative').length;
