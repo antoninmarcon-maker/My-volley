@@ -617,8 +617,11 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
                   <span className="font-bold text-foreground text-xs">{ds[team].neutral}</span>
                 </div>
                 {Object.entries(ds[team].neutralBreakdown).map(([label, val]) => (
-                  <div key={label} className="flex justify-between pl-2">
-                    <span className="text-muted-foreground text-[11px]">{t(`actionsDesc.${label}`, label)}</span>
+                  <div key={label} className="flex items-center justify-between pl-2">
+                    <span className="text-muted-foreground text-[11px] flex items-center gap-1">
+                      {t(`actionsDesc.${label}`, label)}
+                      {showRatings && ds[team].actionRatings[label] && <InlineRatingDots r={ds[team].actionRatings[label]} />}
+                    </span>
                     <span className="font-bold text-foreground text-[11px]">{val}</span>
                   </div>
                 ))}
