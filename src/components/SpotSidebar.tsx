@@ -198,7 +198,7 @@ export default function SpotSidebar({
     }
   };
 
-
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       if (newPhotos.length + files.length > 5) {
