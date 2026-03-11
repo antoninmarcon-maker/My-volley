@@ -15,7 +15,7 @@ interface PlayerStatsProps {
   showRatings?: boolean;
 }
 
-export function PlayerStats({ points, players, teamName, matchId, showRatings = true }: PlayerStatsProps) {
+export function PlayerStats({ points, players, teamName, matchId, showRatings = true, sport = 'volleyball' }: PlayerStatsProps) {
   const { t } = useTranslation();
   const [expandedPlayers, setExpandedPlayers] = useState<Record<string, boolean>>({});
   const [expandedSections, setExpandedSections] = useState<Record<string, { scored?: boolean; faults?: boolean; neutral?: boolean }>>({});
@@ -134,7 +134,7 @@ export function PlayerStats({ points, players, teamName, matchId, showRatings = 
         total: total, efficiency, scoredBreakdown, faultBreakdown, neutralBreakdown,
       };
     }).filter(s => s.total > 0).sort((a, b) => b.scored - a.scored);
-  }, [points, allPlayers, t, showRatings]);
+  }, [points, allPlayers, t, showRatings, sport]);
 
   
 

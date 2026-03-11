@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useTranslation } from 'react-i18next';
+import { getVisibleActionIdentifiers } from '@/lib/actionsConfig';
 
 interface HeatmapViewProps {
   points: Point[];
@@ -81,7 +82,7 @@ function createRatingDotsEl(r: ActionRating): HTMLElement {
   return wrapper;
 }
 
-function buildExportContainer(teamNames: { blue: string; red: string }, label: string, ds: ReturnType<typeof computeStats>): HTMLElement {
+function buildExportContainer(teamNames: { blue: string; red: string }, label: string, ds: ReturnType<typeof computeStats>, visibleKeys: Set<string>): HTMLElement {
   const container = document.createElement('div');
   container.style.cssText = 'position:absolute;left:-9999px;top:0;width:400px;';
   container.className = 'bg-background rounded-2xl p-4 space-y-3';
@@ -110,6 +111,7 @@ function buildExportContainer(teamNames: { blue: string; red: string }, label: s
       ['Bidouilles', ds[team].bidouilles, 'bidouille'], ['2ndes mains', ds[team].secondeMains, 'seconde_main'], ['Autres', ds[team].otherOffensive, 'other_offensive'],
     ];
     for (const [l, v, key] of scoredRows) {
+      if (!visibleKeys.has(key)) continue;
       const row = createStatRow(l, v, { indent: true });
       const ar = ds[team].actionRatings[key];
       if (ar) row.firstChild?.appendChild(createRatingDotsEl(ar));
@@ -120,6 +122,7 @@ function buildExportContainer(teamNames: { blue: string; red: string }, label: s
       ['Out', ds[team].outs, 'out'], ['Filet', ds[team].netFaults, 'net_fault'], ['Srv loupés', ds[team].serviceMisses, 'service_miss'], ['Block Out', ds[team].blockOuts, 'block_out'],
     ];
     for (const [l, v, key] of faultRows) {
+      if (!visibleKeys.has(key)) continue;
       const row = createStatRow(l, v, { indent: true });
       const ar = ds[team].actionRatings[key];
       if (ar) row.firstChild?.appendChild(createRatingDotsEl(ar));
@@ -167,7 +170,7 @@ interface TeamStats {
   actionRatings: Record<string, ActionRating>;
 }
 
-function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: number } {
+function computeStats(pts: Point[], visibleKeys: Set<string>, visibleLabels: Set<string>): { blue: TeamStats; red: TeamStats; total: number } {
   const byTeam = (team: 'blue' | 'red'): TeamStats => {
     const opponent = team === 'blue' ? 'red' : 'blue';
 
@@ -203,6 +206,18 @@ function computeStats(pts: Point[]): { blue: TeamStats; red: TeamStats; total: n
         }];
 
       actionsToProcess.forEach(a => {
+        // Filter visibility:
+        // Use customActionLabel if present to match against visibleLabels.
+        // Otherwise, match action key against visibleKeys.
+        let isVisible = false;
+        if (a.customActionLabel) {
+          isVisible = visibleLabels.has(a.customActionLabel);
+        } else {
+          isVisible = visibleKeys.has(a.action);
+        }
+        
+        if (!isVisible) return;
+
         const isNeutral = a.type === 'neutral' && a.team === team;
         const isScoredByUs = a.type === 'scored' && a.team === team;
         const isFaultByOpponent = a.type === 'fault' && a.team === opponent;
@@ -303,8 +318,9 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
         ? t('heatmap.allSets')
         : `Set ${setFilter_}${setFilter_ === currentSetNumber && !completedSets.some(s => s.number === setFilter_) ? ` (${t('home.setInProgress')})` : ''}`;
       const filename = `stats-${teamNames.blue}-vs-${teamNames.red}-${setFilter_ === 'all' ? 'global' : `set${setFilter_}`}`;
-      const ds = computeStats(filteredPoints);
-      const container = buildExportContainer(teamNames, label, ds);
+      const { visibleKeys, visibleLabels } = getVisibleActionIdentifiers(sport);
+      const ds = computeStats(filteredPoints, visibleKeys, visibleLabels);
+      const container = buildExportContainer(teamNames, label, ds, visibleKeys);
       document.body.appendChild(container);
       const canvas = await html2canvas(container, { backgroundColor: '#1a1a2e', scale: 2 });
       document.body.removeChild(container);
@@ -511,7 +527,10 @@ export function HeatmapView({ points, completedSets, currentSetPoints, currentSe
     });
   }, [filteredPoints]);
 
-  const displayStats = useMemo(() => computeStats(filteredPoints), [filteredPoints]);
+  const displayStats = useMemo(() => {
+    const { visibleKeys, visibleLabels } = getVisibleActionIdentifiers(sport);
+    return computeStats(filteredPoints, visibleKeys, visibleLabels);
+  }, [filteredPoints, sport]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

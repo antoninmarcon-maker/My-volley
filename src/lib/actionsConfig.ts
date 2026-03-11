@@ -245,7 +245,25 @@ export function getVisibleActions(
       ...(c.showOnCourt != null ? { showOnCourt: c.showOnCourt } : {}),
       ...(c.assignToPlayer != null ? { assignToPlayer: c.assignToPlayer } : {}),
       ...(c.hasDirection ? { hasDirection: true } : {}),
-      hasRating: c.hasRating ?? false,
     }));
   return [...visible, ...customs];
+}
+
+export function getVisibleActionIdentifiers(sport: SportType) {
+  const { getScoredActionsForSport, getFaultActionsForSport, getNeutralActionsForSport } = require('@/types/sports');
+  const scored = getVisibleActions(sport, 'scored', getScoredActionsForSport(sport));
+  const faults = getVisibleActions(sport, 'fault', getFaultActionsForSport(sport));
+  const neutral = getVisibleActions(sport, 'neutral', getNeutralActionsForSport(sport));
+  
+  const all = [...scored, ...faults, ...neutral];
+  
+  const visibleKeys = new Set<string>();
+  const visibleLabels = new Set<string>();
+  
+  all.forEach(a => {
+    if (a.customId) visibleLabels.add(a.label);
+    else visibleKeys.add(a.key);
+  });
+  
+  return { visibleKeys, visibleLabels };
 }
