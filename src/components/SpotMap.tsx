@@ -103,15 +103,10 @@ export default function SpotMap({
   };
 
   const filteredSpots = spots.filter(spot => {
-    // If it's unverified (from Google) but unverified is off, hide it
-    if (!spot.is_verified && spot.status === 'waiting_for_validation' && !activeFilters.includes('unverified')) return false;
+    // If it's waiting for validation but filter is off, hide it
+    if (spot.status === 'waiting_for_validation' && !activeFilters.includes('unverified')) return false;
 
-    // If it's temporary but temporary filter is off, hide it
-    if (spot.is_temporary && !activeFilters.includes('temporary')) return false;
-
-    // If it's a specific type but that type is not active, hide it
-    // Wait, the API returns some spots with type 'terrain de sport' or no type if imported. 
-    // Let's make sure we show them if 'unverified' is active, but otherwise filter by type.
+    // Filter by known type
     const knownTypes = ['indoor', 'outdoor_hard', 'outdoor_grass', 'beach'];
     if (spot.type && knownTypes.includes(spot.type) && !activeFilters.includes(spot.type)) {
       return false;
