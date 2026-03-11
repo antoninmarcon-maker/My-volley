@@ -457,7 +457,7 @@ const Index = () => {
                   activeRallyActions={activeCourtActions}
                   viewingPoint={viewingCourtData.point}
                   playerAliases={playerAliases}
-                  pendingHasDirection={pendingActionMeta?.hasDirection}
+                  pendingHasDirection={isPerformanceMode && pendingActionMeta?.hasDirection}
                   awaitingRating={awaitingRating}
                 />
               );
