@@ -38,6 +38,7 @@ export default function SpotSidebar({
   const [newPhotos, setNewPhotos] = useState<File[]>([]);
   const [postingComment, setPostingComment] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
