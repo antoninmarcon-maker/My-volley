@@ -124,6 +124,16 @@ export default function SpotMap({
     });
   };
 
+  const getAddMarkerIcon = () => {
+    return L.divIcon({
+      className: 'custom-div-icon',
+      html: `<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-lg border-[3px] border-white shadow-xl animate-bounce">📍</div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -40]
+    });
+  };
+
   return (
     <div className="w-full h-full relative">
       <MapContainer 
@@ -170,6 +180,7 @@ export default function SpotMap({
           <Marker 
             position={newSpotLocation} 
             draggable={true}
+            icon={getAddMarkerIcon()}
             eventHandlers={{
               dragend: (e) => {
                 const marker = e.target;

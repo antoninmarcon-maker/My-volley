@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 interface SpotFormProps {
   location: [number, number] | null;
+  onLocationChange?: (loc: [number, number]) => void;
   onSuccess: () => void;
   onCancel: () => void;
   spotToEdit?: any;
@@ -18,7 +19,7 @@ interface SpotFormProps {
 
 import { checkAndIncrementRateLimit } from '@/lib/rateLimit';
 
-export default function SpotForm({ location, onSuccess, onCancel, spotToEdit }: SpotFormProps) {
+export default function SpotForm({ location, onLocationChange, onSuccess, onCancel, spotToEdit }: SpotFormProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(spotToEdit?.name || '');
@@ -26,6 +27,38 @@ export default function SpotForm({ location, onSuccess, onCancel, spotToEdit }: 
   const [type, setType] = useState<string>(spotToEdit?.type || 'outdoor_hard');
   const [availability, setAvailability] = useState(spotToEdit?.availability_period || '');
   const [photos, setPhotos] = useState<File[]>([]);
+
+  // Address search states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const handleSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim()) return;
+    
+    // Simple rate limiting/feedback for search
+    setSearching(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=fr,ch,be,ca`);
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (err) {
+      console.error(err);
+      toast.error(t('spots.searchError') || "Erreur lors de la recherche adresse.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSelectSearchResult = (result: any) => {
+    if (onLocationChange) {
+      onLocationChange([parseFloat(result.lat), parseFloat(result.lon)]);
+    }
+    setSearchResults([]);
+    setSearchQuery('');
+  };
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -127,17 +160,48 @@ export default function SpotForm({ location, onSuccess, onCancel, spotToEdit }: 
     <form onSubmit={handleSubmit} className="space-y-6 flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         {!spotToEdit && (
-          !location ? (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-xl flex items-center gap-2">
-              <MapPin size={16} />
-              <p>{t('spots.positionMarker')}</p>
+          <div className="space-y-3 mb-2">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Rechercher une adresse, une ville..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
+                className="bg-secondary/50 text-sm"
+              />
+              <Button type="button" variant="secondary" onClick={() => handleSearch()} disabled={searching || !searchQuery.trim()}>
+                {searching ? <Loader2 size={16} className="animate-spin" /> : '🔍'}
+              </Button>
             </div>
-          ) : (
-            <div className="bg-primary/10 text-primary text-xs p-2 rounded-lg flex items-center gap-2">
-              <MapPin size={14} />
-              <span className="font-mono">{location[0].toFixed(5)}, {location[1].toFixed(5)}</span>
-            </div>
-          )
+            {searchResults.length > 0 && (
+              <div className="bg-secondary/30 rounded-lg border border-border overflow-hidden text-sm">
+                {searchResults.map((res, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className="w-full text-left px-3 py-2 border-b border-border last:border-0 hover:bg-secondary/50 transition-colors truncate"
+                    onClick={() => handleSelectSearchResult(res)}
+                  >
+                    📍 {res.display_name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!location ? (
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-xl flex items-center gap-2">
+                <MapPin size={16} />
+                <p>{t('spots.positionMarker', 'Placez le marqueur sur la carte ou recherchez une adresse.')}</p>
+              </div>
+            ) : (
+              <div className="bg-primary/10 text-primary text-xs p-2 rounded-lg flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 font-mono">
+                  <MapPin size={14} />
+                  <span>{location[0].toFixed(5)}, {location[1].toFixed(5)}</span>
+                </div>
+                <span className="text-[10px] uppercase opacity-70">Ajustable sur la carte</span>
+              </div>
+            )}
+          </div>
         )}
 
         <div className="space-y-1.5">

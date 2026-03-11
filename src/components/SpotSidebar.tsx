@@ -14,6 +14,7 @@ interface SpotSidebarProps {
   isAddingMode: boolean;
   onCloseAdding: () => void;
   newSpotLocation?: [number, number] | null;
+  onLocationChange?: (loc: [number, number]) => void;
   onSpotAdded?: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function SpotSidebar({
   isAddingMode,
   onCloseAdding,
   newSpotLocation,
+  onLocationChange,
   onSpotAdded
 }: SpotSidebarProps) {
   const { t } = useTranslation();
@@ -222,6 +224,7 @@ export default function SpotSidebar({
           {isAddingMode ? (
             <SpotForm 
               location={newSpotLocation || null}
+              onLocationChange={onLocationChange}
               onCancel={handleClose}
               onSuccess={() => {
                 handleClose();

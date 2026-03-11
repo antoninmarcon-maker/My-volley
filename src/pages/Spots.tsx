@@ -64,6 +64,7 @@ export default function Spots() {
           isAddingMode={isAddingMode}
           onCloseAdding={handleStopAdding}
           newSpotLocation={newSpotLocation || null}
+          onLocationChange={setNewSpotLocation}
         />
       </div>
     </div>
