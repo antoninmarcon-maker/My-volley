@@ -122,7 +122,7 @@ export default function SpotMap({
     if (spot.type === 'beach') { bgColor = 'bg-yellow-500'; icon = '🏖️'; }
     if (spot.type === 'outdoor_hard' || spot.type === 'outdoor_grass') { bgColor = 'bg-green-500'; icon = '☀️'; }
     
-    const opacity = (!spot.is_verified && spot.status === 'waiting_for_validation') ? 'opacity-60 border-dashed border-2' : 'border-2 border-white shadow-md';
+    const opacity = (spot.status === 'waiting_for_validation') ? 'opacity-60 border-dashed border-2' : 'border-2 border-white shadow-md';
     
     return L.divIcon({
       className: 'custom-div-icon',
