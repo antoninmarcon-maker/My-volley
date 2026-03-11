@@ -76,12 +76,11 @@ async function runImportSpots(query: string = 'terrain de beach volley France') 
       .insert({
         name,
         description: `Importé automatiquement de Google Places. Adresse : ${address}`,
-        location: `POINT(${lng} ${lat})`,
+        lat,
+        lng,
         type: courtType,
-        status: 'waiting_for_validation', 
-        google_place_id: placeId,
-        is_verified: false,
-        is_temporary: false
+        status: 'waiting_for_validation',
+        user_id: '00000000-0000-0000-0000-000000000000',
       });
 
     if (insertErr) {
@@ -101,7 +100,6 @@ async function runImportSpots(query: string = 'terrain de beach volley France') 
   };
 }
 
-// 1. HTTP Handler for manual triggering or API calls
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -132,12 +130,9 @@ Deno.serve(async (req) => {
   }
 })
 
-// 2. Scheduled Cron Job (Runs every Monday at 02:00 AM UTC)
-// This feature relies on Deno.cron supported by Supabase Edge Functions.
 Deno.cron("Import Spots Weekly", "0 2 * * 1", async () => {
     console.log("Running scheduled weekly Google Places spots import...");
     try {
-        // Run specific queries to find different types of courts
         const resBeach = await runImportSpots('terrain de beach volley France');
         console.log("Scheduled beach volley import finished:", resBeach.summary);
         
