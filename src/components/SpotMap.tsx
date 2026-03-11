@@ -85,7 +85,7 @@ export default function SpotMap({
 
   useEffect(() => {
     supabase.from('spots_with_coords')
-      .select('id, name, type, lat, lng, is_verified, is_temporary, status')
+      .select('id, name, type, lat, lng, status')
       .in('status', ['validated', 'waiting_for_validation'])
       .then(({ data, error }) => {
         if (!error && data) {
@@ -103,15 +103,10 @@ export default function SpotMap({
   };
 
   const filteredSpots = spots.filter(spot => {
-    // If it's unverified (from Google) but unverified is off, hide it
-    if (!spot.is_verified && spot.status === 'waiting_for_validation' && !activeFilters.includes('unverified')) return false;
+    // If it's waiting for validation but filter is off, hide it
+    if (spot.status === 'waiting_for_validation' && !activeFilters.includes('unverified')) return false;
 
-    // If it's temporary but temporary filter is off, hide it
-    if (spot.is_temporary && !activeFilters.includes('temporary')) return false;
-
-    // If it's a specific type but that type is not active, hide it
-    // Wait, the API returns some spots with type 'terrain de sport' or no type if imported. 
-    // Let's make sure we show them if 'unverified' is active, but otherwise filter by type.
+    // Filter by known type
     const knownTypes = ['indoor', 'outdoor_hard', 'outdoor_grass', 'beach'];
     if (spot.type && knownTypes.includes(spot.type) && !activeFilters.includes(spot.type)) {
       return false;
@@ -127,7 +122,7 @@ export default function SpotMap({
     if (spot.type === 'beach') { bgColor = 'bg-yellow-500'; icon = '🏖️'; }
     if (spot.type === 'outdoor_hard' || spot.type === 'outdoor_grass') { bgColor = 'bg-green-500'; icon = '☀️'; }
     
-    const opacity = (!spot.is_verified && spot.status === 'waiting_for_validation') ? 'opacity-60 border-dashed border-2' : 'border-2 border-white shadow-md';
+    const opacity = (spot.status === 'waiting_for_validation') ? 'opacity-60 border-dashed border-2' : 'border-2 border-white shadow-md';
     
     return L.divIcon({
       className: 'custom-div-icon',
@@ -228,7 +223,7 @@ export default function SpotMap({
           >
             <Popup>
               <div className="text-center font-bold">{spot.name}</div>
-              {(!spot.is_verified && spot.status === 'waiting_for_validation') && (
+              {(spot.status === 'waiting_for_validation') && (
                 <div className="text-xs text-orange-500 font-semibold mt-1">À vérifier par la communauté</div>
               )}
             </Popup>
