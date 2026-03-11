@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useTranslation } from 'react-i18next';
+import MapSearchControl from './MapSearchControl';
 
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -147,8 +148,13 @@ export default function SpotMap({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
+        <MapSearchControl 
+          isAddingMode={isAddingMode} 
+          onLocationSelected={onNewSpotLocationChange} 
+        />
+
         {/* Filter Pills overlay */}
-        <div className="absolute top-4 left-4 right-14 z-[400] overflow-x-auto pb-2 hide-scrollbar">
+        <div className="absolute top-16 left-4 right-4 z-[400] overflow-x-auto pb-2 hide-scrollbar">
           <div className="flex items-center gap-2">
             {[
               { id: 'indoor', label: '🏟️ En salle' },

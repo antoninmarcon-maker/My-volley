@@ -9,6 +9,11 @@ AS $$
 DECLARE
   recent_count integer;
 BEGIN
+  -- Bypass rate limit for system user (imported spots)
+  IF NEW.user_id = '00000000-0000-0000-0000-000000000000' THEN
+    RETURN NEW;
+  END IF;
+
   SELECT count(*) INTO recent_count
   FROM public.spots
   WHERE user_id = NEW.user_id
