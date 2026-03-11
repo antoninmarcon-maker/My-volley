@@ -68,6 +68,7 @@ export default function SpotSidebar({
         setPhotos([]);
         setComments([]);
         toast.error("Ce terrain n'existe plus. Recharge la carte.");
+        onClose();
         return;
       }
       setSpot(sData);
